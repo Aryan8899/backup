@@ -351,16 +351,20 @@ const RegisterRank = () => {
                     </span>
                   </div>
                   <span
-                    className={`
-      font-mono text-sm tracking-wider 
-      ${
-        darkMode
-          ? "text-white"
-          : "text-gray-800 font-semibold bg-gray-200 px-2 py-1 rounded-md"
-      }`}
-                  >
-                    {address}
-                  </span>
+  className={`
+    font-mono text-sm tracking-wider break-words 
+    ${darkMode 
+      ? "text-white" 
+      : "text-gray-800 font-semibold bg-gray-200 px-2 py-1 rounded-md"}
+  `}
+>
+  {address
+    ? window.innerWidth < 640 
+      ? `${address.slice(0, 6)}...${address.slice(-4)}` // Shorten for small screens
+      : address
+    : "N/A"}
+</span>
+
                 </div>
               </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import "simplebar/dist/simplebar.min.css";
 import multiavatar from "@multiavatar/multiavatar";
+import { Loader2 } from 'lucide-react';
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
@@ -1297,9 +1298,9 @@ const Rankach: React.FC = () => {
         </div>
 
         {/* Two-Column Layout for Detailed Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Left Column */}
-          <div className="space-y-12">
+          <div className="lg:col-span-3 space-y-8 ">
             <TimeInfoSection
               currentMonth={getDisplayTime(currentMonthIndex)}
               startTime={startTime}
@@ -1310,12 +1311,13 @@ const Rankach: React.FC = () => {
               // currentMonthIndex={currentMonthIndex}
               // loadingGraph={loadingGraph}
               rankData={rankData}
+              loadingGraph={loadingGraph}
               // darkMode={darkMode}
             />
           </div>
 
           {/* Right Column */}
-          <div className="space-y-12">
+          <div className="space-y-8 lg:col-span-2">
             <RankPayoutsTable
               userRank={userRank}
               address={address}
@@ -1404,7 +1406,7 @@ const TimeInfoSection: React.FC<TimeInfoSectionProps> = ({
           <Clock className="w-8 h-8 text-blue-500 dark:text-purple-400" />
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {[
             { label: "Current Month", value: currentMonth, icon: TrendingUp },
             {
@@ -1652,10 +1654,12 @@ const RankPayoutsTable: React.FC<RankPayoutsTableProps> = ({
 
 interface RankDistributionChartProps {
   rankData: { rank: string; count: number }[];
+  loadingGraph: boolean; // Add this line
 }
 
 const RankDistributionChart: React.FC<RankDistributionChartProps> = ({
   rankData,
+  loadingGraph
 }) => {
   if (!rankData || rankData.length === 0) {
     return (
@@ -1739,7 +1743,13 @@ const RankDistributionChart: React.FC<RankDistributionChartProps> = ({
         </motion.div>
 
         {/* Chart Section */}
-        <div className="h-80">
+        
+        <div className="h-96">
+        {loadingGraph ? (
+    <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+      <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />
+    </div>
+  ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={formattedData}
@@ -1809,6 +1819,7 @@ const RankDistributionChart: React.FC<RankDistributionChartProps> = ({
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          )}
         </div>
 
         {/* Footer Section */}

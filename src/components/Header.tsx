@@ -9,6 +9,8 @@ import { ethers } from "ethers";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePriceData } from "../components/PriceContext";
 import { useDarkMode } from "./DarkModeContext";
+import FeaturesSection from "../components/FeaturesSection";
+import Light from "../components/Light";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import tokenAbi from "./token/tokenAbi";
@@ -233,6 +235,11 @@ const Header = () => {
 
   // Rest of your return statement remains the same
   return (
+<> 
+    <div className="fixed inset-0 -z-10">
+    {darkMode ? <FeaturesSection /> : <Light />}
+  </div>
+
     <div className="relative">
       <motion.header
         variants={headerVariants}
@@ -538,6 +545,8 @@ const Header = () => {
 
       <ToastContainer position="top-right" autoClose={5000} />
     </div>
+
+</>
   );
 };
 

@@ -379,6 +379,7 @@ const Dashboard = () => {
     `https://cryptomx.site/#/register?referral=undefined`
   );
   const [isCopied, setIsCopied] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log(error);
@@ -1893,7 +1894,7 @@ const Dashboard = () => {
   //     completed: false,
   //   },
   // ];
-  const navigate = useNavigate();
+  
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

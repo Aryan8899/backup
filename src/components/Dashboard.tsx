@@ -2339,23 +2339,22 @@ const Dashboard = () => {
 
               {/* Teams Ranks Progression Card - Enhanced dark mode and effects */}
               <div className="md:col-span-8 rounded-3xl relative overflow-hidden group h-full">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-800/90 to-slate-900/90 dark:from-slate-800/95 dark:to-slate-900/95" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400 dark:from-slate-800/30 dark:to-slate-900/30" />
 
                 <div
-                  className="relative p-6 backdrop-blur-xl border-2 border-gray-300/10 dark:border-green-600/20 
+                  className="relative p-6 backdrop-blur-xl border-2 border-gray-300/10 
           shadow-xl dark:shadow-slate-900/50 hover:shadow-2xl transition-all duration-500 h-full"
                 >
                   <div className="flex justify-center items-center mb-6">
                     <h2
-                      className="font-bold text-xl md:text-2xl bg-gradient-to-r 
-              from-slate-100 to-slate-300 dark:from-white dark:to-gray-300 
+                      className="font-bold text-xl md:text-2xl bg-blue-500 dark:from-white dark:to-gray-300 
               bg-clip-text text-transparent transition-colors duration-300"
                     >
                       Teams Ranks Progression
                     </h2>
                   </div>
 
-                  <div className="w-full overflow-x-auto rounded-xl bg-slate-800/40 p-4">
+                  <div className="w-full overflow-x-auto rounded-xl  p-4">
                     <div className="min-w-[355px] h-[400px]">
                       <Bar
                         data={rankGraphData}

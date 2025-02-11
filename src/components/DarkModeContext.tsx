@@ -6,27 +6,38 @@ interface DarkModeContextProps {
 }
 
 // ✅ Create Context
-const DarkModeContext = createContext<DarkModeContextProps | undefined>(undefined);
+const DarkModeContext = createContext<DarkModeContextProps | undefined>(
+  undefined
+);
 
 // ✅ Dark Mode Provider (Wrap App with this)
-export const DarkModeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [darkMode, setDarkMode] = useState<boolean>(
-    () => localStorage.getItem("theme") === "dark"
-  );
+export const DarkModeProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [darkMode, setDarkMode] = useState<boolean>(false);
 
+  // ✅ Initialize Dark Mode on Mount
   useEffect(() => {
-    console.log("Dark Mode State Changed:", darkMode);
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
+    const savedTheme = localStorage.getItem("theme");
+    const isDark =
+      savedTheme === "dark" ||
+      (!savedTheme &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
 
+    setDarkMode(isDark);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, []);
+
+  // ✅ Toggle Dark Mode
   const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
+    setDarkMode((prev) => {
+      const newMode = !prev;
+      localStorage.setItem("theme", newMode ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", newMode);
+      return newMode;
+    });
   };
 
   return (

@@ -1,83 +1,59 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
-import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp, RefreshCw, AlertTriangle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import multiavatar from "@multiavatar/multiavatar";
-
-// Project-specific imports
 import FeaturesSection from "../components/FeaturesSection";
 import Light from "../components/Light";
 import { useDarkMode } from "../components/DarkModeContext";
 import contractAbi from "./Props/contractAbi.ts";
 import contractAddress from "./Props/contractAddress.ts";
 import "../index.css";
-import Loader from "./Loader.tsx";
+import axios from "axios";
+import SimpleBar from "simplebar-react";
+import "simplebar/dist/simplebar.min.css";
+import multiavatar from "@multiavatar/multiavatar";
+import { useNavigate } from "react-router-dom";
 
-// Types and Interfaces
 interface ReferralNode {
   address: string;
   rank: string;
   referrals: ReferralNode[];
 }
-
-interface UserDetails {
-  avatar: string;
-  nickname: string;
-}
-
-const ReferralTree: React.FC = () => {
-  // State Management
+const ReferralTree = () => {
   const navigate = useNavigate();
-  const { darkMode } = useDarkMode();
+  const { darkMode } = useDarkMode(); // ✅ Dark mode state is correctly retrieved
+
+  useEffect(() => {
+    console.log("Dark Mode State:", darkMode); // ✅ Debugging log to check state updates
+  }, [darkMode]);
+
   const { address, isConnected } = useWeb3ModalAccount();
+  const { address: userAddress } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
-
-  // Refs for scrolling
-  const treeContainerRef = useRef<HTMLDivElement>(null);
-
-  // Component States
   const [treeData, setTreeData] = useState<ReferralNode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [userDetails, setUserDetails] = useState<Record<string, UserDetails>>(
-    {}
-  );
+  const [isScrollable, setIsScrollable] = useState(false); // State for scrollability
+  const [userAvatars, setUserAvatars] = useState<Record<string, string>>({}); // Stores avatar URLs by address
+  const [userData, setUserData] = useState<{
+    nickname: string;
+    avatar: string;
+  } | null>(null);
+  const [userDetails, setUserDetails] = useState<
+    Record<string, { avatar: string; nickname: string }>
+  >({}); // Stores avatar and nickname by address
+
   const [isProviderReady, setIsProviderReady] = useState(false);
 
-  // Provider and Connection Checks
   useEffect(() => {
     setIsProviderReady(!!walletProvider);
   }, [walletProvider]);
 
-  // Scrolling Handler
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (treeContainerRef.current) {
-      const container = treeContainerRef.current;
-      container.scrollLeft += e.deltaY;
-    }
-  };
-
-  // Node Expansion Toggle
-  const toggleNodeExpansion = (address: string) => {
-    setExpandedNodes((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(address)) {
-        newSet.delete(address);
-      } else {
-        newSet.add(address);
-      }
-      return newSet;
-    });
-  };
-
-  // Registration Status Check
   useEffect(() => {
     const checkRegistrationStatus = async (newAddress: string) => {
       if (!isConnected || !walletProvider || !isProviderReady || !newAddress) {
@@ -86,6 +62,9 @@ const ReferralTree: React.FC = () => {
       }
 
       try {
+        console.log("Checking registration status for:", newAddress);
+
+        // Initialize Web3 provider and contract
         const ethersProvider = new ethers.providers.Web3Provider(
           walletProvider
         );
@@ -96,32 +75,42 @@ const ReferralTree: React.FC = () => {
           signer
         );
 
+        // Fetch user details from the contract
         const userData = await contract.users(newAddress);
+        console.log("Fetched User Data:", userData);
+
+        // Ensure userData exists and check isActive status
         if (!userData || !userData.isActive) {
-          navigate("/");
+          console.log("User is NOT active. Redirecting to home...");
+          navigate("/"); // Redirect unregistered/inactive users
+        } else {
+          console.log("User is active. Staying on the dashboard.");
         }
       } catch (error) {
         console.error("Error checking registration status:", error);
-        navigate("/");
+        navigate("/"); // Redirect if there's an error
       }
     };
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length > 0) {
-        checkRegistrationStatus(accounts[0]);
+        console.log("MetaMask account changed to:", accounts[0]);
+        checkRegistrationStatus(accounts[0]); // Check if the new account is registered
       } else {
-        navigate("/");
+        console.log("No account connected, redirecting...");
+        navigate("/"); // Redirect if no account is connected
       }
     };
 
     if (walletProvider) {
-      const provider = new ethers.providers.Web3Provider(walletProvider);
+      const provider = new ethers.providers.Web3Provider(walletProvider as any);
       const externalProvider = provider.provider as any;
 
       if (externalProvider?.on) {
         externalProvider.on("accountsChanged", handleAccountsChanged);
       }
 
+      // Check registration on initial load
       if (address) {
         checkRegistrationStatus(address);
       }
@@ -137,8 +126,10 @@ const ReferralTree: React.FC = () => {
     }
   }, [walletProvider, address, isConnected, isProviderReady, navigate]);
 
-  // Fetch User Details
-  const fetchUserDetails = async (address: string): Promise<UserDetails> => {
+  const fetchUserDetails = async (
+    address: string
+  ): Promise<{ avatar: string; nickname: string }> => {
+    console.log(isScrollable, userAvatars, setUserAvatars, userData);
     try {
       const response = await axios.get(
         `https://itcback-production.up.railway.app/api/users/${address}`
@@ -146,18 +137,40 @@ const ReferralTree: React.FC = () => {
       const user = response.data.data;
       return {
         avatar: user.avatar || "",
-        nickname: user.nickname || "Unknown",
-      };
+        nickname: user.nickname || "Unknown", // Default to "Unknown" if nickname is not available
+      }; // Return avatar URL or empty if not available
     } catch (error) {
       console.error(`Error fetching user details for ${address}:`, error);
       return {
         avatar: "",
         nickname: "Unknown",
-      };
+      }; // Return empty string on error
     }
   };
 
-  // Fetch Referrals Recursively
+  const [avatarSVG, setAvatarSVG] = useState<string>("");
+
+  useEffect(() => {
+    console.log(error);
+    const fetchAddress = async () => {
+      //console.log(withdrawalRab);
+      if (walletProvider) {
+        try {
+          const provider = new ethers.providers.Web3Provider(walletProvider);
+          const signer = provider.getSigner();
+          const address = await signer.getAddress(); // Get connected wallet address
+          // console.log("the address is", address);
+
+          const avatar = multiavatar(address);
+          setAvatarSVG(avatar);
+        } catch (error) {
+          console.error("Error fetching connected address:", error);
+        }
+      }
+    };
+    fetchAddress();
+  }, [walletProvider]);
+
   const fetchReferrals = async (
     address: string,
     provider: ethers.providers.Web3Provider
@@ -189,8 +202,10 @@ const ReferralTree: React.FC = () => {
       const rankIndex = Number.parseInt(userData[1]?.toString() || "0");
       const rank = getRankName(rankIndex);
 
-      // Fetch user details
+      // Fetch user details (avatar and nickname)
       const details = await fetchUserDetails(address);
+
+      // Update the userDetails map
       setUserDetails((prev) => ({
         ...prev,
         [address]: {
@@ -210,10 +225,41 @@ const ReferralTree: React.FC = () => {
     }
   };
 
-  // Load Tree Data
+  const registerUser = async (address: string) => {
+    try {
+      const response = await axios.get(
+        `https://itcback-production.up.railway.app/api/users/${address}`
+      );
+
+      // Extract the relevant user data
+      const user = response.data.data;
+      // console.log("User data::::::", user);
+
+      // Update the state with nickname and avatar
+      setUserData({
+        nickname: user.nickname,
+        avatar: user.avatar,
+      });
+
+      //console.log("User registered:", user);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+      } else {
+        console.error("Unknown error:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (userAddress) {
+      registerUser(userAddress);
+    }
+  }, [userAddress]);
+
   useEffect(() => {
     const loadTreeData = async () => {
-      if (!address || !walletProvider) {
+      if (!userAddress || !walletProvider) {
         setError("Wallet not connected.");
         setIsLoading(false);
         return;
@@ -224,8 +270,12 @@ const ReferralTree: React.FC = () => {
 
       try {
         const provider = new ethers.providers.Web3Provider(walletProvider);
-        const tree = await fetchReferrals(address, provider);
+        const tree = await fetchReferrals(userAddress, provider);
         setTreeData(tree);
+
+        // Check if scrolling is required based on depth
+        const depth = calculateTreeDepth(tree);
+        setIsScrollable(depth > 3); // Enable scrolling only if depth exceeds 3
       } catch (err) {
         console.error("Error loading referral tree data:", err);
         setError("Failed to load referral tree.");
@@ -234,187 +284,146 @@ const ReferralTree: React.FC = () => {
       }
     };
 
-    loadTreeData();
-  }, [address, walletProvider]);
+    console.log(avatarSVG);
 
-  // Utility Functions
+    loadTreeData();
+  }, [userAddress, walletProvider]);
+
+  const toggleNodeExpansion = (address: string) => {
+    setExpandedNodes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(address)) {
+        newSet.delete(address);
+      } else {
+        newSet.add(address);
+      }
+      return newSet;
+    });
+  };
+
   const shortenAddress = (address: string) =>
     `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 
-  // Render Individual Node
-  const renderNode = (
-    node: ReferralNode,
-    level = 0,
-    isRoot = false,
-    hasParent = false
-  ) => {
+  const calculateTreeDepth = (node: ReferralNode | null, depth = 0): number => {
+    if (!node || node.referrals.length === 0) return depth;
+    return Math.max(
+      ...node.referrals.map((child) => calculateTreeDepth(child, depth + 1))
+    );
+  };
+  // ... previous methods remain the same
+
+  const renderTree = (node: ReferralNode, level = 0, index = 0) => {
     const hasChildren = node.referrals.length > 0;
     const isExpanded = expandedNodes.has(node.address);
-    const details = userDetails[node.address] || {
-      avatar: "",
-      nickname: "Unknown",
-    };
+    const details = userDetails[node.address];
     const avatarSVG = multiavatar(node.address);
 
-    const getGridCols = (count: number) => {
-      if (count > 4) return "grid-cols-5";
-      if (count > 3) return "grid-cols-4";
-      if (count > 2) return "grid-cols-3";
-      if (count > 1) return "grid-cols-2";
-      return "grid-cols-1";
-    };
-
     return (
-      <div className="flex flex-col items-center">
-        {/* Vertical connector from parent */}
-        {hasParent && (
-          <div className="w-px h-8 bg-gradient-to-b from-blue-500/30 to-purple-500/30" />
-        )}
-
-        {/* Node Card */}
-        <motion.div
-          layout
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className={`
-          relative group cursor-pointer transition-all duration-300
-          ${
-            darkMode
-              ? "bg-gray-800/60 backdrop-blur-xl border border-gray-700/50 hover:border-cyan-500/50"
-              : "bg-white/60 backdrop-blur-xl border border-gray-200/50 hover:border-blue-500/50"
-          }
-          rounded-2xl p-4 shadow-lg hover:shadow-2xl w-64 ${
-            isRoot ? "mb-12" : "mb-4"
-          }
-        `}
-          onClick={() => toggleNodeExpansion(node.address)}
-        >
-          {/* Glow Effect */}
+      <div
+        key={node.address}
+        className="referral-node-container flex flex-col items-center"
+      >
+        <div className="flex flex-col items-center">
+          {/* Updated Node Box */}
           <div
-            className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300 
-          bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-cyan-500/10 rounded-2xl blur-lg"
-          />
-
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center">
-            <img
-              src={`data:image/svg+xml;utf8,${encodeURIComponent(avatarSVG)}`}
-              alt="Avatar"
-              className="w-20 h-20 rounded-full border-2 border-white/20 mb-3 group-hover:scale-105 transition-transform"
-            />
-
-            <div className="text-center space-y-1">
-              <h3
-                className={`font-semibold text-lg ${
-                  darkMode ? "text-white" : "text-gray-800"
-                }`}
-              >
-                {details.nickname}
-              </h3>
-              <p
-                className={`text-sm tracking-wider ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {shortenAddress(node.address)}
-              </p>
-              <div
-                className={`text-xs font-medium py-1 px-2 rounded-full 
+            onClick={() => toggleNodeExpansion(node.address)}
+            className={`
+              relative group cursor-pointer transition-all duration-300
               ${
                 darkMode
-                  ? "bg-gray-700 text-cyan-400"
-                  : "bg-blue-50 text-blue-600"
-              }`}
-              >
-                Rank: {node.rank}
-              </div>
-              <div
-                className={`text-xs mt-1 ${
-                  darkMode ? "text-gray-500" : "text-gray-500"
-                }`}
-              >
-                {node.referrals.length} Referrals
-              </div>
-            </div>
+                  ? "bg-gray-800/60 backdrop-blur-xl border border-gray-700/50 hover:border-cyan-500/50"
+                  : "bg-white/60 backdrop-blur-xl border border-gray-200/50 hover:border-blue-500/50"
+              }
+              rounded-2xl p-4 shadow-lg hover:shadow-2xl
+              flex flex-col items-center justify-center
+              w-64
+            `}
+          >
+            {/* Glow Effect */}
+            <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300 
+                bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-cyan-500/10 rounded-2xl blur-lg" />
 
-            {hasChildren && (
-              <div className="absolute bottom-2 right-2 text-gray-500">
-                {isExpanded ? <ChevronUp /> : <ChevronDown />}
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Children Section */}
-        {hasChildren && isExpanded && (
-          <div className="relative flex flex-col items-center">
-            {/* Connection Lines */}
-            <div className="relative w-full">
-              <div className="absolute left-1/2 -translate-x-1/2 h-8 w-px bg-gradient-to-b from-blue-500/30 to-purple-500/30" />
-              {node.referrals.length > 1 && (
-                <div
-                  className="absolute top-8 left-1/2 -translate-x-1/2 h-px bg-gradient-to-r from-blue-500/30 to-purple-500/30"
-                  style={{
-                    width: `${Math.min(node.referrals.length * 280, 1200)}px`,
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Children Grid */}
-            <div
-              className={`grid ${getGridCols(
-                node.referrals.length
-              )} gap-x-8 gap-y-12 pt-8`}
-              style={{
-                minWidth: `${Math.min(node.referrals.length * 280, 1200)}px`,
-              }}
-            >
-              {node.referrals.map((child) => (
-                <div key={child.address} className="flex flex-col items-center">
-                  {renderNode(child, level + 1, false, true)}
+            {/* Content */}
+            <div className="relative z-10">
+              <img
+                src={`data:image/svg+xml;utf8,${encodeURIComponent(avatarSVG)}`}
+                alt="Avatar"
+                className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-white/20 group-hover:scale-105 transition-transform"
+              />
+              <div className="text-center space-y-1">
+                <div className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  {details?.nickname || "Unknown"}
                 </div>
-              ))}
+                <div className={`font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>
+                  {shortenAddress(node.address)}
+                </div>
+                <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium
+                  ${darkMode ? "bg-gray-700 text-cyan-400" : "bg-blue-50 text-blue-600"}`}>
+                  Rank: {node.rank}
+                </div>
+                <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                  {node.referrals.length} Referrals
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Keep existing connector logic */}
+          {hasChildren && isExpanded && (
+            <svg
+              className="w-4 h-6 text-gray-400 my-2 dark:text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
+          )}
+        </div>
+
+        {/* Keep existing children container logic */}
+        {hasChildren && isExpanded && (
+          <div className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div
+                className="w-90 h-0.5 bg-gray-400"
+                style={{
+                  width: `${node.referrals.length * 10}px`,
+                  minWidth: "100%",
+                }}
+              ></div>
+
+              <div className="flex space-x-4 mt-2">
+                {node.referrals.map((child) => (
+                  <div
+                    key={child.address}
+                    className="flex flex-col items-center"
+                  >
+                    <div className="w-0.5 h-6 bg-gray-400"></div>
+                    {renderTree(child, level + 1)}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
       </div>
     );
-  };
+};
 
-  // Main Render
   return (
     <>
-      {/* Background */}
       <div className="fixed inset-0 -z-10">
         {darkMode ? <FeaturesSection /> : <Light />}
       </div>
-
-      {/* Main Container */}
-      <div className="min-h-screen p-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 text-center"
-        >
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Referral Network
-          </h1>
-          <p
-            className={`text-lg ${
-              darkMode ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            Explore your network and track your referral growth
-          </p>
-        </motion.div>
-
-        {/* Tree Container */}
-        <div className="w-full overflow-auto max-h-[calc(100vh-200px)] p-4">
-          <div className="min-w-max flex justify-center">
-            {isLoading ? (
+      <div className="min-h-screen  p-6">
+        <SimpleBar>
+        {isLoading ? (
               <div className="flex justify-center items-center h-96">
                 <div className="absolute inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30" />
 
@@ -492,7 +501,7 @@ const ReferralTree: React.FC = () => {
               </div>
             ) : treeData ? (
               <div className="flex flex-col items-center">
-                {renderNode(treeData, 0, true)}
+                {renderTree(treeData)}
               </div>
             ) : (
               <div className="flex justify-center items-center h-96">
@@ -505,8 +514,7 @@ const ReferralTree: React.FC = () => {
                 </p>
               </div>
             )}
-          </div>
-        </div>
+        </SimpleBar>
       </div>
     </>
   );
