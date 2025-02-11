@@ -1,0 +1,630 @@
+@import 'simplebar/dist/simplebar.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --ring: 215 20.2% 65.1%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --ring: 216 34% 17%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+
+.node-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.connection-line {
+  position: absolute;
+  width: 2px; /* Width of the line */
+  background-color: black; /* Default color for level 1 */
+}
+
+.level-2 {
+  background-color: purple; /* Color for level 2 */
+}
+
+.level-3 {
+  background-color: blue; /* Color for level 3 */
+}
+
+/* Adjust the height of the lines based on the level */
+.level-1 {
+  height: 40px; /* Height for level 1 */
+}
+
+.level-2 {
+  height: 30px; /* Height for level 2 */
+}
+
+.level-3 {
+  height: 20px; /* Height for level 3 */
+}
+
+
+#mobile-nav {
+  display: flex;
+  z-index: 50;
+  opacity: 1;
+}
+
+
+@media (max-width: 1201px) {
+  .desktop-nav {
+    display: none !important;
+  }
+  .mobile-nav {
+    display: flex !important;
+  }
+}
+
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 2s linear infinite;
+}
+
+
+@media (min-width: 1200px) {
+  .desktop-nav {
+    display: flex !important;
+  }
+  .mobile-nav {
+    display: none !important;
+  }
+}
+
+
+
+
+
+/* styles.css */
+@media (max-width: 1200px) {
+  .desktop-nav {
+    display: none; /* Hide desktop navigation below 1040px */
+  }
+
+  .mobile-nav {
+    display: flex; /* Show mobile navigation below 1040px */
+  }
+}
+
+@media (min-width: 1200px) {
+  .desktop-nav {
+    display: flex; /* Show desktop navigation above 1040px */
+  }
+
+  .mobile-nav {
+    display: none; /* Hide mobile navigation above 1040px */
+  }
+}
+
+
+
+/* Global box-sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 10s linear infinite;
+  white-space: nowrap;
+  overflow: hidden;
+  display: block;
+}
+
+
+/* Root styling */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Body settings */
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
+}
+
+/* Hamburger menu */
+#mobile-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  z-index: 50;
+  width: 100%;
+  max-width: 100%;
+  overflow-y: auto;
+}
+
+
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-in-out;
+}
+
+.transition-transform {
+  transition: transform 0.3s ease-in-out;
+}
+
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+.active\:scale-95:active {
+  transform: scale(0.95);
+}
+
+/* Compact Box Styling */
+.tree-node {
+  width: 120px;
+  padding: 8px;
+  font-size: 12px;
+}
+
+
+
+/* Adjust Child Node Alignment */
+.tree-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+  /* Smaller gap between child nodes */
+  margin: 0;
+  /* Remove extra margins */
+}
+
+/* Remove Extra Gaps */
+.tree-node {
+  margin: 0;
+  /* Remove default margin */
+  padding: 6px;
+  /* Compact padding for tighter nodes */
+  font-size: 12px;
+  /* Smaller font size */
+  width: 100px;
+  /* Adjust node width */
+  text-align: center;
+}
+
+
+/* Adjusted Connecting Lines */
+.tree-line-vertical {
+  width: 1px;
+  height: 20px;
+  background-color: #d1d5db;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tree-node {
+    width: 80px;
+    font-size: 10px;
+    padding: 4px;
+  }
+}
+
+
+.referral-tree-container {
+  min-width: 1500px;
+  /* Adjust this value as needed */
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+
+
+
+
+
+/* Custom Gradient */
+/* Custom Gradient with Dark Mode */
+@layer utilities {
+  .custom-gradient {
+    background: linear-gradient(to bottom right,
+        #d1d5db,
+        #f3f4f6,
+        #fefce8,
+        #fde68a
+    );
+    background-attachment: fixed;
+    background-size: 100% 100%;
+    padding: 1rem;
+  }
+
+  /* Dark mode variant */
+  
+
+  .custom-gradients {
+    background: linear-gradient(to bottom right,
+        #d1d5db,
+        #f3f4f6,
+        #fefce8,
+        #fde68a
+    );
+    background-attachment: fixed;
+    background-size: 100% 100%;
+  }
+
+  /* Dark mode variant */
+
+  /* Custom scrollbar dark mode */
+  .dark .custom-scrollbar::-webkit-scrollbar-track {
+    background: linear-gradient(
+      to bottom right,
+      #1f2937,
+      #111827,
+      #18181b,
+      #09090b
+    );
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      to bottom right,
+      #374151, /* dark gray-700 */
+      #1f2937, /* dark gray-800 */
+      #111827  /* dark gray-900 */
+    );
+  }
+
+  /* SimpleBar dark mode */
+  .dark .custom-scrollbar .simplebar-track {
+    background: linear-gradient(
+      to bottom right,
+      #1f2937,
+      #111827,
+      #18181b,
+      #09090b
+    );
+  }
+
+  .dark .custom-scrollbar .simplebar-scrollbar {
+    background: #1f2937;
+  }
+
+  /* Referral node dark mode */
+  .dark .referral-node .node-container {
+    background: linear-gradient(to bottom right, #1f2937, #111827);
+    border-color: #374151;
+  }
+
+  .dark .referral-node .connecting-line {
+    background-color: #4b5563;
+  }
+
+  @media (min-width: 640px) {
+    .custom-gradient {
+      padding: 2rem;
+    }
+  }
+}
+
+/* Debugging outline */
+
+
+/* Bonus Details Grid */
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 440px) {
+  .bonus-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+}
+
+
+/* Mobile-only styles (below 640px) */
+@media (max-width: 639px) {
+  .mobile-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 5rem;
+    margin-left: 1rem;
+    width: 19rem;
+  }
+}
+
+
+/* Vertical Line */
+.tree-node .vertical-line {
+  width: 0;
+  height: 50px;
+  /* Adjust for spacing */
+  border-left: 6px solid #000;
+  /* Bolder and darker vertical line */
+  margin: 0 auto;
+}
+
+/* Horizontal Line */
+.tree-children .horizontal-line {
+  height: 6px;
+  /* Increased thickness for visibility */
+  width: 100%;
+  background-color: #000;
+  /* Pure black for horizontal lines */
+  position: absolute;
+  top: 0;
+}
+
+
+.blink-animation {
+  animation: blink 1s steps(5, start) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* For WebKit Browsers (Chrome, Edge, Safari) */
+.custom-scrollbar {
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: transparent transparent; /* Fallback */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px; /* Width of the scrollbar */
+  height: 10px; /* Height of the scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: linear-gradient(
+    to bottom right,
+    #d1d5db, /* gray-300 */
+    #f3f4f6, /* gray-100 */
+    #fefce8, /* yellow-50 */
+    #fde68a  /* yellow-200 */
+  );
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom right,
+    #fde68a, /* yellow-200 */
+    #f3f4f6, /* gray-100 */
+    #d1d5db  /* gray-300 */
+  );
+  border-radius: 10px;
+}
+
+
+/* SimpleBar's default styles */
+
+
+/* Custom scrollbar styling */
+.custom-scrollbar .simplebar-track {
+  background: linear-gradient(
+    to bottom right,
+    #d1d5db, 
+    #f3f4f6, 
+    #fefce8, 
+    #fde68a
+  );
+}
+
+.custom-scrollbar .simplebar-scrollbar {
+  background: #4b9cd3; /* Thumb color */
+}
+
+
+
+
+
+/* Add this to your index.css or a relevant CSS file */
+.referral-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  margin: 0 10px;
+  /* Add some horizontal margin */
+}
+
+.referral-node .node-container {
+  background: linear-gradient(to bottom right, white, #fefcbf);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.referral-node .node-container:hover {
+  transform: scale(1.05);
+}
+
+.referral-node .connecting-line {
+  width: 2px;
+  background-color: #d1d5db;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.child-nodes {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  /* Adjust gap between child nodes */
+  transition: max-height 0.5s ease, opacity 0.5s ease;
+  overflow: hidden;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
