@@ -158,7 +158,7 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    console.log(totalInvestment, qrCodeUrl);
+   // console.log(totalInvestment, qrCodeUrl);
     const registerUser = async (address: string) => {
       try {
         const response = await axios.get(
@@ -220,66 +220,55 @@ const Dashboard = () => {
     }
   };
 
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Add this section for preview
+   
+    // Preview image
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewImage(reader.result as string);
     };
     reader.readAsDataURL(file);
-
+   
     setIsUploading(true);
-
+   
     if (!address) {
       toast.error("Wallet address not found. Cannot upload the image.");
       setIsUploading(false);
       setPreviewImage(null);
       return;
     }
-
+   
     try {
-      // Upload image to Cloudinary
-      const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/<your-cloud-name>/image/upload`;
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "<your-upload-preset>"); // Replace with your Cloudinary preset
-
-      const cloudinaryResponse = await axios.post(
-        cloudinaryUploadUrl,
-        formData
-      );
-
-      const cloudinaryImageUrl = cloudinaryResponse.data.secure_url;
-
-      // Store Cloudinary image URL in backend
-      const backendResponse = await axios.post(
+      formData.append('image', file);
+      formData.append('address', address);
+   
+      const response = await axios.post(
         "https://itcback-production.up.railway.app/api/users/upload-image",
-        { imageUrl: cloudinaryImageUrl, address: address },
+        formData,
         {
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         }
       );
-
-      if (backendResponse.data.success) {
+   
+      if (response.data.success) {
         setUserData((prev) =>
-          prev ? { ...prev, profileImage: cloudinaryImageUrl } : null
+          prev ? { ...prev, profileImage: response.data.data.profileImage } : null
         );
         toast.success("Profile image updated successfully");
       }
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image");
-      setPreviewImage(null); // Reset preview if upload fails
+      setPreviewImage(null);
     } finally {
       setIsUploading(false);
     }
-  };
-
+};
   interface RankTotals {
     [key: string]: string; // This allows string indexing
   }
@@ -585,20 +574,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     const generateRankGraphData = async () => {
-      if (!isConnected || !walletProvider || !isProviderReady) return;
-
+      if (!isConnected || !walletProvider || !isProviderReady || !address) return;
+  
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider
-        );
+        const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
         const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
-
-        // Define all ranks with their indices
+        const contract = new ethers.Contract(contractAddress, contractAbi, signer);
+  
         const allRanks = [
           { name: "STAR", index: 0, color: "#B8B8B8" },
           { name: "BRONZE", index: 1, color: "#CD7F32" },
@@ -610,81 +592,82 @@ const Dashboard = () => {
           { name: "ROYAL DIAMOND", index: 7, color: "#F59E0B" },
           { name: "CROWN DIAMOND", index: 8, color: "#6366F1" },
         ];
-
-        const activeRanks = [];
-        const userCounts = [];
-        const baseCounts = [];
-        const cubeCounts = [];
-
-        // Recursive function to fetch referrals up to 12 levels deep
-        const getReferralCounts = async (
-          userAddress: any,
-          level = 1,
-          maxLevel = 12,
-          rankIndex: any
-        ) => {
-          if (level > maxLevel) return 0;
-
+  
+        const processedAddresses = new Set(); // Track processed addresses
+        const levelCounts = new Array(13).fill(0); // Track counts per level (0-12)
+        const rankCounts = new Array(9).fill(0); // Track counts per rank
+  
+        // Function to get user's rank and count it
+        const processUserRank = async (address: string) => {
           try {
-            const referrals = await contract.getUserReferrals(userAddress);
-            let rankCount = 0;
-
-            for (const referral of referrals) {
-              const userDetails = await contract.uS(referral);
-              if (userDetails.currentRank.toNumber() === rankIndex) {
-                rankCount++;
-              }
-              rankCount += await getReferralCounts(
-                referral,
-                level + 1,
-                maxLevel,
-                rankIndex
-              );
+            const userDetails = await contract.users(address);
+            const rank = parseInt(userDetails.currentRank.toString());
+            if (rank >= 0 && rank < 9) {
+              rankCounts[rank]++;
+              return rank;
             }
-
-            return rankCount;
+            return 0; // Default to STAR rank if invalid
           } catch (error) {
-            console.error(
-              `Error fetching referrals for ${userAddress}:`,
-              error
-            );
+            console.error(`Error getting rank for ${address}:`, error);
             return 0;
           }
         };
-
-        // Update the rank loop to use the modified function:
-        for (let rank of allRanks) {
-          try {
-            const rankStatus = await contract.getUserReferralRankCount(
-              address,
-              rank.index
-            );
-            let count = rankStatus.toNumber();
-            count += await getReferralCounts(address, 1, 12, rank.index);
-
-            activeRanks.push(rank);
-            userCounts.push(count);
-            baseCounts.push(count * 0.9);
-            cubeCounts.push(count * 0.1);
-          } catch (error) {
-            console.error(`Error fetching data for rank ${rank.name}:`, error);
-            activeRanks.push(rank);
-            userCounts.push(0);
+  
+        // Modified function to get all referrals level by level
+        const getAllReferrals = async (startAddress: string) => {
+          let currentLevel = 1;
+          let currentLevelAddresses = [startAddress];
+          
+          while (currentLevel <= 12 && currentLevelAddresses.length > 0) {
+            console.log(`Processing level ${currentLevel}`);
+            const nextLevelAddresses = [];
+            
+            for (const address of currentLevelAddresses) {
+              if (!processedAddresses.has(address)) {
+                processedAddresses.add(address);
+                
+                try {
+                  // Get referrals for current address
+                  const referrals = await contract.getUserReferrals(address);
+                  
+                  // Process each referral
+                  for (const referral of referrals) {
+                    if (!processedAddresses.has(referral)) {
+                      await processUserRank(referral);
+                      levelCounts[currentLevel]++;
+                      nextLevelAddresses.push(referral);
+                    }
+                  }
+                } catch (error) {
+                  console.error(`Error processing address ${address} at level ${currentLevel}:`, error);
+                }
+              }
+            }
+            
+            currentLevelAddresses = nextLevelAddresses;
+            currentLevel++;
           }
-        }
-
-        // Generate graph data
+        };
+  
+        // Initialize with starting address
+        await processUserRank(address); // Count the root address
+        await getAllReferrals(address);
+  
+        // Log detailed statistics
+        console.log("Level-wise distribution:", levelCounts);
+        console.log("Rank-wise distribution:", rankCounts);
+        console.log("Total unique addresses:", processedAddresses.size);
+  
+        // Create graph data
         const graphData = {
-          labels: activeRanks.map((rank) => rank.name),
+          labels: allRanks.map((rank) => rank.name),
           datasets: [
             {
               label: "Number of Users",
-              data: userCounts,
-              backgroundColor: activeRanks.map((rank) => rank.color + "80"),
-              borderColor: activeRanks.map((rank) =>
-                rank.color === "#000000"
-                  ? "#111111"
-                  : darkenColor(rank.color, -30)
+              data: rankCounts,
+              backgroundColor: allRanks.map((rank) => rank.color + "80"),
+              borderColor: allRanks.map((rank) =>
+                rank.color === "#000000" ? "#111111" : darkenColor(rank.color, -30)
               ),
               borderWidth: 2,
               borderRadius: {
@@ -696,16 +679,16 @@ const Dashboard = () => {
             },
           ],
         };
-
+  
         setRankGraphData(graphData);
+        
       } catch (error) {
         console.error("Error generating rank graph data:", error);
       }
     };
-
+  
     generateRankGraphData();
-  }, [isConnected, walletProvider, isProviderReady]);
-
+  }, [isConnected, walletProvider, isProviderReady, address]);
   useEffect(() => {
     const fetchTotalInvestment = async () => {
       if (!isConnected || !walletProvider || !isProviderReady || !address) {

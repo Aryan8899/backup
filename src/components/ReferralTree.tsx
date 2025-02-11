@@ -422,7 +422,8 @@ const ReferralTree = () => {
         {darkMode ? <FeaturesSection /> : <Light />}
       </div>
       <div className="min-h-screen  p-6">
-        <SimpleBar>
+        <SimpleBar className="w-full overflow-x-auto">
+        <div className="min-w-max">
         {isLoading ? (
               <div className="flex justify-center items-center h-96">
                 <div className="absolute inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30" />
@@ -514,6 +515,8 @@ const ReferralTree = () => {
                 </p>
               </div>
             )}
+</div>
+
         </SimpleBar>
       </div>
     </>
