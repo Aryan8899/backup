@@ -221,9 +221,10 @@ const Transactions = () => {
     <div className={`min-h-screen p-4 md:p-6 lg:p-8 `}>
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent mb-4 md:mb-0">
-            Transaction History
-          </h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent mb-2 sm:mb-3 md:mb-4">
+  Transaction History
+</h1>
+
           <div className="relative">
             <select
               value={selectedTab}
