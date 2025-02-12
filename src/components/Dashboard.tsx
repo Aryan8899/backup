@@ -2226,98 +2226,107 @@ const Dashboard = () => {
                 <div className="absolute inset-0 backdrop-blur-xl" />
 
                 <div className="relative z-10">
-                  <CardHeader className="pb-8">
-                    <div className="flex flex-col items-center justify-center w-full">
-                      <div className="relative group mb-6 transform hover:scale-105 transition-all duration-300">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-700 animate-pulse" />
-                        <div className="relative p-5 bg-slate-900/90 rounded-full ring-2 ring-white/20 hover:ring-white/40 transition-all duration-300">
-                          <User className="h-10 w-10 text-cyan-400" />
-                        </div>
-                      </div>
-                      <CardTitle className="text-3xl font-bold text-center">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 animate-gradient">
-                          User Details
-                        </span>
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
+                <CardHeader className="pb-8">
+  <div className="flex flex-col items-center justify-center w-full">
+    <div className="relative group mb-6 transform hover:scale-105 transition-all duration-300
+      md:mb-4 md:transform md:hover:scale-95">
+      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-700 animate-pulse" />
+      <div className="relative p-5 bg-slate-900/90 rounded-full ring-2 ring-white/20 hover:ring-white/40 transition-all duration-300
+        md:p-4">
+        <User className="h-10 w-10 text-cyan-400 xs:h-6 xs:w-6 
+          md:h-8 md:w-8" />
+      </div>
+    </div>
+    <CardTitle className="text-3xl font-bold text-center xs:text-xl 
+      md:text-2xl">
+      <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 animate-gradient">
+        User Details
+      </span>
+    </CardTitle>
+  </div>
+</CardHeader>
 
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      {[
-                        {
-                          icon: Link,
-                          label: "Referrer",
-                          value: userDetails?.referrer
-                            ? `${userDetails.referrer.slice(
-                                0,
-                                6
-                              )}...${userDetails.referrer.slice(-4)}`
-                            : "N/A",
-                        },
-                        {
-                          icon: Award,
-                          label: "Current Rank",
-                          value: userDetails?.currentRank,
-                        },
-                        {
-                          icon: Clock,
-                          label: "Last Update",
-                          value: userDetails?.lastRankUpdateTime,
-                        },
-                        {
-                          icon: Calendar,
-                          label: "Rank Expiry",
-                          value: !isRankExpired ? (
-                            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-gradient-to-r from-red-500/10 to-red-600/10 animate-pulse border border-red-500/20">
-                              <span className="text-red-500 animate-bounce">
-                                ⚠️
-                              </span>
-                              <span className="font-extrabold tracking-wider bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent">
-                                RANK EXPIRED
-                              </span>
-                            </span>
-                          ) : (
-                            userDetails?.rankExpiryTime
-                          ),
-                        },
-                        {
-                          icon: DollarSign,
-                          label: "Total Purchase",
-                          value:
-                            Number(userDetails?.totalInvestment).toFixed(2) ||
-                            "0.00",
-                        },
-                        {
-                          icon: Activity,
-                          label: "Status",
-                          value: userDetails?.isActive ? "Active" : "Inactive",
-                        },
-                      ].map((item, index) => (
-                        <div
-                          key={index}
-                          className="relative group p-4 rounded-2xl border border-white/10 
-                bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl
-                hover:from-slate-800/80 hover:to-slate-900/80
-                transition-all duration-500 ease-out
-                hover:border-white/20 hover:shadow-2xl
-                hover:transform hover:scale-105"
-                        >
-                          <h4 className="flex items-center gap-3 text-sm font-medium text-slate-200">
-                            <div className="p-2 rounded-xl bg-slate-800/90 ring-1 ring-white/10 group-hover:ring-white/20 transition-all duration-300">
-                              <item.icon className="h-4 w-4 text-cyan-400" />
-                            </div>
-                            {item.label}
-                          </h4>
-                          <p className="mt-3 font-mono text-sm text-white/90 font-medium">
-                            {item.value || "N/A"}
-                          </p>
-                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-all duration-700" />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </div>
+<CardContent className="w-full max-w-[500px] mx-auto p-4 2xs:p-2 
+ md:max-w-[450px] md:p-3">
+ <div className="grid grid-cols-2 gap-4 2xs:grid-cols-1 2xs:gap-2 
+   md:grid-cols-2 md:gap-3">
+   {[
+     {
+       icon: Link,
+       label: "Referrer",
+       value: userDetails?.referrer
+         ? `${userDetails.referrer.slice(0, 6)}...${userDetails.referrer.slice(-4)}`
+         : "N/A",
+     },
+     {
+       icon: Award,
+       label: "Current Rank",
+       value: userDetails?.currentRank,
+     },
+     {
+       icon: Clock,
+       label: "Last Update",
+       value: userDetails?.lastRankUpdateTime,
+     },
+     {
+       icon: Calendar,
+       label: "Rank Expiry",
+       value: !isRankExpired ? (
+         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-500/10 to-red-600/10 animate-pulse border border-red-500/20 2xs:text-[10px]">
+           <span className="text-red-500 animate-bounce text-xs 2xs:text-[10px]">
+             ⚠️
+           </span>
+           <span className="font-bold tracking-wide bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent text-xs 2xs:text-[10px]">
+             RANK EXPIRED
+           </span>
+         </span>
+       ) : (
+         userDetails?.rankExpiryTime
+       ),
+     },
+     {
+       icon: DollarSign,
+       label: "Total Purchase",
+       value: Number(userDetails?.totalInvestment).toFixed(2) || "0.00",
+     },
+     {
+       icon: Activity,
+       label: "Status",
+       value: userDetails?.isActive ? "Active" : "Inactive",
+     },
+   ].map((item, index) => (
+     <div
+       key={index}
+       className="relative group p-3 rounded-xl border border-white/10 
+         bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl
+         hover:from-slate-800/80 hover:to-slate-900/80
+         transition-all duration-300
+         hover:border-white/20
+         2xs:p-2 
+         md:p-2.5"
+     >
+       <h4 className="flex items-center gap-2 text-sm font-medium text-slate-200 2xs:text-xs 
+         md:text-xs">
+         <div className="p-1.5 rounded-lg bg-slate-800/90 ring-1 ring-white/10 
+           group-hover:ring-white/20 transition-all duration-300 
+           2xs:p-1 
+           md:p-1">
+           <item.icon className="h-4 w-4 text-cyan-400 2xs:h-3 2xs:w-3 
+             md:h-3.5 md:w-3.5" />
+         </div>
+         {item.label}
+       </h4>
+       <p className="mt-2 font-mono text-sm text-white/90 font-medium break-words 2xs:text-xs 
+         md:text-xs">
+         {item.value || "N/A"}
+       </p>
+       <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-blue-500/0 
+         opacity-0 group-hover:opacity-100 transition-all duration-500" />
+     </div>
+   ))}
+ </div>
+</CardContent>
+</div>
               </Card>
 
               {/* Teams Ranks Progression Card - Enhanced dark mode and effects */}
@@ -2325,367 +2334,338 @@ const Dashboard = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400 dark:from-slate-800/30 dark:to-slate-900/30" />
 
                 <div
-                  className="relative p-6 backdrop-blur-xl border-2 border-gray-300/10 
-          shadow-xl dark:shadow-slate-900/50 hover:shadow-2xl transition-all duration-500 h-full"
-                >
-                  <div className="flex justify-center items-center mb-6">
-                    <h2
-                      className="font-bold text-xl md:text-2xl bg-blue-500 dark:from-white dark:to-gray-300 
-              bg-clip-text text-transparent transition-colors duration-300"
-                    >
-                      Teams Ranks Progression
-                    </h2>
-                  </div>
+  className="relative p-3 sm:p-6 backdrop-blur-xl border-2 border-gray-300/10 
+  shadow-xl dark:shadow-slate-900/50 hover:shadow-2xl transition-all duration-500 h-full"
+>
+  <div className="flex justify-center items-center mb-4 sm:mb-6">
+    <h2
+      className="font-bold text-lg sm:text-xl md:text-2xl bg-blue-500 dark:from-white dark:to-gray-300 
+      bg-clip-text text-transparent transition-colors duration-300 text-center px-2"
+    >
+      Teams Ranks Progression
+    </h2>
+  </div>
 
-                  <div className="w-full overflow-x-auto rounded-xl  p-4">
-                    <div className="min-w-[355px] h-[400px]">
-                      <Bar
-                        data={rankGraphData}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                          scales: {
-                            y: {
-                              beginAtZero: true,
-                              ticks: {
-                                stepSize: 1,
-                                font: {
-                                  size: 12,
-                                  weight: "bold",
-                                  family: "'Inter', sans-serif",
-                                },
-                                color: "#FFFFFF",
-                                padding: 10,
-                              },
-                              title: {
-                                display: true,
-                                text: "Number of Users",
-                                font: {
-                                  size: 14,
-                                  weight: "bold",
-                                  family: "'Inter', sans-serif",
-                                },
-                                color: "#FFFFFF",
-                                padding: 12,
-                              },
-                              grid: {
-                                color: "rgba(255, 255, 255, 0.1)",
-                                lineWidth: 1,
-                              },
-                            },
-                            x: {
-                              grid: { display: false },
-                              ticks: {
-                                autoSkip: true,
-                                maxRotation: 30,
-                                minRotation: 0,
-                                font: {
-                                  size: 10,
-                                  weight: "bold",
-                                  family: "'Inter', sans-serif",
-                                },
-                                color: "#FFFFFF",
-                                padding: 8,
-                              },
-                            },
-                          },
-                          plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                              backgroundColor: "rgba(15, 23, 42, 0.95)",
-                              titleColor: "#FFFFFF",
-                              bodyColor: "#CBD5E1",
-                              borderColor: "#475569",
-                              borderWidth: 1,
-                              padding: 12,
-                              cornerRadius: 12,
-                              titleSpacing: 8,
-                              bodySpacing: 8,
-                              displayColors: true,
-                              callbacks: {
-                                label: function (context) {
-                                  return `✨ Users: ${context.parsed.y}`;
-                                },
-                              },
-                            },
-                          },
-                          elements: {
-                            bar: {
-                              backgroundColor: (context) => {
-                                const ctx = context.chart.ctx;
-                                const gradient = ctx.createLinearGradient(
-                                  0,
-                                  0,
-                                  0,
-                                  300
-                                );
-                                gradient.addColorStop(
-                                  0,
-                                  "rgba(56, 189, 248, 0.9)"
-                                ); // Cyan
-                                gradient.addColorStop(
-                                  1,
-                                  "rgba(59, 130, 246, 0.9)"
-                                ); // Blue
-                                return gradient;
-                              },
-                              borderRadius: 8,
-                              borderWidth: 0,
-                              hoverBackgroundColor: (context) => {
-                                const ctx = context.chart.ctx;
-                                const gradient = ctx.createLinearGradient(
-                                  0,
-                                  0,
-                                  0,
-                                  300
-                                );
-                                gradient.addColorStop(
-                                  0,
-                                  "rgba(56, 189, 248, 1)"
-                                ); // Brighter Cyan
-                                gradient.addColorStop(
-                                  1,
-                                  "rgba(59, 130, 246, 1)"
-                                ); // Brighter Blue
-                                return gradient;
-                              },
-                              hoverBorderWidth: 2,
-                              hoverBorderColor: "#FFFFFF",
-                            },
-                          },
-                          hover: {
-                            mode: "index",
-                            intersect: false,
-                          },
+  <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">
+    <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[400px]">
+      <Bar
+        data={rankGraphData}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                font: {
+                  size: window.innerWidth < 640 ? 10 : 12,
+                  weight: "bold",
+                  family: "'Inter', sans-serif",
+                },
+                color: "#FFFFFF",
+                padding: window.innerWidth < 640 ? 6 : 10,
+              },
+              title: {
+                display: true,
+                text: "Number of Users",
+                font: {
+                  size: window.innerWidth < 640 ? 12 : 14,
+                  weight: "bold",
+                  family: "'Inter', sans-serif",
+                },
+                color: "#FFFFFF",
+                padding: window.innerWidth < 640 ? 8 : 12,
+              },
+              grid: {
+                color: "rgba(255, 255, 255, 0.1)",
+                lineWidth: 1,
+              },
+            },
+            x: {
+              grid: { display: false },
+              ticks: {
+                autoSkip: true,
+                maxRotation: 45,
+                minRotation: 0,
+                font: {
+                  size: window.innerWidth < 640 ? 8 : 10,
+                  weight: "bold",
+                  family: "'Inter', sans-serif",
+                },
+                color: "#FFFFFF",
+                padding: window.innerWidth < 640 ? 4 : 8,
+              },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
+              titleColor: "#FFFFFF",
+              bodyColor: "#CBD5E1",
+              borderColor: "#475569",
+              borderWidth: 1,
+              padding: window.innerWidth < 640 ? 8 : 12,
+              cornerRadius: window.innerWidth < 640 ? 8 : 12,
+              titleSpacing: window.innerWidth < 640 ? 6 : 8,
+              bodySpacing: window.innerWidth < 640 ? 6 : 8,
+              displayColors: true,
+              callbacks: {
+                label: function (context) {
+                  return `✨ Users: ${context.parsed.y}`;
+                },
+              },
+            },
+          },
+          elements: {
+            bar: {
+              backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, window.innerWidth < 640 ? 200 : 300);
+                gradient.addColorStop(0, "rgba(56, 189, 248, 0.9)"); // Cyan
+                gradient.addColorStop(1, "rgba(59, 130, 246, 0.9)"); // Blue
+                return gradient;
+              },
+              borderRadius: window.innerWidth < 640 ? 6 : 8,
+              borderWidth: 0,
+              hoverBackgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, window.innerWidth < 640 ? 200 : 300);
+                gradient.addColorStop(0, "rgba(56, 189, 248, 1)"); // Brighter Cyan
+                gradient.addColorStop(1, "rgba(59, 130, 246, 1)"); // Brighter Blue
+                return gradient;
+              },
+              hoverBorderWidth: 2,
+              hoverBorderColor: "#FFFFFF",
+            },
+          },
+          hover: {
+            mode: "index",
+            intersect: false,
+          },
+        }}
+      />
+    </div>
+  </div>
+</div>
+              </div>
+            </div>
+
+            <div className="w-full space-y-4 sm:space-y-6">
+  <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+    {/* Enhanced Referral Link Section */}
+    <Card
+      className="relative overflow-hidden group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
+      bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
+      hover:shadow-2xl hover:border-blue-500/20 transition-all duration-500"
+    >
+      {/* Animated background effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            Referral Link
+          </h3>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          <div className="relative group/qr w-24 sm:w-32">
+            <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl blur-lg opacity-0 group-hover/qr:opacity-20 transition-opacity duration-500" />
+            <img
+              src={userData?.referralQR}
+              alt="QR Code"
+              className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg sm:rounded-xl border-2 border-white/10 shadow-lg transition-transform duration-300 group-hover/qr:scale-105"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 sm:gap-3 w-full">
+            <div className="relative">
+              <input
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-gray-200/20 
+                focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/20 transition-all duration-300
+                text-xs sm:text-sm font-medium backdrop-blur-sm"
+                value={inviteLink}
+                readOnly
+              />
+              <button
+                onClick={copyToClipboard}
+                className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-md sm:rounded-lg
+                bg-gradient-to-r from-blue-500 to-cyan-500 text-white
+                hover:from-blue-600 hover:to-cyan-600 transition-all duration-300
+                focus:ring-2 focus:ring-blue-500/20"
+              >
+                {isCopied ? (
+                  <CheckCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                ) : (
+                  <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+                )}
+              </button>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              Share your referral link to grow your community and earn rewards
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+
+    {/* Enhanced Rank Update Section */}
+    <Card
+      className="relative overflow-visible group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
+      bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
+      hover:shadow-2xl hover:border-purple-500/20 transition-all duration-500"
+    >
+      {/* Animated background effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Rank Upgrade
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-purple-500/10">
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
+            <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
+              {userDetails?.currentRank || "Loading..."}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-3 sm:space-y-4">
+          {/* Enhanced Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200/20 
+              bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm
+              hover:bg-white/70 dark:hover:bg-slate-800/70
+              focus:ring-2 focus:ring-purple-500/20 
+              transition-all duration-300
+              flex items-center justify-between"
+            >
+              <span className="text-xs sm:text-sm font-medium">
+                {selectedRank || "Select your rank"}
+              </span>
+              <ChevronDown
+                className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-300 ${
+                  dropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {dropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setDropdownOpen(false)}
+                />
+                <div
+                  className="absolute z-40 w-full mt-2 py-2 rounded-lg sm:rounded-xl border border-gray-200/20 
+                  bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-xl
+                  max-h-48 sm:max-h-64 overflow-y-auto"
+                >
+                  {filteredRanks.map((rank, index) => {
+                    const currentRankDetail = rankDetails.find(
+                      (detail) =>
+                        detail.name === userDetails?.currentRank &&
+                        detail.rankUpgradePriceUSD !== undefined
+                    );
+
+                    const targetRankDetail = rankDetails.find(
+                      (detail) =>
+                        detail.name === rank.name &&
+                        detail.rankUpgradePriceUSD !== undefined
+                    );
+
+                    const priceDifferenceUSD =
+                      currentRankDetail && targetRankDetail
+                        ? parseFloat(targetRankDetail.rankUpgradePriceUSD) -
+                          parseFloat(currentRankDetail.rankUpgradePriceUSD)
+                        : 0;
+
+                    const priceDifferenceITC =
+                      priceDifferenceUSD && priceData?.TUSDTperTITC
+                        ? (
+                            priceDifferenceUSD *
+                            Number(priceData?.TUSDTperTITC)
+                          ).toFixed(4)
+                        : "Loading...";
+
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => {
+                          setSelectedRank(rank.name);
+                          setDropdownOpen(false);
                         }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full space-y-6">
-              <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
-                {/* Enhanced Referral Link Section */}
-                <Card
-                  className="relative overflow-hidden group p-6 rounded-3xl border-2 border-gray-200/20 
-          bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
-          hover:shadow-2xl hover:border-blue-500/20 transition-all duration-500"
-                >
-                  {/* Animated background effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        <Share2 className="w-5 h-5" />
-                      </div>
-                      <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                        Referral Link
-                      </h3>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                      <div className="relative group/qr">
-                        <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur-lg opacity-0 group-hover/qr:opacity-20 transition-opacity duration-500" />
-                        <img
-                          src={userData?.referralQR}
-                          alt="QR Code"
-                          className="w-32 h-32 rounded-xl border-2 border-white/10 shadow-lg transition-transform duration-300 group-hover/qr:scale-105"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-3 w-full">
-                        <div className="relative">
-                          <input
-                            className="w-full px-4 py-3 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-gray-200/20 
-                    focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/20 transition-all duration-300
-                    text-sm font-medium backdrop-blur-sm"
-                            value={inviteLink}
-                            readOnly
-                          />
-                          <button
-                            onClick={copyToClipboard}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg
-                    bg-gradient-to-r from-blue-500 to-cyan-500 text-white
-                    hover:from-blue-600 hover:to-cyan-600 transition-all duration-300
-                    focus:ring-2 focus:ring-blue-500/20"
-                          >
-                            {isCopied ? (
-                              <CheckCheck className="w-4 h-4" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Share your referral link to grow your community and
-                          earn rewards
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Enhanced Rank Update Section */}
-                <Card
-                  className="relative overflow-visible group p-6 rounded-3xl border-2 border-gray-200/20 
-    bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
-    hover:shadow-2xl hover:border-purple-500/20 transition-all duration-500"
-                >
-                  {/* Animated background effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                          <Trophy className="w-5 h-5" />
-                        </div>
-                        <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                          Rank Upgrade
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10">
-                        <Sparkles className="w-4 h-4 text-purple-500" />
-                        <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                          {userDetails?.currentRank || "Loading..."}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {/* Enhanced Dropdown */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setDropdownOpen((prev) => !prev)}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200/20 
-            bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm
-            hover:bg-white/70 dark:hover:bg-slate-800/70
-            focus:ring-2 focus:ring-purple-500/20 
-            transition-all duration-300
-            flex items-center justify-between"
-                        >
-                          <span className="text-sm font-medium">
-                            {selectedRank || "Select your rank"}
-                          </span>
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform duration-300 ${
-                              dropdownOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-
-                        {dropdownOpen && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-30"
-                              onClick={() => setDropdownOpen(false)}
-                            />
-                            <div
-                              className="absolute z-40 w-full mt-2 py-2 rounded-xl border border-gray-200/20 
-                bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-xl
-                max-h-64 overflow-y-auto"
-                            >
-                              {filteredRanks.map((rank, index) => {
-                                const currentRankDetail = rankDetails.find(
-                                  (detail) =>
-                                    detail.name === userDetails?.currentRank &&
-                                    detail.rankUpgradePriceUSD !== undefined
-                                );
-
-                                const targetRankDetail = rankDetails.find(
-                                  (detail) =>
-                                    detail.name === rank.name &&
-                                    detail.rankUpgradePriceUSD !== undefined
-                                );
-
-                                const priceDifferenceUSD =
-                                  currentRankDetail && targetRankDetail
-                                    ? parseFloat(
-                                        targetRankDetail.rankUpgradePriceUSD
-                                      ) -
-                                      parseFloat(
-                                        currentRankDetail.rankUpgradePriceUSD
-                                      )
-                                    : 0;
-
-                                const priceDifferenceITC =
-                                  priceDifferenceUSD && priceData?.TUSDTperTITC
-                                    ? (
-                                        priceDifferenceUSD *
-                                        Number(priceData?.TUSDTperTITC)
-                                      ).toFixed(4)
-                                    : "Loading...";
-
-                                return (
-                                  <div
-                                    key={index}
-                                    onClick={() => {
-                                      setSelectedRank(rank.name);
-                                      setDropdownOpen(false);
-                                    }}
-                                    className="px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 
-                      cursor-pointer transition-colors duration-200"
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="font-medium text-purple-600 dark:text-purple-400">
-                                        {rank.name}
-                                      </span>
-                                      <ArrowUpCircle className="w-4 h-4 text-purple-500" />
-                                    </div>
-                                    <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                                      <div className="flex justify-between">
-                                        <span>Upgrade Cost:</span>
-                                        <span className="font-medium">
-                                          ${priceDifferenceUSD.toFixed(2)} USD
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span>ITC Price:</span>
-                                        <span className="font-medium">
-                                          {priceDifferenceITC} ITC
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Enhanced Upgrade Button */}
-                      <button
-                        onClick={upgradeRank}
-                        disabled={
-                          !selectedRank ||
-                          !userDetails ||
-                          (parseFloat(userDetails.rewards || "0") <
-                            selectedRankPriceUSD &&
-                            parseFloat(userDetails.rewards || "0") <
-                              selectedRankPriceITC)
-                        }
-                        className={`w-full px-6 py-3 rounded-xl font-medium
-          transition-all duration-300 transform hover:scale-[1.02]
-          ${
-            selectedRank &&
-            (parseFloat(userDetails?.rewards || "0") >= selectedRankPriceUSD ||
-              parseFloat(userDetails?.rewards || "0") >= selectedRankPriceITC)
-              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:from-purple-700 hover:to-pink-700"
-              : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-          }`}
+                        className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 
+                        cursor-pointer transition-colors duration-200"
                       >
-                        Upgrade Rank
-                      </button>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </div>
+                        <div className="flex items-center justify-between mb-1 sm:mb-2">
+                          <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
+                            {rank.name}
+                          </span>
+                          <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
+                        </div>
+                        <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          <div className="flex justify-between">
+                            <span>Upgrade Cost:</span>
+                            <span className="font-medium">
+                              ${priceDifferenceUSD.toFixed(2)} USD
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>ITC Price:</span>
+                            <span className="font-medium">
+                              {priceDifferenceITC} ITC
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Enhanced Upgrade Button */}
+          <button
+            onClick={upgradeRank}
+            disabled={
+              !selectedRank ||
+              !userDetails ||
+              (parseFloat(userDetails.rewards || "0") < selectedRankPriceUSD &&
+                parseFloat(userDetails.rewards || "0") < selectedRankPriceITC)
+            }
+            className={`w-full px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium
+            transition-all duration-300 transform hover:scale-[1.02]
+            ${
+              selectedRank &&
+              (parseFloat(userDetails?.rewards || "0") >= selectedRankPriceUSD ||
+                parseFloat(userDetails?.rewards || "0") >= selectedRankPriceITC)
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:from-purple-700 hover:to-pink-700"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            Upgrade Rank
+          </button>
+        </div>
+      </div>
+    </Card>
+  </div>
+</div>
           </div>
         </div>
       )}

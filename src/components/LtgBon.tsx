@@ -551,17 +551,20 @@ const RankDetailsPage = () => {
                 <div className="w-full max-w-sm bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
       <p className="text-sm text-gray-500 dark:text-gray-400">Current Rank</p>
       
-      <div className="flex flex-col items-start space-y-3 mt-2 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-center">
-        <img
-          src={ranks.find((r) => r.name === userDetails?.currentRank)?.image || ranks[0].image}
-          alt={userDetails?.currentRank || "STAR"}
-          className="w-12 h-12 object-contain"
-        />
-        
-        <p className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-[200px]">
-          {userDetails?.currentRank || "N/A"}
-        </p>
-      </div>
+      <div className="flex flex-col items-start space-y-3 mt-2 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-center sm:text-sm sm:ml-2">
+ <img
+   src={ranks.find((r) => r.name === userDetails?.currentRank)?.image || ranks[0].image}
+   alt={userDetails?.currentRank || "STAR"}
+   className="w-12 h-12 object-contain sm:w-10 sm:h-10"
+ />
+ 
+ <p className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-[200px] mr-10 
+   xs:text-lg"
+   style={{marginLeft: "0rem" }}
+   >
+   {userDetails?.currentRank || "N/A"}
+ </p>
+</div>
     </div>
 
 

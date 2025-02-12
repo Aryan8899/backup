@@ -1215,7 +1215,7 @@ const Rankach: React.FC = () => {
   };
   // Component render
   return (
-    <div className="min-h-screen w-full py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen w-full py-12 px-4 sm:px-3 lg:px-8">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -1224,22 +1224,22 @@ const Rankach: React.FC = () => {
       >
         {/* Page Header */}
         <header className="text-center mb-12">
-          <motion.h1
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-500 mb-4"
-          >
-            Rank Achievement Bonus
-          </motion.h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Comprehensive overview of your rank achievements, rewards, and
-            progress
-          </p>
-        </header>
+      <motion.h1
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="text-3xl md:text-5xl lg:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-500 mb-4"
+      >
+        Rank Achievement Bonus
+      </motion.h1>
+      <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+        Comprehensive overview of your rank achievements, rewards, and
+        progress
+      </p>
+    </header>
 
         {/* Stat Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12 sm:text-xl">
           {[
             {
               title: "Total RAB",
@@ -1362,7 +1362,7 @@ const StatCard = ({ icon: Icon, value, label, gradient }: StatCardProps) => (
 
         {/* Value and Label */}
         <div>
-          <div className="text-3xl font-bold text-white tracking-tight">
+          <div className="text-xl lg:text-2xl font-bold text-white tracking-tight">
             {value}
           </div>
           <div className="text-sm font-medium text-white/80 mt-1">{label}</div>
@@ -1744,83 +1744,93 @@ const RankDistributionChart: React.FC<RankDistributionChartProps> = ({
 
         {/* Chart Section */}
         
-        <div className="h-96">
-        {loadingGraph ? (
+        <div className="h-72 sm:h-80 md:h-96 w-full overflow-x-auto">
+  {loadingGraph ? (
     <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg">
       <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />
     </div>
   ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={formattedData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+    <div className="w-[300px] min-w-full h-full ">
+
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={formattedData}
+        margin={{ 
+          top: 20, 
+          right: 10, 
+          left: 10, 
+          bottom: 50 
+        }}
+      >
+        <CartesianGrid
+          strokeDasharray="3 3"
+          vertical={false}
+          className="stroke-gray-200 dark:stroke-gray-700"
+        />
+        <XAxis
+          dataKey="rank"
+          tickLine={false}
+          axisLine={false}
+          angle={-45}
+          textAnchor="end"
+          height={60}
+          interval={0}
+          tick={{
+            fontSize: 10,
+            fill: "currentColor",
+            className: "text-gray-600 dark:text-gray-400",
+          }}
+        />
+        <YAxis
+          tickLine={false}
+          tickMargin={5}
+          axisLine={false}
+          tick={{
+            fontSize: 10,
+            fill: "currentColor",
+            className: "text-gray-600 dark:text-gray-400",
+          }}
+          tickFormatter={formatYAxis}
+          domain={[
+            0,
+            (dataMax: number) => Math.max(1, Math.ceil(dataMax)),
+          ]}
+          allowDecimals={false}
+        />
+        <Tooltip
+          content={<CustomTooltip />}
+          cursor={{ fill: "currentColor", opacity: 0.1 }}
+        />
+        <Bar
+          dataKey="count"
+          radius={[4, 4, 0, 0]}
+          animationBegin={0}
+          animationDuration={1500}
+          animationEasing="ease-out"
+        >
+          {formattedData.map((entry, index) => (
+            <Cell
+              key={`cell-${index}`}
+              fill={entry.color}
+              opacity={0.8}
+              className="hover:opacity-100 transition-opacity duration-300"
             >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                className="stroke-gray-200 dark:stroke-gray-700"
+              <motion.animate
+                attributeName="height"
+                from="0"
+                to={entry.count}
+                dur="1s"
+                fill="freeze"
               />
-              <XAxis
-                dataKey="rank"
-                tickLine={false}
-                axisLine={false}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-                interval={0}
-                tick={{
-                  fontSize: 12,
-                  fill: "currentColor",
-                  className: "text-gray-600 dark:text-gray-400",
-                }}
-              />
-              <YAxis
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tick={{
-                  fill: "currentColor",
-                  className: "text-gray-600 dark:text-gray-400",
-                }}
-                tickFormatter={formatYAxis}
-                domain={[
-                  0,
-                  (dataMax: number) => Math.max(1, Math.ceil(dataMax)),
-                ]}
-                allowDecimals={false}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: "currentColor", opacity: 0.1 }}
-              />
-              <Bar
-                dataKey="count"
-                radius={[6, 6, 0, 0]}
-                animationBegin={0}
-                animationDuration={1500}
-                animationEasing="ease-out"
-              >
-                {formattedData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    opacity={0.8}
-                    className="hover:opacity-100 transition-opacity duration-300"
-                  >
-                    <motion.animate
-                      attributeName="height"
-                      from="0"
-                      to={entry.count}
-                      dur="1s"
-                      fill="freeze"
-                    />
-                  </Cell>
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          )}
-        </div>
+            </Cell>
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+    </div>
+   
+  )}
+</div>
 
         {/* Footer Section */}
         <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
@@ -1988,7 +1998,7 @@ const RankSection: React.FC<RankSectionProps> = ({
                               className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-gray-700"
                             />
                             <div>
-                              <p className="font-medium text-gray-900 dark:text-white">
+                              <p className="font-medium text-gray-900 dark:text-white lg:text-xl">
                                 {`${addr.address.slice(
                                   0,
                                   6
