@@ -1,4 +1,4 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { contractAbi } from "./Props/contractAbi";
 import { contractAddress } from "./Props/contractAddress";
@@ -178,9 +178,9 @@ const Transactions = () => {
         if (contract.getUserInptTxn) {
           const rawTxns = await contract.getUserInptTxn(userAddress);
 
-          console.log("the user is",rawTxns);
+          console.log("the user is", rawTxns);
 
-          console.log("the rawtxns",rawTxns);
+          console.log("the rawtxns", rawTxns);
           const formattedTxns = rawTxns.map((txn: any) => ({
             from: txn[1],
             rank: Number(txn[2] ?? -1),
@@ -222,236 +222,247 @@ const Transactions = () => {
     `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   return (
-    <> 
-     {!isConnected ? (
+    <>
+      {!isConnected ? (
         navigate("/")
       ) : (
-    <div className={`min-h-screen p-4 md:p-6 lg:p-8 `}>
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent mb-2 sm:mb-3 md:mb-4">
-  Transaction History
-</h1>
+        <div className={`min-h-screen p-4 md:p-6 lg:p-8 `}>
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent mb-2 sm:mb-3 md:mb-4">
+                Transaction History
+              </h1>
 
-          <div className="relative">
-            <select
-              value={selectedTab}
-              onChange={(e) => setSelectedTab(e.target.value)}
-              className={`appearance-none ${
-                darkMode
-                  ? "bg-gray-800 text-purple-400"
-                  : "bg-white text-purple-600"
-              } border-2 border-purple-500 rounded-lg px-6 py-3 font-medium shadow-lg hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer`}
+              <div className="relative">
+                <select
+                  value={selectedTab}
+                  onChange={(e) => setSelectedTab(e.target.value)}
+                  className={`appearance-none ${
+                    darkMode
+                      ? "bg-gray-800 text-purple-400"
+                      : "bg-white text-purple-600"
+                  } border-2 border-purple-500 rounded-lg px-6 py-3 font-medium shadow-lg hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer`}
+                >
+                  <option value="Purchase Transactions">
+                    Purchase Transactions
+                  </option>
+                  <option value="Withdrawals">Withdrawals</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-purple-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`${
+                darkMode ? "bg-gray-800" : "bg-white"
+              } rounded-2xl shadow-xl overflow-hidden border ${
+                darkMode ? "border-gray-700" : "border-gray-200"
+              } transition-all duration-300`}
             >
-              <option value="Purchase Transactions">
-                Purchase Transactions
-              </option>
-              <option value="Withdrawals">Withdrawals</option>
-            </select>
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg
-                className="w-5 h-5 text-purple-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+                </div>
+              ) : selectedTab === "Purchase Transactions" &&
+                transactions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <svg
+                    className="w-16 h-16 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p
+                    className={`text-xl ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    No transactions found
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-purple-600 to-blue-500 text-white">
+                        <th className="px-6 py-4 text-left">#</th>
+                        {selectedTab === "Purchase Transactions" ? (
+                          <>
+                            <th className="px-6 py-4 text-left">Sponsor</th>
+                            <th className="px-6 py-4 text-left">Rank</th>
+                            <th className="px-6 py-4 text-right">
+                              Amount (USD)
+                            </th>
+                            <th className="px-6 py-4 text-left">Date & Time</th>
+                            <th className="px-6 py-4 text-left">Type</th>
+                          </>
+                        ) : (
+                          <>
+                            <th className="px-6 py-4 text-left">From</th>
+                            <th className="px-6 py-4 text-right">
+                              Amount (ITC)
+                            </th>
+                            <th className="px-6 py-4 text-left">Date & Time</th>
+                            <th className="px-6 py-4 text-left">Type</th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(selectedTab === "Purchase Transactions"
+                        ? transactions
+                        : withdrawals
+                      ).map((txn, index) => (
+                        <tr
+                          key={index}
+                          className={`border-b ${
+                            darkMode
+                              ? "border-gray-700 hover:bg-gray-700/50"
+                              : "border-gray-200 hover:bg-gray-50"
+                          } transition-colors duration-200`}
+                        >
+                          <td
+                            className={`px-6 py-4 ${
+                              darkMode ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            {index + 1}
+                          </td>
+                          {selectedTab === "Purchase Transactions" ? (
+                            <>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center space-x-2">
+                                  <span
+                                    className={`font-medium ${
+                                      darkMode
+                                        ? "text-gray-100"
+                                        : "text-gray-900"
+                                    }`}
+                                    title={txn.from}
+                                  >
+                                    {shortenAddress(txn.from || "N/A")}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center space-x-3">
+                                  <img
+                                    src={ranks[txn.rank]?.image}
+                                    alt={getRankName(txn.rank)}
+                                    className="h-8 w-8 rounded-full object-cover ring-2 ring-purple-500"
+                                  />
+                                  <span
+                                    className={`font-medium ${
+                                      darkMode
+                                        ? "text-gray-100"
+                                        : "text-gray-900"
+                                    }`}
+                                  >
+                                    {getRankName(txn.rank)}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <span
+                                  className={`font-medium ${
+                                    darkMode ? "text-gray-100" : "text-gray-900"
+                                  }`}
+                                >
+                                  $
+                                  {txn.amt
+                                    ? (txn.amt + (txn.amt * 3) / 100).toFixed(2)
+                                    : "0.00"}
+                                </span>
+                              </td>
+                              <td
+                                className={`px-6 py-4 ${
+                                  darkMode ? "text-gray-400" : "text-gray-600"
+                                }`}
+                              >
+                                {txn.ts || "N/A"}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span
+                                  className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getTransactionTypeStyle(
+                                    txn.tp,
+                                    darkMode
+                                  )}`}
+                                >
+                                  {txn.tp}
+                                </span>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-6 py-4">
+                                <span
+                                  className={`font-medium ${
+                                    darkMode ? "text-gray-100" : "text-gray-900"
+                                  }`}
+                                  title={txn.from}
+                                >
+                                  {shortenAddress(txn.from || "N/A")}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <span
+                                  className={`font-medium ${
+                                    darkMode ? "text-gray-100" : "text-gray-900"
+                                  }`}
+                                >
+                                  {txn.amt ? txn.amt.toFixed(4) : "0.0000"}
+                                </span>
+                              </td>
+                              <td
+                                className={`px-6 py-4 ${
+                                  darkMode ? "text-gray-400" : "text-gray-600"
+                                }`}
+                              >
+                                {txn.ts || "N/A"}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span
+                                  className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getTransactionTypeStyle(
+                                    txn.tp,
+                                    darkMode
+                                  )}`}
+                                >
+                                  {txn.tp}
+                                </span>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        <div
-          className={`${
-            darkMode ? "bg-gray-800" : "bg-white"
-          } rounded-2xl shadow-xl overflow-hidden border ${
-            darkMode ? "border-gray-700" : "border-gray-200"
-          } transition-all duration-300`}
-        >
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
-            </div>
-          ) : selectedTab === "Purchase Transactions" &&
-            transactions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 space-y-4">
-              <svg
-                className="w-16 h-16 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <p
-                className={`text-xl ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                No transactions found
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gradient-to-r from-purple-600 to-blue-500 text-white">
-                    <th className="px-6 py-4 text-left">#</th>
-                    {selectedTab === "Purchase Transactions" ? (
-                      <>
-                        <th className="px-6 py-4 text-left">Sponsor</th>
-                        <th className="px-6 py-4 text-left">Rank</th>
-                        <th className="px-6 py-4 text-right">Amount (USD)</th>
-                        <th className="px-6 py-4 text-left">Date & Time</th>
-                        <th className="px-6 py-4 text-left">Type</th>
-                      </>
-                    ) : (
-                      <>
-                        <th className="px-6 py-4 text-left">From</th>
-                        <th className="px-6 py-4 text-right">Amount (ITC)</th>
-                        <th className="px-6 py-4 text-left">Date & Time</th>
-                        <th className="px-6 py-4 text-left">Type</th>
-                      </>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selectedTab === "Purchase Transactions"
-                    ? transactions
-                    : withdrawals
-                  ).map((txn, index) => (
-                    <tr
-                      key={index}
-                      className={`border-b ${
-                        darkMode
-                          ? "border-gray-700 hover:bg-gray-700/50"
-                          : "border-gray-200 hover:bg-gray-50"
-                      } transition-colors duration-200`}
-                    >
-                      <td
-                        className={`px-6 py-4 ${
-                          darkMode ? "text-gray-400" : "text-gray-600"
-                        }`}
-                      >
-                        {index + 1}
-                      </td>
-                      {selectedTab === "Purchase Transactions" ? (
-                        <>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-2">
-                              <span
-                                className={`font-medium ${
-                                  darkMode ? "text-gray-100" : "text-gray-900"
-                                }`}
-                                title={txn.from}
-                              >
-                                {shortenAddress(txn.from || "N/A")}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <img
-                                src={ranks[txn.rank]?.image}
-                                alt={getRankName(txn.rank)}
-                                className="h-8 w-8 rounded-full object-cover ring-2 ring-purple-500"
-                              />
-                              <span
-                                className={`font-medium ${
-                                  darkMode ? "text-gray-100" : "text-gray-900"
-                                }`}
-                              >
-                                {getRankName(txn.rank)}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <span
-                              className={`font-medium ${
-                                darkMode ? "text-gray-100" : "text-gray-900"
-                              }`}
-                            >
-                              ${txn.amt ? txn.amt.toFixed(2) : "0.00"}
-                            </span>
-                          </td>
-                          <td
-                            className={`px-6 py-4 ${
-                              darkMode ? "text-gray-400" : "text-gray-600"
-                            }`}
-                          >
-                            {txn.ts || "N/A"}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getTransactionTypeStyle(
-                                txn.tp,
-                                darkMode
-                              )}`}
-                            >
-                              {txn.tp}
-                            </span>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`font-medium ${
-                                darkMode ? "text-gray-100" : "text-gray-900"
-                              }`}
-                              title={txn.from}
-                            >
-                              {shortenAddress(txn.from || "N/A")}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <span
-                              className={`font-medium ${
-                                darkMode ? "text-gray-100" : "text-gray-900"
-                              }`}
-                            >
-                              {txn.amt ? txn.amt.toFixed(4) : "0.0000"}
-                            </span>
-                          </td>
-                          <td
-                            className={`px-6 py-4 ${
-                              darkMode ? "text-gray-400" : "text-gray-600"
-                            }`}
-                          >
-                            {txn.ts || "N/A"}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getTransactionTypeStyle(
-                                txn.tp,
-                                darkMode
-                              )}`}
-                            >
-                              {txn.tp}
-                            </span>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-       )}
+      )}
     </>
   );
 };

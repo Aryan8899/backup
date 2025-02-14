@@ -1,6 +1,6 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-const ModernDarkBackground = () => {
+const FeaturesSection = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollPosition, setScrollPosition] = useState(0);
 
@@ -25,7 +25,7 @@ const ModernDarkBackground = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden bg-gradient-to-b from-gray-950 to-black">
+    <div className="fixed inset-0 w-full h-full overflow-hidden bg-gradient-to-b from-gray-950 to-black -z-999999">
       {/* Rich, deep background base */}
       <div className="absolute inset-0 opacity-40">
         <div className="absolute inset-0 bg-gradient-to-tr from-purple-950/30 via-transparent to-blue-950/30" />
@@ -124,15 +124,6 @@ const ModernDarkBackground = () => {
       {/* Smooth vignette effect */}
       <div className="absolute inset-0 bg-radial-gradient from-transparent via-transparent to-black opacity-60" />
     </div>
-  );
-};
-
-const FeaturesSection = () => {
-  return (
-    <>
-      <ModernDarkBackground />
-      <div className="relative z-10">{/* Your content goes here */}</div>
-    </>
   );
 };
 

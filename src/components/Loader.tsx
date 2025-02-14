@@ -18,10 +18,6 @@ const Loader: React.FC = () => {
         {/* Logo Container */}
         <div className="relative">
           <motion.div
-            animate={{
-              scale: [1, 1.05, 1],
-              rotate: [0, 2, -2, 0],
-            }}
             transition={{
               duration: 2,
               repeat: Infinity,

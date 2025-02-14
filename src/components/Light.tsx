@@ -1,11 +1,11 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-const PremiumLightBackground = () => {
+const Light = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollPosition, setScrollPosition] = useState(0);
 
   useEffect(() => {
-    console.log(scrollPosition)
+    console.log(scrollPosition);
     const handleMouseMove = (e: any) => {
       const x = (e.clientX / window.innerWidth) * 2 - 1;
       const y = (e.clientY / window.innerHeight) * 2 - 1;
@@ -25,7 +25,7 @@ const PremiumLightBackground = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+    <div className="fixed inset-0 w-full h-full overflow-hidden bg-gradient-to-b from-slate-50 to-white -z-99999">
       {/* Premium layered background */}
       <div className="absolute inset-0">
         {/* Base gradient layers */}
@@ -170,13 +170,4 @@ const PremiumLightBackground = () => {
   );
 };
 
-const FeaturesSection = () => {
-  return (
-    <>
-      <PremiumLightBackground />
-      <div className="relative z-10">{/* Your content goes here */}</div>
-    </>
-  );
-};
-
-export default FeaturesSection;
+export default Light;
