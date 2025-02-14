@@ -6,7 +6,8 @@ import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
 import axios from "axios"; // Import axios for making HTTP requests
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { BigNumber, constants } from "ethers";
+import { BigNumber} from "ethers";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import contractAbi from "./Props/contractAbi.ts"; // Adjust path as needed
@@ -101,14 +102,16 @@ interface UserData {
   referralQR?: string;
   profileImage?: string;
   address?: string;
+  avatar?: string;
 }
 
-interface ProfileSectionProps {
-  address?: string;
-  className?: string;
-}
+// interface ProfileSectionProps {
+//   address?: string;
+//   className?: string;
+// }
 
 const Dashboard = () => {
+ 
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [rankMessage, setRankMessage] = useState("");
   const [showMarquee, setShowMarquee] = useState(false);
@@ -120,12 +123,8 @@ const Dashboard = () => {
     darkMode ? "dark" : "light"
   );
   const [newNickname, setNewNickname] = useState("");
-  const [userData, setUserData] = useState<{
-    nickname: string;
-    referralQR: string;
-    profileImage?: string;
-    address?: string;
-  } | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [usrCnt, setUsrCnt] = useState<number | null>(null);
@@ -158,11 +157,13 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+
+   console.log(avatarSVG,backgroundKey,totalInvestment,qrCodeUrl)
    // console.log(totalInvestment, qrCodeUrl);
     const registerUser = async (address: string) => {
       try {
         const response = await axios.get(
-          `https://itcback-production.up.railway.app/api/users/${address}`
+          `https://server.cryptomx.site/api/users/${address}`
         );
 
         const user = response.data.data;
@@ -170,15 +171,21 @@ const Dashboard = () => {
           nickname: user.nickname,
           referralQR: user.referralQR,
           profileImage: user.profileImage,
+          avatar: user.avatar, // Make sure this is being set
           address: address, // Add this line
         });
+        
+        if (user.avatar) {
+          setAvatarUrl(user.avatar);
+          console.log('Setting avatar URL:', user.avatar);
+        }
 
         // Keep your existing QR code URL setting
         const url = `https://res.cloudinary.com/dygw3ixdr/image/upload/v1737705516/qr-codes/${address}.png`;
         setQrCodeUrl(url);
       } catch (error) {
         console.error("Error fetching user data:", error);
-        toast.error("Failed to load user data");
+        // toast.error("Failed to load user data");
       }
     };
 
@@ -186,89 +193,137 @@ const Dashboard = () => {
       registerUser(address);
     }
   });
-
+ 
+  const [isNicknameLoading, setIsNicknameLoading] = useState(false);
   const handleUpdateNickname = async () => {
     if (!address) {
       toast.error("Please connect your wallet first");
       return;
     }
-
+ 
     try {
+      setIsNicknameLoading(true);
       const response = await axios.put(
-        `https://itcback-production.up.railway.app/api/users/update`,
+        `https://server.cryptomx.site/api/users/update-nickname`,
         {
           nickname: newNickname,
           address: address,
         }
       );
 
-      if (response.data.success) {
-        setUserData((prev) =>
-          prev
-            ? {
-                ...prev,
-                nickname: newNickname,
-              }
-            : null
-        );
+      console.log("Full Response:", response);
+
+      // ✅ Check response status instead of success field
+      if (response.status === 200) {
         toast.success("Nickname updated successfully");
+        setUserData((prev) =>
+          prev ? { ...prev, nickname: newNickname } : null
+        );
         setShowNicknameModal(false);
+      } else {
+        console.warn("Unexpected response structure:", response.data);
+        toast.error("Nickname update may not have been successful.");
       }
     } catch (error) {
       console.error("Error updating nickname:", error);
-      toast.error("Failed to update nickname");
+      toast.error("Something went wrong. Please try again.");
+      setIsNicknameLoading(false);
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-   
-    // Preview image
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-   
+  //const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null); // Define state
+
+// First, update the state management for avatar
+const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+// Add this useEffect to handle initial avatar loading
+useEffect(() => {
+  console.log(avatarUrl)
+  if (userData?.avatar) {
+    setAvatarUrl(userData.avatar);
+  }
+}, [userData?.avatar]);
+
+// Modify the handleImageUpload function
+const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  // Preview Image
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    setPreviewImage(reader.result as string);
+  };
+  reader.readAsDataURL(file);
+
+  if (!address) {
+    toast.error("Wallet address not found. Cannot upload the image.");
+    return;
+  }
+
+  try {
     setIsUploading(true);
-   
-    if (!address) {
-      toast.error("Wallet address not found. Cannot upload the image.");
-      setIsUploading(false);
-      setPreviewImage(null);
-      return;
-    }
-   
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('address', address);
-   
-      const response = await axios.post(
-        "https://itcback-production.up.railway.app/api/users/upload-image",
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+    const formData = new FormData();
+    formData.append("avatar", file);
+    formData.append("address", address);
+
+    console.log('Uploading avatar for address:', address);
+    
+    const response = await axios.put(
+      "https://server.cryptomx.site/api/users/update-avatar",
+      formData,
+      { 
+        headers: { 
+          "Content-Type": "multipart/form-data" 
         }
-      );
-   
-      if (response.data.success) {
-        setUserData((prev) =>
-          prev ? { ...prev, profileImage: response.data.data.profileImage } : null
-        );
-        toast.success("Profile image updated successfully");
       }
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
-      setPreviewImage(null);
-    } finally {
-      setIsUploading(false);
+    );
+
+    console.log('Upload response:', response.data);
+
+    // Check if the response has the expected structure
+    if (response.data && response.data.data) {
+      const newAvatarUrl = response.data.data.avatar;
+      if (newAvatarUrl) {
+        // Update both states
+        setUserData(prev => ({
+          ...prev!,
+          avatar: newAvatarUrl
+        }));
+        setAvatarUrl(newAvatarUrl);
+        setPreviewImage(null);
+        
+        // Fetch updated user data
+        const userResponse = await axios.get(
+          `https://server.cryptomx.site/api/users/${address}`
+        );
+        
+        if (userResponse.data && userResponse.data.data) {
+          setUserData(userResponse.data.data);
+        }
+        
+        toast.success("Avatar updated successfully!");
+      } else {
+        throw new Error('Avatar URL not found in response');
+      }
+    } else {
+      throw new Error('Invalid response structure');
     }
+  } catch (error) {
+    console.error("Upload error details:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Response data:", error.response?.data);
+      console.error("Response status:", error.response?.status);
+    }
+    // Only show error toast if the upload actually failed
+    if (error instanceof Error && !error.message.includes('Avatar URL not found')) {
+      toast.error("Failed to upload image.");
+    }
+  } finally {
+    setIsUploading(false);
+  }
 };
+  
   interface RankTotals {
     [key: string]: string; // This allows string indexing
   }
@@ -322,6 +377,7 @@ const Dashboard = () => {
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
+    console.log(withdrawalBonus)
     console.log(error, withdrawalRab);
     const fetchAddress = async () => {
       //console.log(withdrawalRab);
@@ -1286,17 +1342,45 @@ const Dashboard = () => {
 
         // Fetch user data
         const userData = await contract.users(address);
-        // console.log("Raw user data:", userData);
+        console.log("Raw user data:", userData);
 
-        const formatTimestamp = (timestamp: BigNumber): string => {
-          if (timestamp.eq(constants.MaxUint256)) {
-            return "Never";
+        const formatTimestamp = (timestamp: any): string => {
+          try {
+            // Log the incoming timestamp
+            console.log("Original timestamp:", timestamp);
+            
+            // Convert to number and log
+            const timestampNum = Number(timestamp);
+            console.log("Converted to number:", timestampNum);
+            
+            if (isNaN(timestampNum) || timestampNum === 0) {
+              console.log("Invalid timestamp detected");
+              return "Not updated";
+            }
+        
+            // Log milliseconds conversion
+            console.log("In milliseconds:", timestampNum * 1000);
+            
+            // Log final date
+            const finalDate = new Date(timestampNum * 1000).toLocaleDateString();
+            console.log("Final formatted date:", finalDate);
+            
+            return finalDate;
+            
+          } catch (error) {
+            console.error('Error formatting timestamp:', error);
+            return "Invalid timestamp";
           }
-          const timestampInt = parseInt(timestamp.toString(), 10);
-          return timestampInt > 0
-            ? new Date(timestampInt * 1000).toLocaleDateString()
-            : "Not updated";
         };
+        // Then when using it:
+console.log("Raw userData.lastRankUpdateTime:", userData.lastRankUpdateTime);
+const formattedDate = formatTimestamp(Number(userData.lastRankUpdateTime));
+console.log("Final result:", formattedDate);
+
+
+console.log("Raw userData.rankExpiryTime:", userData.rankExpiryTime);
+const formattedDate2 = formatTimestamp(Number(userData.rankExpiryTime));
+console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
 
         const [totalBonusData, totalRABData, totalLevelData] =
           await Promise.all([
@@ -1332,11 +1416,19 @@ const Dashboard = () => {
         //   rewardSumBN = rewardSumBN.add(r1).add(r3).add(r5);
         // }
 
+        console.log("the total purchase is", Number(userData.userTotalInvestment));
+
+
         // Extract the necessary details
-        const expectedTime = userData[2]; // Expected time (e.g., last rank update time)
-        const expiryTime = userData[3]; // Expiry time
+        const expectedTime = userData[0]?.toString(); // Expected time (e.g., last rank update time)
+        const expiryTime = userData.rankExpiryTime; // Expiry time
         // Ensure current time is an integer before creating a BigNumber
         const currentTime = BigNumber.from(Math.floor(Date.now() / 1000)); // Use Math.floor to remove decimals
+
+        console.log("the excpeted time is",expectedTime);
+        console.log("the  time is",expiryTime);
+        console.log("the ime is",currentTime);
+
 
         // Compute active/inactive status
         const isActive =
@@ -1344,12 +1436,12 @@ const Dashboard = () => {
         const isExpired = currentTime.gt(expiryTime);
 
         const formattedData = {
-          referrer: userData[0] || "No referrer",
-          currentRank: getRankName(userData[1]?.toString() || "0"),
-          lastRankUpdateTime: formatTimestamp(userData[2]),
-          rankExpiryTime: formatTimestamp(userData[3]),
+          referrer: userData[2] || "No referrer",
+          currentRank: getRankName(userData[0]?.toString() || "0"),
+          lastRankUpdateTime: formatTimestamp(Number(userData.lastRankUpdateTime)),
+  rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
           totalInvestment: ethers.utils.formatEther(
-            userData[4]?.toString() || "0"
+            userData[5]?.toString() || "0"
           ),
           isActive: isActive && !isExpired,
           isExpired: isExpired,
@@ -1358,7 +1450,7 @@ const Dashboard = () => {
           rewards: total.toString(),
         };
 
-        console.log("Formatted user data:::::", formattedData);
+        console.log("Formatted user data:::::", formattedData.lastRankUpdateTime);
         setUserDetails(formattedData);
         setError(null);
       } catch (error) {
@@ -1478,13 +1570,22 @@ const Dashboard = () => {
       const expiryTime = new Date(
         `${userDetails.rankExpiryTime} 23:59:59`
       ).getTime();
+
+      console.log("the expriy time is",expiryTime);
       const currentTime = Date.now();
       const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
+//     
 
-      if (currentTime > expiryTime) {
+console.log("the current time is",currentTime);
+console.log("the expriy is",expiryTime);
+
+
+      if (currentTime < expiryTime) {
         setIsRankExpired(true);
+        console.log("bigger")
       } else {
         setIsRankExpired(false);
+        console.log("false h g")
       }
 
       // Show marquee only within 1 hour of expiry
@@ -1948,36 +2049,49 @@ const Dashboard = () => {
                     <div className="relative p-8 flex flex-col items-center justify-center min-h-[300px]">
                       {/* Profile Image */}
                       <div className="relative mb-6 group">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
-                        <div className="relative">
-                          {previewImage || userData?.profileImage ? (
-                            <img
-                              src={previewImage || userData?.profileImage}
-                              alt="Profile"
-                              className="w-24 h-24 object-cover rounded-full border-2 border-white/80"
-                            />
-                          ) : (
-                            <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
-                              <User className="w-12 h-12 text-white/80" />
-                            </div>
-                          )}
+  <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
+  <div className="relative">
+  {isUploading ? (
+    <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+    </div>
+  ) : (
+    previewImage || userData?.avatar ? (
+      <img
+        src={previewImage || userData?.avatar}
+        alt="Profile"
+        className="w-24 h-24 object-cover rounded-full border-2 border-white/80"
+        onError={(e) => {
+          console.error('Image failed to load:', e);
+          e.currentTarget.src = ''; // Clear the source on error
+          setUserData(prev => prev ? { ...prev, avatar: undefined } : null);
+        }}
+      />
+    ) : (
+      <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
+        <User className="w-12 h-12 text-white/80" />
+      </div>
+    )
+  )}
+  
+  {/* Camera Icon Button */}
+  <button
+    onClick={() => fileInputRef.current?.click()}
+    disabled={isUploading}
+    className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full hover:bg-indigo-700 transition-colors duration-200"
+  >
+    <Camera className="w-4 h-4 text-white" />
+  </button>
+</div>
+  <input
+    ref={fileInputRef}
+    type="file"
+    className="hidden"
+    accept="image/*"
+    onChange={handleImageUpload}
+  />
+</div>
 
-                          {/* Camera Icon Overlay */}
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full hover:bg-indigo-700 transition-colors duration-200"
-                          >
-                            <Camera className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                        />
-                      </div>
 
                       {/* User Info */}
                       <h3 className="text-2xl font-bold text-white mb-3">
@@ -2024,9 +2138,19 @@ const Dashboard = () => {
                           >
                             Cancel
                           </Button>
-                          <Button onClick={handleUpdateNickname}>
-                            Save Changes
-                          </Button>
+                          <Button 
+  onClick={handleUpdateNickname} 
+  disabled={isNicknameLoading}
+>
+  {isNicknameLoading ? (
+    <>
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      Saving...
+    </>
+  ) : (
+    "Save Changes"
+  )}
+</Button>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -2485,13 +2609,18 @@ const Dashboard = () => {
 
           <div className="flex flex-col gap-2 sm:gap-3 w-full">
             <div className="relative">
-              <input
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-gray-200/20 
-                focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/20 transition-all duration-300
-                text-xs sm:text-sm font-medium backdrop-blur-sm"
-                value={inviteLink}
-                readOnly
-              />
+            <input
+  className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white/50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-gray-200/20 
+  focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/20 transition-all duration-300
+  text-xs sm:text-sm font-medium backdrop-blur-sm truncate"
+  value={`${inviteLink.slice(0, -2)}...`}  // Cuts last 2 chars and adds ellipsis
+  onClick={() => {
+    // When clicked, selects the full text
+    navigator.clipboard.writeText(inviteLink);
+  }}
+  readOnly
+  title={inviteLink}
+/>
               <button
                 onClick={copyToClipboard}
                 className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-md sm:rounded-lg

@@ -19,10 +19,11 @@ import {
 } from "recharts";
 
 import contractAbi from "./Props/contractAbi.ts";
+
 import contractAddress from "./Props/contractAddress.ts";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useDarkMode } from "../components/DarkModeContext";
+//import { useDarkMode } from "../components/DarkModeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -62,13 +63,13 @@ interface RankData {
   count: number;
 }
 
-interface RankDetail {
-  id: number;
-  name: string;
-  count: string;
-  pendingAmount: string;
-  totalDistributedAmount: string;
-}
+// interface RankDetail {
+//   id: number;
+//   name: string;
+//   count: string;
+//   pendingAmount: string;
+//   totalDistributedAmount: string;
+// }
 
 interface AddressData {
   rank: string;
@@ -91,15 +92,17 @@ const RANKS = [
   { name: "CROWN_DIAMOND", index: 8, image: rank8 },
 ];
 const Rankach: React.FC = () => {
+  
   const navigate = useNavigate();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [isProviderReady, setIsProviderReady] = useState(false);
 
+  //const { address, isConnected } = useWeb3ModalAccount();
   // State variables
   const [maxPayouts, setMaxPayouts] = useState<{ [key: string]: string }>({});
   const [rankshare, setRankshare] = useState<string>("Loading...");
-  const [rankDetails, setRankDetails] = useState<RankDetail[]>([]);
+  //const [rankDetails, setRankDetails] = useState<RankDetail[]>([]);
   const [addresses, setAddresses] = useState<AddressData[]>([]);
   const [currentmonth, setcurrentmonth] = useState<string>("Loading...");
   const [totalRab, setTotalRab] = useState<string>("Loading...");
@@ -115,7 +118,7 @@ const Rankach: React.FC = () => {
   const [remainingTime, setRemainingTime] = useState<string>("Loading...");
   const [Elgibility, setElgibility] = useState<string | boolean>("Loading...");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+ // const [loading, setLoading] = useState<boolean>(false);
   const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
   const [userRank, setUserRank] = useState<string | null>(null);
   const [rankrem, setRemDetails] = useState({
@@ -177,10 +180,13 @@ const Rankach: React.FC = () => {
 
   // useEffects
   useEffect(() => {
+    console.log(getDisplayMonth(2))
     setIsProviderReady(!!walletProvider);
   }, [walletProvider]);
 
   useEffect(() => {
+
+    console.log(currentmonth,monthlyindex,error,rankrem,loadingAddresses,avatarSVG,copiedState,setCopiedState)
     const checkAdminAndFetchUserData = async () => {
       if (!isConnected || !walletProvider || !address) {
         console.warn("Wallet not connected or provider not available.");
@@ -206,29 +212,37 @@ const Rankach: React.FC = () => {
           return;
         }
 
+        
         const userData = await contract.users(address);
+        
+        console.log("the curr is",getRankName(userData[0]?.toString() || "0"),)
+
         const formattedData: UserDetails = {
-          referrer: userData[0] || "No referrer",
-          currentRank: getRankName(userData[1]?.toString() || "0"),
+          referrer: userData[2] || "No referrer",
+          currentRank: getRankName(userData[0]?.toString() || "0"),
           lastRankUpdateTime:
-            userData[2]?.toNumber() > 0
-              ? new Date(userData[2].toNumber() * 1000).toLocaleDateString()
+          userData.lastRankUpdateTime?.toNumber() > 0
+              ? new Date(userData.lastRankUpdateTime.toNumber() * 1000).toLocaleDateString()
               : "Not updated",
           rankExpiryTime:
-            userData[3]?.toNumber() > 0
-              ? new Date(userData[3].toNumber() * 1000).toLocaleDateString()
+          userData.rankExpiryTime?.toNumber() > 0
+              ? new Date( userData.rankExpiryTime.toNumber() * 1000).toLocaleDateString()
               : "Not set",
           totalInvestment: ethers.utils.formatEther(
-            userData[4]?.toString() || "0"
+            userData[5]?.toString() || "0"
           ),
-          isActive: userData[5] || false,
+          isActive: userData[1] || false,
           rewards: Array.isArray(userData[6])
             ? ethers.utils.formatEther(userData[6][0]?.toString() || "0")
             : "0",
         };
 
+        console.log("the index is",getRankIndex(formattedData.currentRank))
+
         setUserDetails(formattedData);
         setError(null);
+
+      
 
         const rankIndex = getRankIndex(formattedData.currentRank);
         if (rankIndex !== -1) {
@@ -351,7 +365,7 @@ const Rankach: React.FC = () => {
         );
 
         const userData = await contract.users(address);
-        const currentRank = parseInt(userData[1].toString());
+        const currentRank = parseInt(userData[0].toString());
         const rankDuration = await contract.userRankDurations(
           address,
           currentRank
@@ -379,27 +393,14 @@ const Rankach: React.FC = () => {
     fetchRankDetails();
   }, [isConnected, walletProvider, address]);
 
-  useEffect(() => {
-    const fetchTimestamps = async () => {
-      const start = await fetchRabStartTimestamp();
-      if (start) {
-        const totalDurationSeconds = 60 * 60;
-        const end = start + totalDurationSeconds;
 
-        setStartTime(start);
-        setEndTime(end);
-      }
-    };
-
-    fetchTimestamps();
-  }, []);
 
   const fetchUserDetails = async (
     address: string
   ): Promise<{ avatar: string; nickname: string }> => {
     try {
       const response = await axios.get(
-        `https://itcback-production.up.railway.app/api/users/${address}`
+        `https://server.cryptomx.site/api/users/${address}`
       );
       const user = response.data.data;
       return {
@@ -430,7 +431,8 @@ const Rankach: React.FC = () => {
       );
 
       const currentMonth = await contract.currentMonthIndex();
-      setCurrentMonthIndex(currentMonth.toNumber());
+      console.log("the current month is",currentMonth.toNumber());
+      setCurrentMonthIndex(currentMonth.toNumber() + 1);
     } catch (error) {
       console.error("Error fetching current month index:", error);
     }
@@ -515,7 +517,7 @@ const Rankach: React.FC = () => {
       );
 
       const userData = await contract.users(address);
-      const userRankIndex = userData[1]?.toString();
+      const userRankIndex = userData[0]?.toString();
       const ranks = [
         "STAR",
         "BRONZE",
@@ -567,11 +569,17 @@ const Rankach: React.FC = () => {
 
           while (true) {
             try {
+
+              console.log("the current mon is",currentMonthIndex);
+              console.log("the rank.id is", rank.id);
+              console.log("the address index is",addressIndex);
               const userAddress = await contract.monthlyEligibleAddresses(
                 currentMonthIndex,
                 rank.id,
                 addressIndex
               );
+
+              console.log("the mon is",userAddress);
 
               if (!userAddress) break;
 
@@ -581,9 +589,13 @@ const Rankach: React.FC = () => {
                 nickname: "", // You can fetch nickname if available
                 avatar: multiavatar(userAddress),
               };
+              console.log("running");
 
               rankAddressesList.push(userDetails);
+
+              console.log("heheheh")
               addressIndex++;
+              
             } catch (addressError) {
               console.error(
                 `Error fetching address for ${rank.name}:`,
@@ -1027,6 +1039,8 @@ const Rankach: React.FC = () => {
       const lastMonthIndex = await contract.currentMonthIndex();
       const lastMon = lastMonthIndex.toNumber();
 
+      console.log("the lastmonindex",lastMonthIndex.toNumber());
+
       const { totalAmount } = await contract.monthlyRabPools(lastMon);
 
       const monthly = await contract.getMnthlyRABPoolBalance();
@@ -1093,17 +1107,33 @@ const Rankach: React.FC = () => {
 
         let start, end;
 
+        console.log("the curr1 is",currentMonthIndex);
+
         if (currentMonthIndex === 0) {
           start = await contract.rabStartTimestamp();
+          console.log("the nefore start is",start)
           start = start.toNumber();
+
+          console.log("the start is",start);
         } else {
+
+          console.log("the curr22 is",currentMonthIndex);
           const monthlyData = await contract.monthlyRabPools(
-            currentMonthIndex - 1
+            currentMonthIndex - 2
           );
+
+          console.log("the mon is",monthlyData);
           start = monthlyData.distributionTimestamp.toNumber();
+          console.log("the newmon is start is",start);
         }
 
+
+        console.log("the start is",start);
         end = start + 60 * 60;
+
+        console.log("Calculated new_Start Time:", start);
+        console.log("Calculated new_End Time:", end);
+        console.log("Current Time:", Math.floor(Date.now() / 1000));
 
         setStartTime(start);
         setEndTime(end);
@@ -1115,20 +1145,51 @@ const Rankach: React.FC = () => {
     fetchTimestamps();
   }, [currentMonthIndex, walletProvider]);
 
+
+
+  useEffect(() => {
+    const fetchTimestamps = async () => {
+      const start = await fetchRabStartTimestamp();
+      if (start) {
+        const totalDurationSeconds = 60 * 60;
+        const end = start + totalDurationSeconds;
+
+        console.log("the end is",end);
+
+        setStartTime(start);
+        setEndTime(end);
+      }
+    };
+
+    fetchTimestamps();
+  }, []);
+
+  // useEffect(() => {
+  //   // Add more logging to understand timestamp values
+  //   console.log("Start Time:", startTime);
+  //   console.log("End Time:", endTime);
+  //   console.log("Current Time:", Math.floor(Date.now() / 1000));
+  // }, [startTime, endTime]);
+
   useEffect(() => {
     if (!endTime) return;
 
     const interval = setInterval(() => {
-      const currentTime = Math.floor(Date.now() / 1000);
+      const currentTime = Math.floor(Date.now() / 1000); // Current timestamp in seconds
       const remaining = Math.max(endTime - currentTime, 0);
+
+       console.log("the end time is",endTime);
+       console.log("the current time is",currentTime);
+      console.log("the rem is",remaining);
 
       if (remaining <= 1 && !isExpired) {
         setIsExpired(true);
-        setRemainingTime("00D :00Hrs :00Min :00Sec");
+        // setRemainingTime("00D :00Hrs :00Min :00Sec"); // Display all zeroes when time is up
         clearInterval(interval);
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        // setTimeout(() => {
+        //   window.location.reload();
+        // }, 2000);
+
         return;
       }
 
@@ -1170,27 +1231,30 @@ const Rankach: React.FC = () => {
     fetchAddress();
   }, [walletProvider]);
 
-  const copyToClipboard = (text: string, addrIdx: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setCopiedState((prev) => ({
-          ...prev,
-          [addrIdx]: true,
-        }));
+  // const copyToClipboard = (text: string, addrIdx: string) => {
+  //   navigator.clipboard
+  //     .writeText(text)
+  //     .then(() => {
+  //       setCopiedState((prev) => ({
+  //         ...prev,
+  //         [addrIdx]: true,
+  //       }));
 
-        setTimeout(() => {
-          setCopiedState((prev) => ({
-            ...prev,
-            [addrIdx]: false,
-          }));
-        }, 2000);
-      })
-      .catch((err) => {
-        console.error("Failed to copy: ", err);
-      });
-  };
+  //       setTimeout(() => {
+  //         setCopiedState((prev) => ({
+  //           ...prev,
+  //           [addrIdx]: false,
+  //         }));
+  //       }, 2000);
+  //     })
+  //     .catch((err) => {
+  //       console.error("Failed to copy: ", err);
+  //     });
 
+      
+  // };
+
+ 
   const getDisplayTime = (currentMonthIndex: number) => {
     // Calculate years and remaining months
     const years = Math.floor(currentMonthIndex / 12);
@@ -1215,6 +1279,7 @@ const Rankach: React.FC = () => {
   };
   // Component render
   return (
+    
     <div className="min-h-screen w-full py-12 px-4 sm:px-3 lg:px-8">
       <motion.div
         initial={{ opacity: 0 }}
@@ -2062,6 +2127,8 @@ export const EligibleAddressesSection: React.FC<EligibleAddressesProps> = ({
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
 
   const handleCopy = async (address: string, key: string) => {
+
+    console.log(currentMonthIndex);
     try {
       await navigator.clipboard.writeText(address);
       setCopiedStates((prev) => ({ ...prev, [key]: true }));

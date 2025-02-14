@@ -12,6 +12,7 @@ import FeaturesSection from "../components/FeaturesSection";
 import Light from "../components/Light";
 import { useDarkMode } from "../components/DarkModeContext";
 
+
 // Import rank images
 import rank0 from "../assets/rank0.png";
 import rank1 from "../assets/rank1.png";
@@ -45,6 +46,7 @@ const eligibleRanks = [
 
 const RankDetailsPage = () => {
   const { walletProvider } = useWeb3ModalProvider();
+  
 
   const { darkMode } = useDarkMode(); // ✅ Dark mode state is correctly retrieved
 
@@ -181,7 +183,7 @@ const RankDetailsPage = () => {
           const userData = await contract.users(address);
 
           // Convert user rank to integer
-          const userRankId = parseInt(userData[1].toString(), 10);
+          const userRankId = parseInt(userData[0].toString(), 10);
           setUserRank(userRankId);
         } catch (error) {
           console.error("Error fetching user details:", error);
@@ -245,6 +247,9 @@ const RankDetailsPage = () => {
       <div className="fixed inset-0 -z-10">
         {darkMode ? <FeaturesSection /> : <Light />}
       </div>
+      {!isConnected ? (
+        navigate("/")
+      ) : (
       <div className="min-h-screen p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
@@ -259,96 +264,87 @@ const RankDetailsPage = () => {
 
           {/* Main Content Card */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300">
-            {/* Table Container */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gradient-to-r from-blue-600 to-purple-600">
-                    <th className="px-6 py-4 text-white font-semibold text-left">
-                      Rank
-                    </th>
-                    <th className="px-6 py-4 text-white font-semibold text-right">
-                      Price (USD)
-                    </th>
-                    <th className="px-6 py-4 text-white font-semibold text-right">
-                      Fee Added
-                    </th>
-                    <th className="px-6 py-4 text-white font-semibold text-right">
-                      ITC Price
-                    </th>
-                    <th className="px-6 py-4 text-white font-semibold text-center">
-                      RAB %
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rankDetails.map((rank, index) => (
-                    <tr
-                      key={rank.id}
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[800px]"> {/* Added minimum width */}
+          <thead>
+            <tr className="bg-gradient-to-r from-blue-600 to-purple-600">
+              <th className="px-4 lg:px-6 py-4 text-white font-semibold text-left whitespace-nowrap">
+                Rank
+              </th>
+              <th className="px-4 lg:px-6 py-4 text-white font-semibold text-right whitespace-nowrap">
+                Price (USD)
+              </th>
+              <th className="px-4 lg:px-6 py-4 text-white font-semibold text-right whitespace-nowrap">
+                Fee Added
+              </th>
+              <th className="px-4 lg:px-6 py-4 text-white font-semibold text-right whitespace-nowrap">
+                ITC Price
+              </th>
+              <th className="px-4 lg:px-6 py-4 text-white font-semibold text-center whitespace-nowrap">
+                RAB %
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rankDetails.map((rank, index) => (
+              <tr
+                key={rank.id}
+                className={`
+                  border-b border-gray-200 dark:border-gray-700
+                  transition-colors duration-200
+                  ${userRank === rank.id ? "bg-emerald-50 dark:bg-emerald-900/20" : ""}
+                  ${userRank !== null && rank.id < userRank ? "bg-indigo-50 dark:bg-indigo-900/20" : ""}
+                  hover:bg-gray-50 dark:hover:bg-gray-700/50
+                `}
+              >
+                <td className="px-4 lg:px-6 py-4">
+                  <div className="flex items-center space-x-2 lg:space-x-3">
+                    <div className="flex-shrink-0">
+                      <img
+                        src={ranks[index].image}
+                        alt={rank.name}
+                        className="h-8 w-8 lg:h-12 lg:w-12 rounded-full object-cover ring-2 ring-purple-500"
+                      />
+                    </div>
+                    <div className="min-w-0"> {/* Added min-w-0 to prevent text overflow */}
+                      <p
+                        className={`font-semibold truncate ${
+                          userRank === rank.id
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-gray-900 dark:text-white"
+                        }`}
+                      >
+                        {rank.name}
+                      </p>
+                      <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 truncate">
+                        Level {index + 1}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 lg:px-6 py-4 text-right whitespace-nowrap">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    ${rank.cumulativePrice}
+                  </span>
+                </td>
+                <td className="px-4 lg:px-6 py-4 text-right whitespace-nowrap">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    ${rank.addedFeePrice}
+                  </span>
+                </td>
+                <td className="px-4 lg:px-6 py-4 text-right whitespace-nowrap">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {rank.rankPriceInITC}
+                  </span>
+                  <span className="ml-1 text-xs lg:text-sm text-gray-500 dark:text-gray-400">
+                    ITC
+                  </span>
+                </td>
+                <td className="px-4 lg:px-6 py-4">
+                  <div className="flex justify-center">
+                    <span
                       className={`
-                    border-b border-gray-200 dark:border-gray-700
-                    transition-colors duration-200
-                    ${
-                      userRank === rank.id
-                        ? "bg-emerald-50 dark:bg-emerald-900/20"
-                        : ""
-                    }
-                    ${
-                      userRank !== null && rank.id < userRank
-                        ? "bg-indigo-50 dark:bg-indigo-900/20"
-                        : ""
-                    }
-                    hover:bg-gray-50 dark:hover:bg-gray-700/50
-                  `}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-shrink-0">
-                            <img
-                              src={ranks[index].image}
-                              alt={rank.name}
-                              className="h-12 w-12 rounded-full object-cover ring-2 ring-purple-500"
-                            />
-                          </div>
-                          <div>
-                            <p
-                              className={`font-semibold ${
-                                userRank === rank.id
-                                  ? "text-emerald-600 dark:text-emerald-400"
-                                  : "text-gray-900 dark:text-white"
-                              }`}
-                            >
-                              {rank.name}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Level {index + 1}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          ${rank.cumulativePrice}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          ${rank.addedFeePrice}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {rank.rankPriceInITC}
-                        </span>
-                        <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">
-                          ITC
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center">
-                          <span
-                            className={`
-                        inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                        inline-flex items-center px-2 lg:px-3 py-1 rounded-full text-xs lg:text-sm font-medium whitespace-nowrap
                         ${
                           rank.rabShare === "5%"
                             ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
@@ -363,43 +359,43 @@ const RankDetailsPage = () => {
                             : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
                         }
                       `}
-                          >
-                            {rank.rabShare}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    >
+                      {rank.rabShare}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-            {/* Legend Section */}
-            <div className="p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-500"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    Current Rank
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-500"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    Achieved Ranks
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-300"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    Future Ranks
-                  </span>
-                </div>
-              </div>
-            </div>
+      <div className="p-4 lg:p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-500"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Current Rank
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-500"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Achieved Ranks
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-300"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Future Ranks
+            </span>
           </div>
         </div>
       </div>
+    </div>
+        </div>
+      </div>
+         )}
     </>
   );
 };

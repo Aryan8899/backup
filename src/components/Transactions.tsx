@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { contractAbi } from "./Props/contractAbi";
 import { contractAddress } from "./Props/contractAddress";
@@ -7,8 +7,8 @@ import {
   useWeb3ModalAccount,
 } from "@web3modal/ethers5/react";
 import { useNavigate } from "react-router-dom";
-import FeaturesSection from "../components/FeaturesSection";
-import Light from "../components/Light";
+//import FeaturesSection from "../components/FeaturesSection";
+//import Light from "../components/Light";
 import { useDarkMode } from "../components/DarkModeContext";
 import "../index.css";
 
@@ -177,6 +177,10 @@ const Transactions = () => {
 
         if (contract.getUserInptTxn) {
           const rawTxns = await contract.getUserInptTxn(userAddress);
+
+          console.log("the user is",rawTxns);
+
+          console.log("the rawtxns",rawTxns);
           const formattedTxns = rawTxns.map((txn: any) => ({
             from: txn[1],
             rank: Number(txn[2] ?? -1),
@@ -218,6 +222,10 @@ const Transactions = () => {
     `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   return (
+    <> 
+     {!isConnected ? (
+        navigate("/")
+      ) : (
     <div className={`min-h-screen p-4 md:p-6 lg:p-8 `}>
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
@@ -443,6 +451,8 @@ const Transactions = () => {
         </div>
       </div>
     </div>
+       )}
+    </>
   );
 };
 

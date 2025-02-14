@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useDarkMode } from "./components/DarkModeContext";
-import { DarkModeProvider } from "./components/DarkModeContext";
+//import { DarkModeProvider } from "./components/DarkModeContext";
 
 // Lazy load components
 const Dashboard = lazy(() => import("./components/Dashboard"));

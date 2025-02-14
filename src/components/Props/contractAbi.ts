@@ -1,1873 +1,1768 @@
 export const contractAbi = [
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "target",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+      }
     ],
-    name: "AddressEmptyCode",
-    type: "error",
+    "name": "AddressEmptyCode",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "AlreadyRegistered",
-    type: "error",
+    "inputs": [],
+    "name": "AlreadyRegistered",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "CannotReferSelf",
-    type: "error",
+    "inputs": [],
+    "name": "CannotReferSelf",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "implementation",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
     ],
-    name: "ERC1967InvalidImplementation",
-    type: "error",
+    "name": "ERC1967InvalidImplementation",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "ERC1967NonPayable",
-    type: "error",
+    "inputs": [],
+    "name": "ERC1967NonPayable",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "ERR_RankExpired",
-    type: "error",
+    "inputs": [],
+    "name": "ERR_RankExpired",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "FailedCall",
-    type: "error",
+    "inputs": [],
+    "name": "FailedCall",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "ITC_AutomationAdd",
-    type: "error",
+    "inputs": [],
+    "name": "ITC_AutomationAdd",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "ITC_OnlyARBAdmin",
-    type: "error",
+    "inputs": [],
+    "name": "ITC_OnlyARBAdmin",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "uint256",
-        name: "provided",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "provided",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "required",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      }
     ],
-    name: "InsufficientBalance",
-    type: "error",
+    "name": "InsufficientBalance",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "string",
-        name: "paramName",
-        type: "string",
-      },
+        "internalType": "string",
+        "name": "paramName",
+        "type": "string"
+      }
     ],
-    name: "InvalidAddress",
-    type: "error",
+    "name": "InvalidAddress",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "InvalidInitialization",
-    type: "error",
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "InvalidRank",
-    type: "error",
+    "inputs": [],
+    "name": "InvalidRank",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "InvalidReferrer",
-    type: "error",
+    "inputs": [],
+    "name": "InvalidReferrer",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "InvalidUpgrade",
-    type: "error",
+    "inputs": [],
+    "name": "InvalidUpgrade",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "NotInitializing",
-    type: "error",
+    "inputs": [],
+    "name": "MonthNotCompleted",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "NothingToClaim",
-    type: "error",
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "OprtrCntRgstr",
-    type: "error",
+    "inputs": [],
+    "name": "NothingToClaim",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "owner",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
     ],
-    name: "OwnableInvalidOwner",
-    type: "error",
+    "name": "OwnableInvalidOwner",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
     ],
-    name: "OwnableUnauthorizedAccount",
-    type: "error",
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "ReentrancyGuardReentrantCall",
-    type: "error",
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "TranAdmnfld",
-    type: "error",
+    "inputs": [],
+    "name": "TransferFailed",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "TranfldLTG",
-    type: "error",
+    "inputs": [],
+    "name": "UUPSUnauthorizedCallContext",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "TransferFailed",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "TrnConFld",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "UUPSUnauthorizedCallContext",
-    type: "error",
-  },
-  {
-    inputs: [
+    "inputs": [
       {
-        internalType: "bytes32",
-        name: "slot",
-        type: "bytes32",
-      },
+        "internalType": "bytes32",
+        "name": "slot",
+        "type": "bytes32"
+      }
     ],
-    name: "UUPSUnsupportedProxiableUUID",
-    type: "error",
+    "name": "UUPSUnsupportedProxiableUUID",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: "UserNotActive",
-    type: "error",
+    "inputs": [],
+    "name": "UserNotActive",
+    "type": "error"
   },
   {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "string",
-        name: "txType",
-        type: "string",
-      },
-    ],
-    name: "ArbPoolUpdated",
-    type: "event",
+    "inputs": [],
+    "name": "UsrAlrdyBlcklstd",
+    "type": "error"
   },
   {
-    anonymous: false,
-    inputs: [
+    "inputs": [
       {
-        indexed: false,
-        internalType: "uint64",
-        name: "version",
-        type: "uint64",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "Initialized",
-    type: "event",
+    "name": "UsrBlcklstd",
+    "type": "error"
   },
   {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "from",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint8",
-        name: "level",
-        type: "uint8",
-      },
-    ],
-    name: "LvlIncmDstrbtd",
-    type: "event",
+    "inputs": [],
+    "name": "UsrNtBlcklstd",
+    "type": "error"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "uint256",
-        name: "monthIndex",
-        type: "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
+        "indexed": false,
+        "internalType": "string",
+        "name": "txType",
+        "type": "string"
+      }
     ],
-    name: "MonthlyPoolUpdated",
-    type: "event",
+    "name": "ArbPoolUpdated",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "previousOwner",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "newOwner",
-        type: "address",
-      },
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
     ],
-    name: "OwnershipTransferred",
-    type: "event",
+    "name": "Initialized",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "itcPerUSD",
-        type: "uint256",
+        "indexed": false,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "usdPerITC",
-        type: "uint256",
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
       },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "level",
+        "type": "uint8"
+      }
     ],
-    name: "PriceITCUSDT",
-    type: "event",
+    "name": "LvlIncmDstrbtd",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "recipient",
-        type: "address",
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "monthIndex",
+        "type": "uint256"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "monthIndex",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
-    name: "RabShrDstrbtd",
-    type: "event",
+    "name": "MonthlyPoolUpdated",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "price",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "cumulativePrice",
-        type: "uint256",
-      },
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
     ],
-    name: "RankDetailsUpdated",
-    type: "event",
+    "name": "OwnershipTransferred",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "user",
-        type: "address",
+        "indexed": true,
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "monthIndex",
+        "type": "uint256"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "count",
-        type: "uint256",
-      },
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
-    name: "RankLTGAccumulated",
-    type: "event",
+    "name": "RabShrDstrbtd",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "user",
-        type: "address",
+        "indexed": false,
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "rank",
+        "type": "uint8"
       },
       {
-        indexed: false,
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdPrice",
+        "type": "uint256"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "itcPrice",
+        "type": "uint256"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "count",
-        type: "uint256",
-      },
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "TtlCstITC",
+        "type": "uint256"
+      }
     ],
-    name: "RankLTGDistributed",
-    type: "event",
+    "name": "RankPrice",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: false,
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
       },
       {
-        indexed: true,
-        internalType: "uint256",
-        name: "usdPrice",
-        type: "uint256",
+        "indexed": false,
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "rank",
+        "type": "uint8"
       },
       {
-        indexed: true,
-        internalType: "uint256",
-        name: "itcPrice",
-        type: "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       },
       {
-        indexed: true,
-        internalType: "uint256",
-        name: "TtlCstITC",
-        type: "uint256",
-      },
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "adminFee",
+        "type": "uint256"
+      }
     ],
-    name: "RankPrice",
-    type: "event",
+    "name": "RankUpgrade",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "user",
-        type: "address",
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
+        "indexed": false,
+        "internalType": "address",
+        "name": "referrer",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
+        "indexed": false,
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "rank",
+        "type": "uint8"
       },
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "adminFee",
-        type: "uint256",
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "baseCost",
+        "type": "uint256"
       },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "adminFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
     ],
-    name: "RankUpgrade",
-    type: "event",
+    "name": "RgstrdnRnkPrchsd",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "referrer",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "baseCost",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "adminFee",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "timestamp",
-        type: "uint256",
-      },
+        "indexed": true,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
     ],
-    name: "RgstrdnRnkPrchsd",
-    type: "event",
+    "name": "Upgraded",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "inputs": [],
+    "name": "AdmnWallt",
+    "outputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "refferal",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "updateTime",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "newexpiryTime",
-        type: "uint256",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    name: "RnkRnwdByRffrl",
-    type: "event",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    anonymous: false,
-    inputs: [
+    "inputs": [],
+    "name": "MONTH_DURATION",
+    "outputs": [
       {
-        indexed: true,
-        internalType: "address",
-        name: "implementation",
-        type: "address",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    name: "Upgraded",
-    type: "event",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "AdmnWallt",
-    outputs: [
+    "inputs": [],
+    "name": "PRCHS_FEE",
+    "outputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "MONTH_DURATION",
-    outputs: [
+    "inputs": [],
+    "name": "RANK_VALIDITY",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "PRCHS_FEE",
-    outputs: [
+    "inputs": [],
+    "name": "UPGRADE_INTERFACE_VERSION",
+    "outputs": [
       {
-        internalType: "uint8",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "RANK_VALIDITY",
-    outputs: [
+    "inputs": [],
+    "name": "WITHDRAWAL_FEE",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "UPGRADE_INTERFACE_VERSION",
-    outputs: [
+    "inputs": [],
+    "name": "ZERO_ADDRESS",
+    "outputs": [
       {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "WITHDRAWAL_FEE",
-    outputs: [
+    "inputs": [],
+    "name": "arbAdmin",
+    "outputs": [
       {
-        internalType: "uint8",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "ZERO_ADDRESS",
-    outputs: [
+    "inputs": [],
+    "name": "arbPool",
+    "outputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "arbAdmin",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    "inputs": [],
+    "name": "automatedMonthlyRabDistribution",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "arbPool",
-    outputs: [
+    "inputs": [],
+    "name": "automationAdd",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "automatedMonthlyRabDistribution",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "blacklistUser",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "automationAdd",
-    outputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "name": "blacklisted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "_currentRank",
-        type: "uint8",
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "_currentRank",
+        "type": "uint8"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "_targetRank",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "_targetRank",
+        "type": "uint8"
+      }
     ],
-    name: "calculateUpgradeCost",
-    outputs: [
+    "name": "calculateUpgradeCost",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "baseCostITC",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "baseCostITC",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "AdmnFeeAmt",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "AdmnFeeAmt",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "itcPerUSDT",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "itcPerUSDT",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "nonpayable",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "claimMonthlyRab",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    "inputs": [],
+    "name": "claimMonthlyRab",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "currentMonthIndex",
-    outputs: [
+    "inputs": [],
+    "name": "currentMonthIndex",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "getITCTokenPrice",
-    outputs: [
+    "inputs": [],
+    "name": "getITCTokenPrice",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "itcPerUSDT",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "itcPerUSDT",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "usdtPerITC",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "usdtPerITC",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "nonpayable",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "getMnthlyRABPoolBalance",
-    outputs: [
+    "inputs": [],
+    "name": "getMnthlyRABPoolBalance",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "_rank",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "_rank",
+        "type": "uint8"
+      }
     ],
-    name: "getRankDetails",
-    outputs: [
+    "name": "getRankDetails",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "price",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "cumulativePrice",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "cumulativePrice",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "rank",
+        "type": "uint8"
+      }
     ],
-    name: "getRankLTG",
-    outputs: [
+    "name": "getRankLTG",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "count",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "pendingAmount",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "pendingAmount",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "ttlDstrbtdAmount",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "ttlDstrbtdAmount",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "_rank",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "_rank",
+        "type": "uint8"
+      }
     ],
-    name: "getRankPrice",
-    outputs: [
+    "name": "getRankPrice",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "usdPrice",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "usdPrice",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "itcPerUSDT",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "itcPerUSDT",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "baseCostITC",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "baseCostITC",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "AdmnFeeAmt",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "AdmnFeeAmt",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "TtlCstITC",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "TtlCstITC",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "nonpayable",
-    type: "function",
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "rank",
+        "type": "uint8"
+      }
     ],
-    name: "getRemainingPayouts",
-    outputs: [
+    "name": "getRemainingPayouts",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "getTtlInvstmnt",
-    outputs: [
+    "inputs": [],
+    "name": "getTtlInvstmnt",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "getTtlLtgDstrbtd",
-    outputs: [
+    "inputs": [],
+    "name": "getTtlLtgDstrbtd",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "getTtlRabDstrbtd",
-    outputs: [
+    "inputs": [],
+    "name": "getTtlRabDstrbtd",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "getTtllvlDstrbtd",
-    outputs: [
+    "inputs": [],
+    "name": "getTtllvlDstrbtd",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "distributor",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "distributor",
+        "type": "address"
+      }
     ],
-    name: "getUplines",
-    outputs: [
+    "name": "getUplines",
+    "outputs": [
       {
-        internalType: "address[]",
-        name: "",
-        type: "address[]",
-      },
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getUserInptTxn",
-    outputs: [
+    "name": "getUserInptTxn",
+    "outputs": [
       {
-        components: [
+        "components": [
           {
-            internalType: "address",
-            name: "user",
-            type: "address",
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
           },
           {
-            internalType: "address",
-            name: "from",
-            type: "address",
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
           },
           {
-            internalType: "enum ITCCommunityUpgradeableV1.Rank",
-            name: "rank",
-            type: "uint8",
+            "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+            "name": "rank",
+            "type": "uint8"
           },
           {
-            internalType: "uint256",
-            name: "ttlamt",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "ttlamt",
+            "type": "uint256"
           },
           {
-            internalType: "uint256",
-            name: "ts",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "ts",
+            "type": "uint256"
           },
           {
-            internalType: "string",
-            name: "tp",
-            type: "string",
-          },
+            "internalType": "string",
+            "name": "tp",
+            "type": "string"
+          }
         ],
-        internalType: "struct ITCCommunityUpgradeableV1.inputTx[]",
-        name: "",
-        type: "tuple[]",
-      },
+        "internalType": "struct ITCCommunityUpgradeableV1.inputTx[]",
+        "name": "",
+        "type": "tuple[]"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
       },
-    ],
-    name: "getUserRank",
-    outputs: [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "rank",
+        "type": "uint8"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "name": "getUserReferralRankCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
-      {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "rank",
-        type: "uint8",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getUserReferralRankCount",
-    outputs: [
+    "name": "getUserReferrals",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getUserReferrals",
-    outputs: [
+    "name": "getUserTtlInvstmnt",
+    "outputs": [
       {
-        internalType: "address[]",
-        name: "",
-        type: "address[]",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getUserTtlInvstmnt",
-    outputs: [
+    "name": "getUserWthdrlTxn",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
-    ],
-    name: "getUserWthdrlTxn",
-    outputs: [
-      {
-        components: [
+        "components": [
           {
-            internalType: "address",
-            name: "user",
-            type: "address",
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
           },
           {
-            internalType: "address",
-            name: "from",
-            type: "address",
+            "internalType": "address",
+            "name": "from",
+            "type": "address"
           },
           {
-            internalType: "uint256",
-            name: "ttlamt",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "ttlamt",
+            "type": "uint256"
           },
           {
-            internalType: "uint256",
-            name: "ts",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "ts",
+            "type": "uint256"
           },
           {
-            internalType: "string",
-            name: "tp",
-            type: "string",
-          },
+            "internalType": "string",
+            "name": "tp",
+            "type": "string"
+          }
         ],
-        internalType: "struct ITCCommunityUpgradeableV1.wthdrlTx[]",
-        name: "",
-        type: "tuple[]",
-      },
+        "internalType": "struct ITCCommunityUpgradeableV1.wthdrlTx[]",
+        "name": "",
+        "type": "tuple[]"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getUsrTtlLtgrcvd",
-    outputs: [
+    "name": "getUsrTtlLtgrcvd",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getUsrTtllvlrcvd",
-    outputs: [
+    "name": "getUsrTtllvlrcvd",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getUsrTtlrabrcvd",
-    outputs: [
+    "name": "getUsrTtlrabrcvd",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getWthlvlIncm",
-    outputs: [
+    "name": "getWthlvlIncm",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "user",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "getWthrabIncome",
-    outputs: [
+    "name": "getWthrabIncome",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "_itcToken",
-        type: "address",
+        "internalType": "address",
+        "name": "_itcToken",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "_AdmnWallt",
-        type: "address",
+        "internalType": "address",
+        "name": "_AdmnWallt",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "_operatorAdd",
-        type: "address",
+        "internalType": "address",
+        "name": "_operatorAdd",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "_initialOwner",
-        type: "address",
+        "internalType": "address",
+        "name": "_operator1Add",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "_automationAdd",
-        type: "address",
+        "internalType": "address",
+        "name": "_operator2Add",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "_arbAdmin",
-        type: "address",
+        "internalType": "address",
+        "name": "_initialOwner",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "_poolAdd",
-        type: "address",
+        "internalType": "address",
+        "name": "_automationAdd",
+        "type": "address"
       },
+      {
+        "internalType": "address",
+        "name": "_arbAdmin",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_poolAdd",
+        "type": "address"
+      }
     ],
-    name: "initialize",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "itcToken",
-    outputs: [
+    "inputs": [],
+    "name": "itcToken",
+    "outputs": [
       {
-        internalType: "contract IERC20",
-        name: "",
-        type: "address",
-      },
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
+      }
     ],
-    name: "maxPyts",
-    outputs: [
+    "name": "maxPyts",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
       },
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    name: "monthlyEligibleAddresses",
-    outputs: [
+    "name": "monthlyEligibleAddresses",
+    "outputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
       },
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    name: "monthlyEligibleUsers",
-    outputs: [
+    "name": "monthlyEligibleUsers",
+    "outputs": [
       {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    name: "monthlyRabPools",
-    outputs: [
+    "name": "monthlyRabPools",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "totalAmount",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "totalAmount",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "distributionTimestamp",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "distributionTimestamp",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "operatorAdd",
-    outputs: [
+    "inputs": [],
+    "name": "operator1Add",
+    "outputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "owner",
-    outputs: [
+    "inputs": [],
+    "name": "operator2Add",
+    "outputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "pool",
-    outputs: [
+    "inputs": [],
+    "name": "operatorAdd",
+    "outputs": [
       {
-        internalType: "contract IPancakeSwapV3Pool",
-        name: "",
-        type: "address",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "proxiableUUID",
-    outputs: [
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
       {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
-      },
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [],
+    "name": "pool",
+    "outputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "contract IPancakeSwapV3Pool",
+        "name": "",
+        "type": "address"
+      }
     ],
-    name: "rUC",
-    outputs: [
-      {
-        internalType: "uint128",
-        name: "cnt",
-        type: "uint128",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [],
+    "name": "proxiableUUID",
+    "outputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
     ],
-    name: "rabShrPrsntg",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "rabStartTimestamp",
-    outputs: [
+    "inputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "name": "rUC",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "cnt",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
+      }
     ],
-    name: "rankAchievements",
-    outputs: [
+    "name": "rabShrPrsntg",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "achievedTimestamp",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "payoutsReceived",
-        type: "uint256",
-      },
-      {
-        internalType: "bool",
-        name: "isEligible",
-        type: "bool",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [],
+    "name": "rabStartTimestamp",
+    "outputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    name: "rankDetails",
-    outputs: [
-      {
-        internalType: "uint64",
-        name: "price",
-        type: "uint64",
-      },
-      {
-        internalType: "uint64",
-        name: "cumulativePrice",
-        type: "uint64",
-      },
-      {
-        internalType: "uint64",
-        name: "ltgb",
-        type: "uint64",
-      },
-      {
-        internalType: "uint64",
-        name: "cummltv25",
-        type: "uint64",
-      },
-      {
-        internalType: "uint64",
-        name: "cummltv5",
-        type: "uint64",
-      },
-      {
-        internalType: "uint64",
-        name: "rank2per",
-        type: "uint64",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "_referrer",
-        type: "address",
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "_rank",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
+      }
     ],
-    name: "registerAndPurchaseRank",
-    outputs: [],
-    stateMutability: "payable",
-    type: "function",
+    "name": "rankAchievements",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "achievedTimestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "payoutsReceived",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isEligible",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "renounceOwnership",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    "inputs": [
+      {
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "name": "rankDetails",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "price",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "cumulativePrice",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "ltgb",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "cummltv25",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "cummltv5",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "rank2per",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "newOwner",
-        type: "address",
+        "internalType": "address",
+        "name": "_referrer",
+        "type": "address"
       },
+      {
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "_rank",
+        "type": "uint8"
+      }
     ],
-    name: "transferOwnership",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    "name": "registerAndPurchaseRank",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "_rank",
-        type: "uint8",
-      },
-      {
-        internalType: "uint64",
-        name: "_price",
-        type: "uint64",
-      },
-      {
-        internalType: "uint64",
-        name: "_cumulativePrice",
-        type: "uint64",
-      },
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
     ],
-    name: "updateRankDetails",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
+    "name": "removeFromBlacklist",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [
-      {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "_targetRank",
-        type: "uint8",
-      },
-    ],
-    name: "upgradeRank",
-    outputs: [],
-    stateMutability: "payable",
-    type: "function",
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "newImplementation",
-        type: "address",
-      },
-      {
-        internalType: "bytes",
-        name: "data",
-        type: "bytes",
-      },
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
     ],
-    name: "upgradeToAndCall",
-    outputs: [],
-    stateMutability: "payable",
-    type: "function",
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "_targetRank",
+        "type": "uint8"
+      }
     ],
-    name: "userRankDurations",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "startMonth",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "remainingPayouts",
-        type: "uint256",
-      },
-      {
-        internalType: "bool",
-        name: "isActive",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    "name": "upgradeRank",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "",
-        type: "uint8",
-      },
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
     ],
-    name: "userRankLTGBonuses",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "count",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "pendingAmount",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "ttlDstrbtdAmount",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       },
+      {
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
+      }
     ],
-    name: "users",
-    outputs: [
+    "name": "userRankDurations",
+    "outputs": [
       {
-        internalType: "address",
-        name: "referrer",
-        type: "address",
+        "internalType": "uint256",
+        "name": "startMonth",
+        "type": "uint256"
       },
       {
-        internalType: "enum ITCCommunityUpgradeableV1.Rank",
-        name: "currentRank",
-        type: "uint8",
+        "internalType": "uint256",
+        "name": "remainingPayouts",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "lastRankUpdateTime",
-        type: "uint256",
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       },
       {
-        internalType: "uint256",
-        name: "rankExpiryTime",
-        type: "uint256",
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "name": "userRankLTGBonuses",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
       },
       {
-        internalType: "uint256",
-        name: "userTotalInvestment",
-        type: "uint256",
+        "internalType": "uint256",
+        "name": "pendingAmount",
+        "type": "uint256"
       },
       {
-        internalType: "bool",
-        name: "isActive",
-        type: "bool",
+        "internalType": "uint256",
+        "name": "ttlDstrbtdAmount",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "users",
+    "outputs": [
+      {
+        "internalType": "enum ITCCommunityUpgradeableV1.Rank",
+        "name": "currentRank",
+        "type": "uint8"
       },
       {
-        components: [
+        "internalType": "bool",
+        "name": "isActive",
+        "type": "bool"
+      },
+      {
+        "internalType": "address",
+        "name": "referrer",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastRankUpdateTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rankExpiryTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "userTotalInvestment",
+        "type": "uint256"
+      },
+      {
+        "components": [
           {
-            internalType: "uint256",
-            name: "WthlvlIncm",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "WthlvlIncm",
+            "type": "uint256"
           },
           {
-            internalType: "uint256",
-            name: "TtllvlIncmrcvd",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "TtllvlIncmrcvd",
+            "type": "uint256"
           },
           {
-            internalType: "uint256",
-            name: "TtlLtgrcvd",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "TtlLtgrcvd",
+            "type": "uint256"
           },
           {
-            internalType: "uint256",
-            name: "WthrabIncome",
-            type: "uint256",
+            "internalType": "uint256",
+            "name": "WthrabIncome",
+            "type": "uint256"
           },
           {
-            internalType: "uint256",
-            name: "TtlrabIncmrcvd",
-            type: "uint256",
-          },
+            "internalType": "uint256",
+            "name": "TtlrabIncmrcvd",
+            "type": "uint256"
+          }
         ],
-        internalType: "struct ITCCommunityUpgradeableV1.RwdInfo",
-        name: "rewards",
-        type: "tuple",
-      },
+        "internalType": "struct ITCCommunityUpgradeableV1.RwdInfo",
+        "name": "rewards",
+        "type": "tuple"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "usrCnt",
-    outputs: [
+    "inputs": [],
+    "name": "usrCnt",
+    "outputs": [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    stateMutability: "view",
-    type: "function",
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "version",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "pure",
-    type: "function",
+    "inputs": [],
+    "name": "withdrawARBPoolBalance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: "withdrawARBPoolBalance",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "withdrawLevelIncome",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
+    "inputs": [],
+    "name": "withdrawLevelIncome",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
 ];
 
 export default contractAbi;

@@ -233,7 +233,7 @@ const RegisterRank = () => {
 
       try {
         const response = await axios.post(
-          `https://itcback-production.up.railway.app/api/users/register`,
+          `https://server.cryptomx.site/api/users/register`,
           {
             address: address,
           }
@@ -344,7 +344,7 @@ const RegisterRank = () => {
                     />
                     <span
                       className={`
-        text-sm font-medium tracking-wider uppercase 
+        text-sm font-medium tracking-wider uppercase  sm:text-sm
         ${darkMode ? "text-gray-300" : "text-gray-700 text-opacity-80"}`}
                     >
                       Connected Wallet
@@ -360,7 +360,7 @@ const RegisterRank = () => {
 >
   {address
     ? window.innerWidth < 640 
-      ? `${address.slice(0, 6)}...${address.slice(-4)}` // Shorten for small screens
+      ? `${address.slice(0, 3)}...${address.slice(-3)}` // Shorten for small screens
       : address
     : "N/A"}
 </span>

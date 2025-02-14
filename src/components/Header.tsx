@@ -85,7 +85,9 @@ const Header = () => {
         signer
       );
       const userData = await contract.users(address);
-      const currentRank = userData[1];
+
+      console.log("the data is",userData);
+      const currentRank = userData[0];
       setUserRank(currentRank);
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -156,6 +158,9 @@ const Header = () => {
   };
 
   useEffect(() => {
+
+    console.log(menuVariants);
+
     const checkUserStatus = async () => {
       if (!walletProvider || !address || !isConnected) return;
 
@@ -245,7 +250,7 @@ const Header = () => {
         variants={headerVariants}
         initial="hidden"
         animate="visible"
-        className={`sticky my-5 mx-6 inset-x-0 top-0 z-[70] px-6 py-3 backdrop-blur-xl transition-all duration-300 ${
+        className={`sticky my-5 mx-4 sm:mx-6 inset-x-0 top-0 z-[70] px-4 sm:px-6 py-3 backdrop-blur-xl transition-all duration-300 ${
           darkMode
             ? "bg-gray-900/80 border-gray-800"
             : "bg-white/70 border-gray-100"
@@ -253,13 +258,13 @@ const Header = () => {
       >
         <div className="flex items-center justify-between ">
           {/* Logo */}
-          <motion.div whileHover={{ scale: 1.3 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
             <a href="/">
-              <img
-                className="h-12 w-auto"
-                src="https://cticlub.org/assets/images/brand/itclogow.png"
-                alt="ITC Logo"
-              />
+            <img
+          className="h-8 sm:h-10 md:h-12 w-auto"
+          src="https://cticlub.org/assets/images/brand/itclogow.png"
+          alt="ITC Logo"
+        />
             </a>
           </motion.div>
 
@@ -267,7 +272,7 @@ const Header = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`hidden lg:flex items-center px-5 py-2 rounded-xl backdrop-blur-xl mx-4 ${
+            className={`hidden md:flex items-center px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl backdrop-blur-xl mx-2 sm:mx-4 ${
               darkMode
                 ? "bg-gray-800 text-gray-300"
                 : "bg-white/80 text-gray-600"
@@ -280,14 +285,14 @@ const Header = () => {
                 transition: { duration: 1, repeat: Infinity },
               }}
             >
-              <span className="text-sm font-semibold uppercase opacity-75">
+              <span className="text-xs sm:text-sm font-semibold uppercase opacity-75">
                 ITC Price
               </span>
               <motion.span
                 key={priceData?.TITCperTUSDT}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`text-lg font-bold ${
+                className={`text-sm sm:text-lg font-bold ${
                   parseFloat(priceData?.TITCperTUSDT || "0.0") >
                   parseFloat(previousPrice || "0.0")
                     ? "text-green-500"
@@ -305,14 +310,14 @@ const Header = () => {
           </motion.div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-4 flex-grow justify-center">
+          <div className="hidden lg:flex items-center space-x-2 sm:space-x-4 flex-grow justify-center">
             {navigationItems.map((item) => (
               <motion.button
                 key={item.name}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleNavigation(item)}
-                className={`px-3 py-1.5 text-sm font-medium transition-all duration-200 rounded-lg ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium transition-all duration-200 rounded-lg ${
                   isActivePath(item.path)
                     ? darkMode
                       ? "bg-gray-800 text-white"
@@ -328,15 +333,15 @@ const Header = () => {
           </div>
 
           {/* Desktop Wallet & Theme Toggle */}
-          <div className="hidden lg:flex items-center space-x-3">
+          <div className="hidden lg:flex items-center space-x-2 sm:space-x-3">
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className={`flex items-center px-3 py-2 rounded-xl ${
+              className={`flex items-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl ${
                 darkMode ? "bg-gray-800 text-white" : "bg-gray-50 text-gray-700"
               }`}
             >
-              <Wallet className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">{itcBalance} ITC</span>
+              <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="text-xs sm:text-sm font-medium">{itcBalance} ITC</span>
             </motion.div>
 
             <motion.button
@@ -377,7 +382,7 @@ const Header = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden">
+          <div className="lg:hidden flex items-center">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setMenuOpen(!menuOpen)}

@@ -4,8 +4,8 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, RefreshCw, AlertTriangle } from "lucide-react";
+import { motion } from "framer-motion";
+import { AlertTriangle } from "lucide-react";
 import FeaturesSection from "../components/FeaturesSection";
 import Light from "../components/Light";
 import { useDarkMode } from "../components/DarkModeContext";
@@ -132,7 +132,7 @@ const ReferralTree = () => {
     console.log(isScrollable, userAvatars, setUserAvatars, userData);
     try {
       const response = await axios.get(
-        `https://itcback-production.up.railway.app/api/users/${address}`
+        `https://server.cryptomx.site/api/users/${address}`
       );
       const user = response.data.data;
       return {
@@ -199,7 +199,7 @@ const ReferralTree = () => {
     try {
       const referrals: string[] = await contract.getUserReferrals(address);
       const userData = await contract.users(address);
-      const rankIndex = Number.parseInt(userData[1]?.toString() || "0");
+      const rankIndex = Number.parseInt(userData[0]?.toString() || "0");
       const rank = getRankName(rankIndex);
 
       // Fetch user details (avatar and nickname)
@@ -228,7 +228,7 @@ const ReferralTree = () => {
   const registerUser = async (address: string) => {
     try {
       const response = await axios.get(
-        `https://itcback-production.up.railway.app/api/users/${address}`
+        `https://server.cryptomx.site/api/users/${address}`
       );
 
       // Extract the relevant user data
@@ -313,6 +313,7 @@ const ReferralTree = () => {
   // ... previous methods remain the same
 
   const renderTree = (node: ReferralNode, level = 0, index = 0) => {
+    console.log(index)
     const hasChildren = node.referrals.length > 0;
     const isExpanded = expandedNodes.has(node.address);
     const details = userDetails[node.address];
@@ -421,6 +422,9 @@ const ReferralTree = () => {
       <div className="fixed inset-0 -z-10">
         {darkMode ? <FeaturesSection /> : <Light />}
       </div>
+      {!isConnected ? (
+        navigate("/")
+      ) : (
       <div className="min-h-screen  p-6">
         <SimpleBar className="w-full overflow-x-auto">
         <div className="min-w-max">
@@ -519,6 +523,7 @@ const ReferralTree = () => {
 
         </SimpleBar>
       </div>
+        )}
     </>
   );
 };

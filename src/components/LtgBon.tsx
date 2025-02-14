@@ -4,7 +4,7 @@ import { contractAbi } from "./Props/contractAbi";
 import { contractAddress } from "./Props/contractAddress";
 import { useWeb3ModalProvider } from "@web3modal/ethers5/react";
 import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
-import { BigNumber, constants } from "ethers";
+import { BigNumber } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../components/DarkModeContext";
 import FeaturesSection from "../components/FeaturesSection";
@@ -80,6 +80,7 @@ const RankDetailsPage = () => {
   }
 
   useEffect(() => {
+    console.log(withdrawalBonus,isLoading,error)
     const checkRegistrationStatus = async (newAddress: string) => {
       if (!isConnected || !walletProvider || !isProviderReady || !newAddress) {
         console.warn("Wallet is not connected or provider is not ready.");
@@ -215,14 +216,33 @@ const RankDetailsPage = () => {
         const userData = await contract.users(address);
         //console.log("Raw user data:", userData);
 
-        const formatTimestamp = (timestamp: BigNumber): string => {
-          if (timestamp.eq(constants.MaxUint256)) {
-            return "Never";
+        const formatTimestamp = (timestamp: any): string => {
+          try {
+            // Log the incoming timestamp
+            console.log("Original timestamp:", timestamp);
+            
+            // Convert to number and log
+            const timestampNum = Number(timestamp);
+            console.log("Converted to number:", timestampNum);
+            
+            if (isNaN(timestampNum) || timestampNum === 0) {
+              console.log("Invalid timestamp detected");
+              return "Not updated";
+            }
+        
+            // Log milliseconds conversion
+            console.log("In milliseconds:", timestampNum * 1000);
+            
+            // Log final date
+            const finalDate = new Date(timestampNum * 1000).toLocaleDateString();
+            console.log("Final formatted date:", finalDate);
+            
+            return finalDate;
+            
+          } catch (error) {
+            console.error('Error formatting timestamp:', error);
+            return "Invalid timestamp";
           }
-          const timestampInt = parseInt(timestamp.toString(), 10);
-          return timestampInt > 0
-            ? new Date(timestampInt * 1000).toLocaleDateString()
-            : "Not updated";
         };
 
         // ─── 1) Build a total of rewards at indices [1], [3], [5] ────────────
@@ -245,12 +265,12 @@ const RankDetailsPage = () => {
 
         // ─── 2) Format other fields as before ────────────────────────────────
         const formattedData = {
-          referrer: userData[0] || "No referrer",
-          currentRank: getRankName(userData[1]?.toString() || "0"),
-          lastRankUpdateTime: formatTimestamp(userData[2]),
-          rankExpiryTime: formatTimestamp(userData[3]),
+          referrer: userData[2] || "No referrer",
+          currentRank: getRankName(userData[0]?.toString() || "0"),
+          lastRankUpdateTime: formatTimestamp(Number(userData.lastRankUpdateTime)),
+  rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
           totalInvestment: ethers.utils.formatEther(
-            userData[4]?.toString() || "0"
+            userData[5]?.toString() || "0"
           ),
           isActive: userData[5] || false,
 
@@ -297,6 +317,9 @@ const RankDetailsPage = () => {
           for (let i = 0; i <= 8; i++) {
             const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
             // console.log("the ltg is", response);
+
+            // console.log("the pencho is",Number(response.ttlDstrbtdAmount
+            // ));
 
             // Add the pending amount to the total
             if (i <= 7) {
@@ -426,6 +449,10 @@ const RankDetailsPage = () => {
       <div className="fixed inset-0 -z-10">
         {darkMode ? <FeaturesSection /> : <Light />}
       </div>
+
+      {!isConnected ? (
+        navigate("/")
+      ) : (
 
       <div className="min-h-screen p-5 relative">
         {/* Header Section */}
@@ -558,7 +585,7 @@ const RankDetailsPage = () => {
    className="w-12 h-12 object-contain sm:w-10 sm:h-10"
  />
  
- <p className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-[200px] mr-10 
+ <p className="lg:text-xl text-xl md:text-xl font-bold text-gray-900 dark:text-white truncate  mr-10 
    xs:text-lg"
    style={{marginLeft: "0rem" }}
    >
@@ -573,6 +600,7 @@ const RankDetailsPage = () => {
           )}
         </div>
       </div>
+       )}
     </>
   );
 };
