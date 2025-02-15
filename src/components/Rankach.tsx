@@ -415,6 +415,7 @@ const Rankach: React.FC = () => {
       };
     }
   };
+  const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
 
   const fetchCurrentMonthIndex = async () => {
     if (!walletProvider) {
@@ -433,6 +434,7 @@ const Rankach: React.FC = () => {
       const currentMonth = await contract.currentMonthIndex();
       console.log("the current month is",currentMonth.toNumber());
       setCurrentMonthIndex(currentMonth.toNumber() + 1);
+      setIsMonthIndexLoaded(true);
     } catch (error) {
       console.error("Error fetching current month index:", error);
     }
@@ -449,7 +451,11 @@ const Rankach: React.FC = () => {
     }
 
     try {
+
+      console.log("running");
       const monthlyRabValue = parseFloat(monthlyRab);
+
+      console.log("the mon rab is",monthlyRabValue);
 
       const rankPercentages: Record<number, number> = {
         4: 0.05,
@@ -563,18 +569,23 @@ const Rankach: React.FC = () => {
 
         const addresses: Record<string, UserAddress[]> = {};
 
+        const currentMonthIndexFromContract = await contract.currentMonthIndex();
+      const monthIndex = currentMonthIndexFromContract.toNumber();
+
         for (const rank of eliteRanks) {
           const rankAddressesList: UserAddress[] = [];
           let addressIndex = 0;
+          console.log("the current mon22 is",currentMonthIndex);
 
           while (true) {
             try {
 
-              console.log("the current mon is",currentMonthIndex);
+             
+              console.log("the current mon is",monthIndex);
               console.log("the rank.id is", rank.id);
               console.log("the address index is",addressIndex);
               const userAddress = await contract.monthlyEligibleAddresses(
-                currentMonthIndex,
+                monthIndex ,
                 rank.id,
                 addressIndex
               );
@@ -586,7 +597,7 @@ const Rankach: React.FC = () => {
               // Optional: Fetch additional user details if needed
               const userDetails = {
                 address: userAddress,
-                nickname: "", // You can fetch nickname if available
+                // You can fetch nickname if available
                 avatar: multiavatar(userAddress),
               };
               console.log("running");
@@ -616,8 +627,9 @@ const Rankach: React.FC = () => {
         setIsLoading(false);
       }
     };
-
-    fetchAllRankAddresses();
+    if (isMonthIndexLoaded && walletProvider) { // Only run after month index is loaded
+      fetchAllRankAddresses();
+    }
   }, [walletProvider, currentMonthIndex]);
 
   useEffect(() => {
@@ -627,7 +639,8 @@ const Rankach: React.FC = () => {
     }
   }, [isConnected, walletProvider, address]);
 
-  const fetchDataForRanks = async (monthIndex: number) => {
+
+    const fetchDataForRanks = async (monthIndex: number) => {
     if (!walletProvider) {
       console.error("Wallet provider is not available");
       return;
@@ -636,6 +649,8 @@ const Rankach: React.FC = () => {
     console.log("Fetching rank distribution data...");
     setLoadingGraph(true);
 
+    
+
     const provider = new ethers.providers.Web3Provider(walletProvider);
     const contract = new ethers.Contract(
       contractAddress,
@@ -643,7 +658,12 @@ const Rankach: React.FC = () => {
       provider
     );
 
+    
+
     const data: Record<number, number> = {}; // Initialize properly
+
+
+    
 
     try {
       for (let rank of RANKS) {
@@ -652,6 +672,7 @@ const Rankach: React.FC = () => {
 
         while (true) {
           try {
+            console.log("the monthindex12",monthlyindex);
             const userAddress = await contract.monthlyEligibleAddresses(
               monthIndex,
               rank.index,
@@ -779,9 +800,13 @@ const Rankach: React.FC = () => {
 
   useEffect(() => {
     if (currentMonthIndex >= 0 && walletProvider) {
-      fetchDataForRanks(currentMonthIndex);
+      console.log("Using adjusted month index_new:", currentMonthIndex);
+      const adjustedMonthIndex = Math.max(0, currentMonthIndex - 1);
+      console.log("Using adjusted month index:", adjustedMonthIndex);
+      fetchDataForRanks(adjustedMonthIndex);
     }
   }, [currentMonthIndex, walletProvider]);
+  
 
   const rabShrPrsntg = async (rankIndex: number) => {
     if (!walletProvider) {
@@ -1052,6 +1077,8 @@ const Rankach: React.FC = () => {
         ethers.utils.formatEther(monthly)
       ).toFixed(2);
 
+      console.log("the format is",formattedTotalAmount);
+
       setMonthlyRabindex(formattedTotalAmount);
       setMonthlyRab(formattedTimestamp);
     } catch (error) {
@@ -1184,11 +1211,11 @@ const Rankach: React.FC = () => {
 
       if (remaining <= 1 && !isExpired) {
         setIsExpired(true);
-        // setRemainingTime("00D :00Hrs :00Min :00Sec"); // Display all zeroes when time is up
+        setRemainingTime("00D :00Hrs :00Min :00Sec"); // Display all zeroes when time is up
         clearInterval(interval);
-        // setTimeout(() => {
-        //   window.location.reload();
-        // }, 2000);
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
 
         return;
       }

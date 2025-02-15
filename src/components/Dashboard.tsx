@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useDarkMode } from "../components/DarkModeContext";
-import multiavatar from "@multiavatar/multiavatar";
+//import multiavatar from "@multiavatar/multiavatar";
 import { usePriceData } from "../components/PriceContext.tsx";
+
 import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
 import axios from "axios"; // Import axios for making HTTP requests
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { BigNumber} from "ethers";
+import { BigNumber } from "ethers";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
@@ -111,11 +112,12 @@ interface UserData {
 // }
 
 const Dashboard = () => {
- 
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [rankMessage, setRankMessage] = useState("");
   const [showMarquee, setShowMarquee] = useState(false);
-  const [isRankExpired, setIsRankExpired] = useState(false);
+  const [isRankExpired, setIsRankExpired] = useState<"loading" | boolean>(
+    "loading"
+  );
   const { priceData } = usePriceData();
   const [avatarSVG, setAvatarSVG] = useState<string>("");
   const { darkMode } = useDarkMode();
@@ -151,15 +153,18 @@ const Dashboard = () => {
     setBackgroundKey(darkMode ? "dark" : "light");
   }, [darkMode]);
 
+  if (!avatarSVG && !backgroundKey && !totalInvestment && !qrCodeUrl) {
+    console.log("update!!");
+  }
+
   useEffect(() => {
     const timeout = setTimeout(() => setIsLoading(false), 2000);
     return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
-
-   console.log(avatarSVG,backgroundKey,totalInvestment,qrCodeUrl)
-   // console.log(totalInvestment, qrCodeUrl);
+    //console.log(avatarSVG,backgroundKey,totalInvestment,qrCodeUrl)
+    // console.log(totalInvestment, qrCodeUrl);
     const registerUser = async (address: string) => {
       try {
         const response = await axios.get(
@@ -174,10 +179,10 @@ const Dashboard = () => {
           avatar: user.avatar, // Make sure this is being set
           address: address, // Add this line
         });
-        
+
         if (user.avatar) {
           setAvatarUrl(user.avatar);
-          console.log('Setting avatar URL:', user.avatar);
+          //console.log('Setting avatar URL:', user.avatar);
         }
 
         // Keep your existing QR code URL setting
@@ -193,14 +198,14 @@ const Dashboard = () => {
       registerUser(address);
     }
   });
- 
+
   const [isNicknameLoading, setIsNicknameLoading] = useState(false);
   const handleUpdateNickname = async () => {
     if (!address) {
       toast.error("Please connect your wallet first");
       return;
     }
- 
+
     try {
       setIsNicknameLoading(true);
       const response = await axios.put(
@@ -210,8 +215,6 @@ const Dashboard = () => {
           address: address,
         }
       );
-
-      console.log("Full Response:", response);
 
       // ✅ Check response status instead of success field
       if (response.status === 200) {
@@ -233,97 +236,100 @@ const Dashboard = () => {
 
   //const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null); // Define state
 
-// First, update the state management for avatar
-const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // First, update the state management for avatar
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-// Add this useEffect to handle initial avatar loading
-useEffect(() => {
-  console.log(avatarUrl)
-  if (userData?.avatar) {
-    setAvatarUrl(userData.avatar);
-  }
-}, [userData?.avatar]);
+  // Add this useEffect to handle initial avatar loading
+  useEffect(() => {
+    console.log(avatarUrl);
+    if (userData?.avatar) {
+      setAvatarUrl(userData.avatar);
+    }
+  }, [userData?.avatar]);
 
-// Modify the handleImageUpload function
-const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  // Modify the handleImageUpload function
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  // Preview Image
-  const reader = new FileReader();
-  reader.onloadend = () => {
-    setPreviewImage(reader.result as string);
-  };
-  reader.readAsDataURL(file);
+    // Preview Image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
 
-  if (!address) {
-    toast.error("Wallet address not found. Cannot upload the image.");
-    return;
-  }
+    if (!address) {
+      toast.error("Wallet address not found. Cannot upload the image.");
+      return;
+    }
 
-  try {
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("avatar", file);
-    formData.append("address", address);
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("avatar", file);
+      formData.append("address", address);
 
-    console.log('Uploading avatar for address:', address);
-    
-    const response = await axios.put(
-      "https://server.cryptomx.site/api/users/update-avatar",
-      formData,
-      { 
-        headers: { 
-          "Content-Type": "multipart/form-data" 
+      //console.log('Uploading avatar for address:', address);
+
+      const response = await axios.put(
+        "https://server.cryptomx.site/api/users/update-avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
-      }
-    );
+      );
 
-    console.log('Upload response:', response.data);
+      // Check if the response has the expected structure
+      if (response.data && response.data.data) {
+        const newAvatarUrl = response.data.data.avatar;
+        if (newAvatarUrl) {
+          // Update both states
+          setUserData((prev) => ({
+            ...prev!,
+            avatar: newAvatarUrl,
+          }));
+          setAvatarUrl(newAvatarUrl);
+          setPreviewImage(null);
 
-    // Check if the response has the expected structure
-    if (response.data && response.data.data) {
-      const newAvatarUrl = response.data.data.avatar;
-      if (newAvatarUrl) {
-        // Update both states
-        setUserData(prev => ({
-          ...prev!,
-          avatar: newAvatarUrl
-        }));
-        setAvatarUrl(newAvatarUrl);
-        setPreviewImage(null);
-        
-        // Fetch updated user data
-        const userResponse = await axios.get(
-          `https://server.cryptomx.site/api/users/${address}`
-        );
-        
-        if (userResponse.data && userResponse.data.data) {
-          setUserData(userResponse.data.data);
+          // Fetch updated user data
+          const userResponse = await axios.get(
+            `https://server.cryptomx.site/api/users/${address}`
+          );
+
+          if (userResponse.data && userResponse.data.data) {
+            setUserData(userResponse.data.data);
+          }
+
+          toast.success("Avatar updated successfully!");
+        } else {
+          throw new Error("Avatar URL not found in response");
         }
-        
-        toast.success("Avatar updated successfully!");
       } else {
-        throw new Error('Avatar URL not found in response');
+        throw new Error("Invalid response structure");
       }
-    } else {
-      throw new Error('Invalid response structure');
+    } catch (error) {
+      console.error("Upload error details:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Response status:", error.response?.status);
+      }
+      // Only show error toast if the upload actually failed
+      if (
+        error instanceof Error &&
+        !error.message.includes("Avatar URL not found")
+      ) {
+        toast.error("Failed to upload image.");
+      }
+    } finally {
+      setIsUploading(false);
     }
-  } catch (error) {
-    console.error("Upload error details:", error);
-    if (axios.isAxiosError(error)) {
-      console.error("Response data:", error.response?.data);
-      console.error("Response status:", error.response?.status);
-    }
-    // Only show error toast if the upload actually failed
-    if (error instanceof Error && !error.message.includes('Avatar URL not found')) {
-      toast.error("Failed to upload image.");
-    }
-  } finally {
-    setIsUploading(false);
-  }
-};
-  
+  };
+
   interface RankTotals {
     [key: string]: string; // This allows string indexing
   }
@@ -376,27 +382,29 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
   );
   const [isCopied, setIsCopied] = useState(false);
 
-  useEffect(() => {
-    console.log(withdrawalBonus)
-    console.log(error, withdrawalRab);
-    const fetchAddress = async () => {
-      //console.log(withdrawalRab);
-      if (walletProvider) {
-        try {
-          const provider = new ethers.providers.Web3Provider(walletProvider);
-          const signer = provider.getSigner();
-          const address = await signer.getAddress(); // Get connected wallet address
-          // console.log("the address is", address);
-          setConnectedAddress(address);
-          const avatar = multiavatar(address);
-          setAvatarSVG(avatar);
-        } catch (error) {
-          console.error("Error fetching connected address:", error);
-        }
-      }
-    };
-    fetchAddress();
-  }, [walletProvider]);
+  if (!error && !withdrawalBonus) {
+    console.log("update!!");
+  }
+
+  // useEffect(() => {
+  //   const fetchAddress = async () => {
+  //     //console.log(withdrawalRab);
+  //     if (walletProvider) {
+  //       try {
+  //         const provider = new ethers.providers.Web3Provider(walletProvider);
+  //         const signer = provider.getSigner();
+  //         const address = await signer.getAddress(); // Get connected wallet address
+  //         // console.log("the address is", address);
+  //         setConnectedAddress(address);
+  //         const avatar = multiavatar(address);
+  //         setAvatarSVG(avatar);
+  //       } catch (error) {
+  //         console.error("Error fetching connected address:", error);
+  //       }
+  //     }
+  //   };
+  //   fetchAddress();
+  // }, [walletProvider]);
 
   const fetchRankDetails = async () => {
     try {
@@ -630,13 +638,20 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
 
   useEffect(() => {
     const generateRankGraphData = async () => {
-      if (!isConnected || !walletProvider || !isProviderReady || !address) return;
-  
+      if (!isConnected || !walletProvider || !isProviderReady || !address)
+        return;
+
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider
+        );
         const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(contractAddress, contractAbi, signer);
-  
+        const contract = new ethers.Contract(
+          contractAddress,
+          contractAbi,
+          signer
+        );
+
         const allRanks = [
           { name: "STAR", index: 0, color: "#B8B8B8" },
           { name: "BRONZE", index: 1, color: "#CD7F32" },
@@ -648,11 +663,11 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
           { name: "ROYAL DIAMOND", index: 7, color: "#F59E0B" },
           { name: "CROWN DIAMOND", index: 8, color: "#6366F1" },
         ];
-  
+
         const processedAddresses = new Set(); // Track processed addresses
         const levelCounts = new Array(13).fill(0); // Track counts per level (0-12)
         const rankCounts = new Array(9).fill(0); // Track counts per rank
-  
+
         // Function to get user's rank and count it
         const processUserRank = async (address: string) => {
           try {
@@ -668,24 +683,24 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
             return 0;
           }
         };
-  
+
         // Modified function to get all referrals level by level
         const getAllReferrals = async (startAddress: string) => {
           let currentLevel = 1;
           let currentLevelAddresses = [startAddress];
-          
+
           while (currentLevel <= 12 && currentLevelAddresses.length > 0) {
-            console.log(`Processing level ${currentLevel}`);
+            //console.log(`Processing level ${currentLevel}`);
             const nextLevelAddresses = [];
-            
+
             for (const address of currentLevelAddresses) {
               if (!processedAddresses.has(address)) {
                 processedAddresses.add(address);
-                
+
                 try {
                   // Get referrals for current address
                   const referrals = await contract.getUserReferrals(address);
-                  
+
                   // Process each referral
                   for (const referral of referrals) {
                     if (!processedAddresses.has(referral)) {
@@ -695,25 +710,25 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
                     }
                   }
                 } catch (error) {
-                  console.error(`Error processing address ${address} at level ${currentLevel}:`, error);
+                  console.error(
+                    `Error processing address ${address} at level ${currentLevel}:`,
+                    error
+                  );
                 }
               }
             }
-            
+
             currentLevelAddresses = nextLevelAddresses;
             currentLevel++;
           }
         };
-  
+
         // Initialize with starting address
         await processUserRank(address); // Count the root address
         await getAllReferrals(address);
-  
+
         // Log detailed statistics
-        console.log("Level-wise distribution:", levelCounts);
-        console.log("Rank-wise distribution:", rankCounts);
-        console.log("Total unique addresses:", processedAddresses.size);
-  
+
         // Create graph data
         const graphData = {
           labels: allRanks.map((rank) => rank.name),
@@ -723,7 +738,9 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
               data: rankCounts,
               backgroundColor: allRanks.map((rank) => rank.color + "80"),
               borderColor: allRanks.map((rank) =>
-                rank.color === "#000000" ? "#111111" : darkenColor(rank.color, -30)
+                rank.color === "#000000"
+                  ? "#111111"
+                  : darkenColor(rank.color, -30)
               ),
               borderWidth: 2,
               borderRadius: {
@@ -735,14 +752,13 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
             },
           ],
         };
-  
+
         setRankGraphData(graphData);
-        
       } catch (error) {
         console.error("Error generating rank graph data:", error);
       }
     };
-  
+
     generateRankGraphData();
   }, [isConnected, walletProvider, isProviderReady, address]);
   useEffect(() => {
@@ -921,7 +937,7 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
           walletProvider
         );
         const network = await ethersProvider.getNetwork();
-        console.log("Connected to network:", network.name);
+        // console.log("Connected to network:", network.name);
         setIsProviderReady(true);
       } catch (error) {
         console.error("Error initializing provider:", error);
@@ -993,10 +1009,10 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
         parseFloat(ethers.utils.formatEther(totalRABData || "0")).toFixed(4)
       );
 
-      console.log(
-        "the value issssss:",
-        ethers.utils.formatEther(withdrawalLevelData || "0")
-      );
+      // console.log(
+      //   "the value issssss:",
+      //   ethers.utils.formatEther(withdrawalLevelData || "0")
+      // );
       setWithdrawalLevel(
         parseFloat(
           ethers.utils.formatEther(withdrawalLevelData || "0")
@@ -1214,13 +1230,13 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
         signer
       );
 
-      console.log("before");
+      // console.log("before");
       const tx = await contract.withdrawLevelIncome(); // Level Distribution Pool withdrawal function
       await tx.wait();
 
-      console.log("After ");
+      // console.log("After ");
 
-      console.log("Withdraw Level Transaction Hashhhhhhh:", tx.hash);
+      // console.log("Withdraw Level Transaction Hashhhhhhh:", tx.hash);
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
       setWithdrawalLevel(
@@ -1269,7 +1285,7 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
       const tx = await contract.claimMonthlyRab(); // Level Distribution Pool withdrawal function
       await tx.wait();
 
-      console.log("Withdraw Level Transaction Hash:", tx.hash);
+      // console.log("Withdraw Level Transaction Hash:", tx.hash);
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
       setWithdrawalRab(
@@ -1342,45 +1358,45 @@ const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => 
 
         // Fetch user data
         const userData = await contract.users(address);
-        console.log("Raw user data:", userData);
+        // console.log("Raw user data:", userData);
 
         const formatTimestamp = (timestamp: any): string => {
           try {
             // Log the incoming timestamp
-            console.log("Original timestamp:", timestamp);
-            
+            //console.log("Original timestamp:", timestamp);
+
             // Convert to number and log
             const timestampNum = Number(timestamp);
-            console.log("Converted to number:", timestampNum);
-            
+            // console.log("Converted to number:", timestampNum);
+
             if (isNaN(timestampNum) || timestampNum === 0) {
-              console.log("Invalid timestamp detected");
+              //console.log("Invalid timestamp detected");
               return "Not updated";
             }
-        
+
             // Log milliseconds conversion
-            console.log("In milliseconds:", timestampNum * 1000);
-            
+            // console.log("In milliseconds:", timestampNum * 1000);
+
             // Log final date
-            const finalDate = new Date(timestampNum * 1000).toLocaleDateString();
-            console.log("Final formatted date:", finalDate);
-            
+            const finalDate = new Date(
+              timestampNum * 1000
+            ).toLocaleDateString();
+            // console.log("Final formatted date:", finalDate);
+
             return finalDate;
-            
           } catch (error) {
-            console.error('Error formatting timestamp:', error);
+            //console.error('Error formatting timestamp:', error);
             return "Invalid timestamp";
           }
         };
         // Then when using it:
-console.log("Raw userData.lastRankUpdateTime:", userData.lastRankUpdateTime);
-const formattedDate = formatTimestamp(Number(userData.lastRankUpdateTime));
-console.log("Final result:", formattedDate);
+        //console.log("Raw userData.lastRankUpdateTime:", userData.lastRankUpdateTime);
+        // const formattedDate = formatTimestamp(Number(userData.lastRankUpdateTime));
+        // //console.log("Final result:", formattedDate);
 
-
-console.log("Raw userData.rankExpiryTime:", userData.rankExpiryTime);
-const formattedDate2 = formatTimestamp(Number(userData.rankExpiryTime));
-console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
+        // //console.log("Raw userData.rankExpiryTime:", userData.rankExpiryTime);
+        // const formattedDate2 = formatTimestamp(Number(userData.rankExpiryTime));
+        //console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
 
         const [totalBonusData, totalRABData, totalLevelData] =
           await Promise.all([
@@ -1397,7 +1413,7 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
           parseFloat(ethers.utils.formatEther(totalRABData || "0")) +
           parseFloat(ethers.utils.formatEther(totalLevelData || "0"));
 
-        console.log("the total is", total);
+        // console.log("the total is", total);
         // ─── 1) Build a total of rewards at indices [1], [3], [5] ────────────
         // let rewardSumBN = BigNumber.from(0);
         // if (Array.isArray(userData[6])) {
@@ -1416,8 +1432,7 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
         //   rewardSumBN = rewardSumBN.add(r1).add(r3).add(r5);
         // }
 
-        console.log("the total purchase is", Number(userData.userTotalInvestment));
-
+        // console.log("the total purchase is", Number(userData.userTotalInvestment));
 
         // Extract the necessary details
         const expectedTime = userData[0]?.toString(); // Expected time (e.g., last rank update time)
@@ -1425,10 +1440,9 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
         // Ensure current time is an integer before creating a BigNumber
         const currentTime = BigNumber.from(Math.floor(Date.now() / 1000)); // Use Math.floor to remove decimals
 
-        console.log("the excpeted time is",expectedTime);
-        console.log("the  time is",expiryTime);
-        console.log("the ime is",currentTime);
-
+        // console.log("the excpeted time is",expectedTime);
+        // console.log("the  time is",expiryTime);
+        // console.log("the ime is",currentTime);
 
         // Compute active/inactive status
         const isActive =
@@ -1438,8 +1452,10 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
         const formattedData = {
           referrer: userData[2] || "No referrer",
           currentRank: getRankName(userData[0]?.toString() || "0"),
-          lastRankUpdateTime: formatTimestamp(Number(userData.lastRankUpdateTime)),
-  rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
+          lastRankUpdateTime: formatTimestamp(
+            Number(userData.lastRankUpdateTime)
+          ),
+          rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
           totalInvestment: ethers.utils.formatEther(
             userData[5]?.toString() || "0"
           ),
@@ -1450,7 +1466,7 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
           rewards: total.toString(),
         };
 
-        console.log("Formatted user data:::::", formattedData.lastRankUpdateTime);
+        //console.log("Formatted user data:::::", formattedData.lastRankUpdateTime);
         setUserDetails(formattedData);
         setError(null);
       } catch (error) {
@@ -1479,7 +1495,7 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
       }
 
       try {
-        console.log("Checking registration status for:", newAddress);
+        //console.log("Checking registration status for:", newAddress);
 
         // Initialize Web3 provider and contract
         const ethersProvider = new ethers.providers.Web3Provider(
@@ -1494,7 +1510,7 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
 
         // Fetch user details from the contract
         const userData = await contract.users(newAddress);
-        console.log("Fetched User Data:", userData);
+        //console.log("Fetched User Data:", userData);
 
         // Ensure userData exists and check isActive status
         if (!userData || !userData.isActive) {
@@ -1511,10 +1527,10 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length > 0) {
-        console.log("MetaMask account changed to:", accounts[0]);
+        //console.log("MetaMask account changed to:", accounts[0]);
         checkRegistrationStatus(accounts[0]); // Check if the new account is registered
       } else {
-        console.log("No account connected, redirecting...");
+        // console.log("No account connected, redirecting...");
         navigate("/"); // Redirect if no account is connected
       }
     };
@@ -1571,21 +1587,20 @@ console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
         `${userDetails.rankExpiryTime} 23:59:59`
       ).getTime();
 
-      console.log("the expriy time is",expiryTime);
+      //console.log("the expriy time is",expiryTime);
       const currentTime = Date.now();
       const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
-//     
+      //
 
-console.log("the current time is",currentTime);
-console.log("the expriy is",expiryTime);
+      // console.log("the current time is",currentTime);
+      // console.log("the expriy is",expiryTime);
 
-
-      if (currentTime < expiryTime) {
+      if (currentTime > expiryTime) {
         setIsRankExpired(true);
-        console.log("bigger")
+        // console.log("expired");
       } else {
         setIsRankExpired(false);
-        console.log("false h g")
+        // console.log("not expired");
       }
 
       // Show marquee only within 1 hour of expiry
@@ -1731,12 +1746,12 @@ console.log("the expriy is",expiryTime);
         const totalPool = ltgValue + rtgValue + ldpValue;
         // setTotalPoolValue(totalPool.toFixed(4));
 
-        console.log("Pool values:", {
-          ltgValue,
-          rtgValue,
-          ldpValue,
-          totalPool,
-        });
+        // console.log("Pool values:", {
+        //   ltgValue,
+        //   rtgValue,
+        //   ldpValue,
+        //   totalPool,
+        // });
 
         const ranks = [
           { name: "STAR", index: 0, multiplier: 1 },
@@ -1866,7 +1881,7 @@ console.log("the expriy is",expiryTime);
   };
 
   useEffect(() => {
-    console.log(handleRankSelection);
+    // console.log(handleRankSelection);
     const handleClickOutside = (event: MouseEvent) => {
       const nav = document.getElementById("mobile-nav");
       const hamburger = document.getElementById("hamburger-button");
@@ -1882,7 +1897,7 @@ console.log("the expriy is",expiryTime);
         document.body.style.overflow = "unset";
       }
     };
-    console.log("menu", menuOpen);
+    //console.log("menu", menuOpen);
 
     document.addEventListener("mousedown", handleClickOutside);
 
@@ -2049,49 +2064,48 @@ console.log("the expriy is",expiryTime);
                     <div className="relative p-8 flex flex-col items-center justify-center min-h-[300px]">
                       {/* Profile Image */}
                       <div className="relative mb-6 group">
-  <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
-  <div className="relative">
-  {isUploading ? (
-    <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-    </div>
-  ) : (
-    previewImage || userData?.avatar ? (
-      <img
-        src={previewImage || userData?.avatar}
-        alt="Profile"
-        className="w-24 h-24 object-cover rounded-full border-2 border-white/80"
-        onError={(e) => {
-          console.error('Image failed to load:', e);
-          e.currentTarget.src = ''; // Clear the source on error
-          setUserData(prev => prev ? { ...prev, avatar: undefined } : null);
-        }}
-      />
-    ) : (
-      <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
-        <User className="w-12 h-12 text-white/80" />
-      </div>
-    )
-  )}
-  
-  {/* Camera Icon Button */}
-  <button
-    onClick={() => fileInputRef.current?.click()}
-    disabled={isUploading}
-    className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full hover:bg-indigo-700 transition-colors duration-200"
-  >
-    <Camera className="w-4 h-4 text-white" />
-  </button>
-</div>
-  <input
-    ref={fileInputRef}
-    type="file"
-    className="hidden"
-    accept="image/*"
-    onChange={handleImageUpload}
-  />
-</div>
+                        <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
+                        <div className="relative">
+                          {isUploading ? (
+                            <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                            </div>
+                          ) : previewImage || userData?.avatar ? (
+                            <img
+                              src={previewImage || userData?.avatar}
+                              alt="Profile"
+                              className="w-24 h-24 object-cover rounded-full border-2 border-white/80"
+                              onError={(e) => {
+                                console.error("Image failed to load:", e);
+                                e.currentTarget.src = ""; // Clear the source on error
+                                setUserData((prev) =>
+                                  prev ? { ...prev, avatar: undefined } : null
+                                );
+                              }}
+                            />
+                          ) : (
+                            <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
+                              <User className="w-12 h-12 text-white/80" />
+                            </div>
+                          )}
 
+                          {/* Camera Icon Button */}
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full hover:bg-indigo-700 transition-colors duration-200"
+                          >
+                            <Camera className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                        />
+                      </div>
 
                       {/* User Info */}
                       <h3 className="text-2xl font-bold text-white mb-3">
@@ -2138,19 +2152,19 @@ console.log("the expriy is",expiryTime);
                           >
                             Cancel
                           </Button>
-                          <Button 
-  onClick={handleUpdateNickname} 
-  disabled={isNicknameLoading}
->
-  {isNicknameLoading ? (
-    <>
-      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      Saving...
-    </>
-  ) : (
-    "Save Changes"
-  )}
-</Button>
+                          <Button
+                            onClick={handleUpdateNickname}
+                            disabled={isNicknameLoading}
+                          >
+                            {isNicknameLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              "Save Changes"
+                            )}
+                          </Button>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -2350,107 +2364,142 @@ console.log("the expriy is",expiryTime);
                 <div className="absolute inset-0 backdrop-blur-xl" />
 
                 <div className="relative z-10">
-                <CardHeader className="pb-8">
-  <div className="flex flex-col items-center justify-center w-full">
-    <div className="relative group mb-6 transform hover:scale-105 transition-all duration-300
-      md:mb-4 md:transform md:hover:scale-95">
-      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-700 animate-pulse" />
-      <div className="relative p-5 bg-slate-900/90 rounded-full ring-2 ring-white/20 hover:ring-white/40 transition-all duration-300
-        md:p-4">
-        <User className="h-10 w-10 text-cyan-400 xs:h-6 xs:w-6 
-          md:h-8 md:w-8" />
-      </div>
-    </div>
-    <CardTitle className="text-3xl font-bold text-center xs:text-xl 
-      md:text-2xl">
-      <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 animate-gradient">
-        User Details
-      </span>
-    </CardTitle>
-  </div>
-</CardHeader>
-
-<CardContent className="w-full max-w-[500px] mx-auto p-4 2xs:p-2 
- md:max-w-[450px] md:p-3">
- <div className="grid grid-cols-2 gap-4 2xs:grid-cols-1 2xs:gap-2 
-   md:grid-cols-2 md:gap-3">
-   {[
-     {
-       icon: Link,
-       label: "Referrer",
-       value: userDetails?.referrer
-         ? `${userDetails.referrer.slice(0, 6)}...${userDetails.referrer.slice(-4)}`
-         : "N/A",
-     },
-     {
-       icon: Award,
-       label: "Current Rank",
-       value: userDetails?.currentRank,
-     },
-     {
-       icon: Clock,
-       label: "Last Update",
-       value: userDetails?.lastRankUpdateTime,
-     },
-     {
-       icon: Calendar,
-       label: "Rank Expiry",
-       value: !isRankExpired ? (
-         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-500/10 to-red-600/10 animate-pulse border border-red-500/20 2xs:text-[10px]">
-           <span className="text-red-500 animate-bounce text-xs 2xs:text-[10px]">
-             ⚠️
-           </span>
-           <span className="font-bold tracking-wide bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent text-xs 2xs:text-[10px]">
-             RANK EXPIRED
-           </span>
-         </span>
-       ) : (
-         userDetails?.rankExpiryTime
-       ),
-     },
-     {
-       icon: DollarSign,
-       label: "Total Purchase",
-       value: Number(userDetails?.totalInvestment).toFixed(2) || "0.00",
-     },
-     {
-       icon: Activity,
-       label: "Status",
-       value: userDetails?.isActive ? "Active" : "Inactive",
-     },
-   ].map((item, index) => (
-     <div
-       key={index}
-       className="relative group p-3 rounded-xl border border-white/10 
+                  <CardHeader className="pb-8">
+                    <div className="flex flex-col items-center justify-center w-full">
+                      <div
+                        className="relative group mb-6 transform hover:scale-105 transition-all duration-300
+      md:mb-4 md:transform md:hover:scale-95"
+                      >
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-700 animate-pulse" />
+                        <div
+                          className="relative p-5 bg-slate-900/90 rounded-full ring-2 ring-white/20 hover:ring-white/40 transition-all duration-300
+        md:p-4"
+                        >
+                          <User
+                            className="h-10 w-10 text-cyan-400 xs:h-6 xs:w-6 
+          md:h-8 md:w-8"
+                          />
+                        </div>
+                      </div>
+                      <CardTitle
+                        className="text-3xl font-bold text-center xs:text-xl 
+      md:text-2xl"
+                      >
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 animate-gradient">
+                          User Details
+                        </span>
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent
+                    className="w-full max-w-[500px] mx-auto p-4 2xs:p-2 
+ md:max-w-[450px] md:p-3"
+                  >
+                    <div
+                      className="grid grid-cols-2 gap-4 2xs:grid-cols-1 2xs:gap-2 
+   md:grid-cols-2 md:gap-3"
+                    >
+                      {[
+                        {
+                          icon: Link,
+                          label: "Referrer",
+                          value: userDetails?.referrer
+                            ? `${userDetails.referrer.slice(
+                                0,
+                                6
+                              )}...${userDetails.referrer.slice(-4)}`
+                            : "Loading...",
+                        },
+                        {
+                          icon: Award,
+                          label: "Current Rank",
+                          value: userDetails?.currentRank || "Loading...",
+                        },
+                        {
+                          icon: Clock,
+                          label: "Last Update",
+                          value:
+                            userDetails?.lastRankUpdateTime || "Loading...",
+                        },
+                        {
+                          icon: Calendar,
+                          label: "Rank Expiry",
+                          value:
+                            isRankExpired === "loading" ? (
+                              "Loading..."
+                            ) : isRankExpired ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-500/10 to-red-600/10 animate-pulse border border-red-500/20 2xs:text-[10px]">
+                                <span className="text-red-500 animate-bounce text-xs 2xs:text-[10px]">
+                                  ⚠️
+                                </span>
+                                <span className="font-bold tracking-wide bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent text-xs 2xs:text-[10px]">
+                                  RANK EXPIRED
+                                </span>
+                              </span>
+                            ) : (
+                              userDetails?.rankExpiryTime || "Loading..."
+                            ),
+                        },
+                        {
+                          icon: DollarSign,
+                          label: "Total Purchase",
+                          value: userDetails?.totalInvestment
+                            ? Number(userDetails.totalInvestment).toFixed(2)
+                            : "Loading...",
+                        },
+                        {
+                          icon: Activity,
+                          label: "Status",
+                          value:
+                            userDetails === null
+                              ? "Loading..."
+                              : userDetails.isActive
+                              ? "Active"
+                              : "Inactive",
+                        },
+                      ].map((item, index) => (
+                        <div
+                          key={index}
+                          className="relative group p-3 rounded-xl border border-white/10 
          bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl
          hover:from-slate-800/80 hover:to-slate-900/80
          transition-all duration-300
          hover:border-white/20
          2xs:p-2 
          md:p-2.5"
-     >
-       <h4 className="flex items-center gap-2 text-sm font-medium text-slate-200 2xs:text-xs 
-         md:text-xs">
-         <div className="p-1.5 rounded-lg bg-slate-800/90 ring-1 ring-white/10 
+                        >
+                          <h4
+                            className="flex items-center gap-2 text-sm font-medium text-slate-200 2xs:text-xs 
+         md:text-xs"
+                          >
+                            <div
+                              className="p-1.5 rounded-lg bg-slate-800/90 ring-1 ring-white/10 
            group-hover:ring-white/20 transition-all duration-300 
            2xs:p-1 
-           md:p-1">
-           <item.icon className="h-4 w-4 text-cyan-400 2xs:h-3 2xs:w-3 
-             md:h-3.5 md:w-3.5" />
-         </div>
-         {item.label}
-       </h4>
-       <p className="mt-2 font-mono text-sm text-white/90 font-medium break-words 2xs:text-xs 
-         md:text-xs">
-         {item.value || "N/A"}
-       </p>
-       <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-blue-500/0 
-         opacity-0 group-hover:opacity-100 transition-all duration-500" />
-     </div>
-   ))}
- </div>
-</CardContent>
-</div>
+           md:p-1"
+                            >
+                              <item.icon
+                                className="h-4 w-4 text-cyan-400 2xs:h-3 2xs:w-3 
+             md:h-3.5 md:w-3.5"
+                              />
+                            </div>
+                            {item.label}
+                          </h4>
+                          <p
+                            className="mt-2 font-mono text-sm text-white/90 font-medium break-words 2xs:text-xs 
+         md:text-xs"
+                          >
+                            {item.value}
+                          </p>
+                          <div
+                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-blue-500/0 
+         opacity-0 group-hover:opacity-100 transition-all duration-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </div>
               </Card>
 
               {/* Teams Ranks Progression Card - Enhanced dark mode and effects */}
@@ -2458,343 +2507,373 @@ console.log("the expriy is",expiryTime);
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400 dark:from-slate-800/30 dark:to-slate-900/30" />
 
                 <div
-  className="relative p-3 sm:p-6 backdrop-blur-xl border-2 border-gray-300/10 
+                  className="relative p-3 sm:p-6 backdrop-blur-xl border-2 border-gray-300/10 
   shadow-xl dark:shadow-slate-900/50 hover:shadow-2xl transition-all duration-500 h-full"
->
-  <div className="flex justify-center items-center mb-4 sm:mb-6">
-    <h2
-      className="font-bold text-lg sm:text-xl md:text-2xl bg-blue-500 dark:from-white dark:to-gray-300 
-      bg-clip-text text-transparent transition-colors duration-300 text-center px-2"
-    >
-      Teams Ranks Progression
-    </h2>
-  </div>
+                >
+                  <div className="flex justify-center items-center mb-4 sm:mb-6">
+                    <h2
+                      className="font-bold text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-blue-500 to-blue-600 
+    bg-clip-text text-transparent transition-colors duration-300 text-center px-2 py-1 leading-normal"
+                    >
+                      Teams Ranks Progression
+                    </h2>
+                  </div>
 
-  <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">
-    <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[400px]">
-      <Bar
-        data={rankGraphData}
-        options={{
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                stepSize: 1,
-                font: {
-                  size: window.innerWidth < 640 ? 10 : 12,
-                  weight: "bold",
-                  family: "'Inter', sans-serif",
-                },
-                color: "#FFFFFF",
-                padding: window.innerWidth < 640 ? 6 : 10,
-              },
-              title: {
-                display: true,
-                text: "Number of Users",
-                font: {
-                  size: window.innerWidth < 640 ? 12 : 14,
-                  weight: "bold",
-                  family: "'Inter', sans-serif",
-                },
-                color: "#FFFFFF",
-                padding: window.innerWidth < 640 ? 8 : 12,
-              },
-              grid: {
-                color: "rgba(255, 255, 255, 0.1)",
-                lineWidth: 1,
-              },
-            },
-            x: {
-              grid: { display: false },
-              ticks: {
-                autoSkip: true,
-                maxRotation: 45,
-                minRotation: 0,
-                font: {
-                  size: window.innerWidth < 640 ? 8 : 10,
-                  weight: "bold",
-                  family: "'Inter', sans-serif",
-                },
-                color: "#FFFFFF",
-                padding: window.innerWidth < 640 ? 4 : 8,
-              },
-            },
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: "rgba(15, 23, 42, 0.95)",
-              titleColor: "#FFFFFF",
-              bodyColor: "#CBD5E1",
-              borderColor: "#475569",
-              borderWidth: 1,
-              padding: window.innerWidth < 640 ? 8 : 12,
-              cornerRadius: window.innerWidth < 640 ? 8 : 12,
-              titleSpacing: window.innerWidth < 640 ? 6 : 8,
-              bodySpacing: window.innerWidth < 640 ? 6 : 8,
-              displayColors: true,
-              callbacks: {
-                label: function (context) {
-                  return `✨ Users: ${context.parsed.y}`;
-                },
-              },
-            },
-          },
-          elements: {
-            bar: {
-              backgroundColor: (context) => {
-                const ctx = context.chart.ctx;
-                const gradient = ctx.createLinearGradient(0, 0, 0, window.innerWidth < 640 ? 200 : 300);
-                gradient.addColorStop(0, "rgba(56, 189, 248, 0.9)"); // Cyan
-                gradient.addColorStop(1, "rgba(59, 130, 246, 0.9)"); // Blue
-                return gradient;
-              },
-              borderRadius: window.innerWidth < 640 ? 6 : 8,
-              borderWidth: 0,
-              hoverBackgroundColor: (context) => {
-                const ctx = context.chart.ctx;
-                const gradient = ctx.createLinearGradient(0, 0, 0, window.innerWidth < 640 ? 200 : 300);
-                gradient.addColorStop(0, "rgba(56, 189, 248, 1)"); // Brighter Cyan
-                gradient.addColorStop(1, "rgba(59, 130, 246, 1)"); // Brighter Blue
-                return gradient;
-              },
-              hoverBorderWidth: 2,
-              hoverBorderColor: "#FFFFFF",
-            },
-          },
-          hover: {
-            mode: "index",
-            intersect: false,
-          },
-        }}
-      />
-    </div>
-  </div>
-</div>
+                  <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">
+                    <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[400px]">
+                      <Bar
+                        data={rankGraphData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              ticks: {
+                                stepSize: 1,
+                                font: {
+                                  size: window.innerWidth < 640 ? 10 : 12,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 6 : 10,
+                              },
+                              title: {
+                                display: true,
+                                text: "Number of Users",
+                                font: {
+                                  size: window.innerWidth < 640 ? 12 : 14,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 8 : 12,
+                              },
+                              grid: {
+                                color: "rgba(255, 255, 255, 0.1)",
+                                lineWidth: 1,
+                              },
+                            },
+                            x: {
+                              grid: { display: false },
+                              ticks: {
+                                autoSkip: true,
+                                maxRotation: 45,
+                                minRotation: 0,
+                                font: {
+                                  size: window.innerWidth < 640 ? 8 : 10,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 4 : 8,
+                              },
+                            },
+                          },
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                              backgroundColor: "rgba(15, 23, 42, 0.95)",
+                              titleColor: "#FFFFFF",
+                              bodyColor: "#CBD5E1",
+                              borderColor: "#475569",
+                              borderWidth: 1,
+                              padding: window.innerWidth < 640 ? 8 : 12,
+                              cornerRadius: window.innerWidth < 640 ? 8 : 12,
+                              titleSpacing: window.innerWidth < 640 ? 6 : 8,
+                              bodySpacing: window.innerWidth < 640 ? 6 : 8,
+                              displayColors: true,
+                              callbacks: {
+                                label: function (context) {
+                                  return `✨ Users: ${context.parsed.y}`;
+                                },
+                              },
+                            },
+                          },
+                          elements: {
+                            bar: {
+                              backgroundColor: (context) => {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(
+                                  0,
+                                  0,
+                                  0,
+                                  window.innerWidth < 640 ? 200 : 300
+                                );
+                                gradient.addColorStop(
+                                  0,
+                                  "rgba(56, 189, 248, 0.9)"
+                                ); // Cyan
+                                gradient.addColorStop(
+                                  1,
+                                  "rgba(59, 130, 246, 0.9)"
+                                ); // Blue
+                                return gradient;
+                              },
+                              borderRadius: window.innerWidth < 640 ? 6 : 8,
+                              borderWidth: 0,
+                              hoverBackgroundColor: (context) => {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(
+                                  0,
+                                  0,
+                                  0,
+                                  window.innerWidth < 640 ? 200 : 300
+                                );
+                                gradient.addColorStop(
+                                  0,
+                                  "rgba(56, 189, 248, 1)"
+                                ); // Brighter Cyan
+                                gradient.addColorStop(
+                                  1,
+                                  "rgba(59, 130, 246, 1)"
+                                ); // Brighter Blue
+                                return gradient;
+                              },
+                              hoverBorderWidth: 2,
+                              hoverBorderColor: "#FFFFFF",
+                            },
+                          },
+                          hover: {
+                            mode: "index",
+                            intersect: false,
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="w-full space-y-4 sm:space-y-6">
-  <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-    {/* Enhanced Referral Link Section */}
-    <Card
-      className="relative overflow-hidden group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+                {/* Enhanced Referral Link Section */}
+                <Card
+                  className="relative overflow-hidden group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
       bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
       hover:shadow-2xl hover:border-blue-500/20 transition-all duration-500"
-    >
-      {/* Animated background effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                >
+                  {/* Animated background effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      <div className="relative z-10">
-        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-          <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-          </div>
-          <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-            Referral Link
-          </h3>
-        </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                      <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </div>
+                      <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                        Referral Link
+                      </h3>
+                    </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-          <div className="relative group/qr w-24 sm:w-32">
-            <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl blur-lg opacity-0 group-hover/qr:opacity-20 transition-opacity duration-500" />
-            <img
-              src={userData?.referralQR}
-              alt="QR Code"
-              className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg sm:rounded-xl border-2 border-white/10 shadow-lg transition-transform duration-300 group-hover/qr:scale-105"
-            />
-          </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                      <div className="relative group/qr w-24 sm:w-32">
+                        <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl blur-lg opacity-0 group-hover/qr:opacity-20 transition-opacity duration-500" />
+                        <img
+                          src={userData?.referralQR}
+                          alt="QR Code"
+                          className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg sm:rounded-xl border-2 border-white/10 shadow-lg transition-transform duration-300 group-hover/qr:scale-105"
+                        />
+                      </div>
 
-          <div className="flex flex-col gap-2 sm:gap-3 w-full">
-            <div className="relative">
-            <input
-  className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white/50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-gray-200/20 
+                      <div className="flex flex-col gap-2 sm:gap-3 w-full">
+                        <div className="relative">
+                          <input
+                            className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white/50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-gray-200/20 
   focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/20 transition-all duration-300
   text-xs sm:text-sm font-medium backdrop-blur-sm truncate"
-  value={`${inviteLink.slice(0, -2)}...`}  // Cuts last 2 chars and adds ellipsis
-  onClick={() => {
-    // When clicked, selects the full text
-    navigator.clipboard.writeText(inviteLink);
-  }}
-  readOnly
-  title={inviteLink}
-/>
-              <button
-                onClick={copyToClipboard}
-                className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-md sm:rounded-lg
+                            value={`${inviteLink.slice(0, -2)}...`} // Cuts last 2 chars and adds ellipsis
+                            onClick={() => {
+                              // When clicked, selects the full text
+                              navigator.clipboard.writeText(inviteLink);
+                            }}
+                            readOnly
+                            title={inviteLink}
+                          />
+                          <button
+                            onClick={copyToClipboard}
+                            className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-md sm:rounded-lg
                 bg-gradient-to-r from-blue-500 to-cyan-500 text-white
                 hover:from-blue-600 hover:to-cyan-600 transition-all duration-300
                 focus:ring-2 focus:ring-blue-500/20"
-              >
-                {isCopied ? (
-                  <CheckCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-                ) : (
-                  <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
-                )}
-              </button>
-            </div>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              Share your referral link to grow your community and earn rewards
-            </p>
-          </div>
-        </div>
-      </div>
-    </Card>
+                          >
+                            {isCopied ? (
+                              <CheckCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                            ) : (
+                              <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          Share your referral link to grow your community and
+                          earn rewards
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
 
-    {/* Enhanced Rank Update Section */}
-    <Card
-      className="relative overflow-visible group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
+                {/* Enhanced Rank Update Section */}
+                <Card
+                  className="relative overflow-visible group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
       bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
       hover:shadow-2xl hover:border-purple-500/20 transition-all duration-500"
-    >
-      {/* Animated background effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                >
+                  {/* Animated background effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-              <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Rank Upgrade
-            </h3>
-          </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                          <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </div>
+                        <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                          Rank Upgrade
+                        </h3>
+                      </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-purple-500/10">
-            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
-            <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
-              {userDetails?.currentRank || "Loading..."}
-            </span>
-          </div>
-        </div>
+                      <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-purple-500/10">
+                        <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
+                        <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
+                          {userDetails?.currentRank || "Loading..."}
+                        </span>
+                      </div>
+                    </div>
 
-        <div className="space-y-3 sm:space-y-4">
-          {/* Enhanced Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen((prev) => !prev)}
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200/20 
+                    <div className="space-y-3 sm:space-y-4">
+                      {/* Enhanced Dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setDropdownOpen((prev) => !prev)}
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200/20 
               bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm
               hover:bg-white/70 dark:hover:bg-slate-800/70
               focus:ring-2 focus:ring-purple-500/20 
               transition-all duration-300
               flex items-center justify-between"
-            >
-              <span className="text-xs sm:text-sm font-medium">
-                {selectedRank || "Select your rank"}
-              </span>
-              <ChevronDown
-                className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-300 ${
-                  dropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+                        >
+                          <span className="text-xs sm:text-sm font-medium">
+                            {selectedRank || "Select your rank"}
+                          </span>
+                          <ChevronDown
+                            className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-300 ${
+                              dropdownOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
 
-            {dropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setDropdownOpen(false)}
-                />
-                <div
-                  className="absolute z-40 w-full mt-2 py-2 rounded-lg sm:rounded-xl border border-gray-200/20 
+                        {dropdownOpen && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-30"
+                              onClick={() => setDropdownOpen(false)}
+                            />
+                            <div
+                              className="absolute z-40 w-full mt-2 py-2 rounded-lg sm:rounded-xl border border-gray-200/20 
                   bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-xl
                   max-h-48 sm:max-h-64 overflow-y-auto"
-                >
-                  {filteredRanks.map((rank, index) => {
-                    const currentRankDetail = rankDetails.find(
-                      (detail) =>
-                        detail.name === userDetails?.currentRank &&
-                        detail.rankUpgradePriceUSD !== undefined
-                    );
+                            >
+                              {filteredRanks.map((rank, index) => {
+                                const currentRankDetail = rankDetails.find(
+                                  (detail) =>
+                                    detail.name === userDetails?.currentRank &&
+                                    detail.rankUpgradePriceUSD !== undefined
+                                );
 
-                    const targetRankDetail = rankDetails.find(
-                      (detail) =>
-                        detail.name === rank.name &&
-                        detail.rankUpgradePriceUSD !== undefined
-                    );
+                                const targetRankDetail = rankDetails.find(
+                                  (detail) =>
+                                    detail.name === rank.name &&
+                                    detail.rankUpgradePriceUSD !== undefined
+                                );
 
-                    const priceDifferenceUSD =
-                      currentRankDetail && targetRankDetail
-                        ? parseFloat(targetRankDetail.rankUpgradePriceUSD) -
-                          parseFloat(currentRankDetail.rankUpgradePriceUSD)
-                        : 0;
+                                const priceDifferenceUSD =
+                                  currentRankDetail && targetRankDetail
+                                    ? parseFloat(
+                                        targetRankDetail.rankUpgradePriceUSD
+                                      ) -
+                                      parseFloat(
+                                        currentRankDetail.rankUpgradePriceUSD
+                                      )
+                                    : 0;
 
-                    const priceDifferenceITC =
-                      priceDifferenceUSD && priceData?.TUSDTperTITC
-                        ? (
-                            priceDifferenceUSD *
-                            Number(priceData?.TUSDTperTITC)
-                          ).toFixed(4)
-                        : "Loading...";
+                                const priceDifferenceITC =
+                                  priceDifferenceUSD && priceData?.TUSDTperTITC
+                                    ? (
+                                        priceDifferenceUSD *
+                                        Number(priceData?.TUSDTperTITC)
+                                      ).toFixed(4)
+                                    : "Loading...";
 
-                    return (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          setSelectedRank(rank.name);
-                          setDropdownOpen(false);
-                        }}
-                        className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 
+                                return (
+                                  <div
+                                    key={index}
+                                    onClick={() => {
+                                      setSelectedRank(rank.name);
+                                      setDropdownOpen(false);
+                                    }}
+                                    className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 
                         cursor-pointer transition-colors duration-200"
-                      >
-                        <div className="flex items-center justify-between mb-1 sm:mb-2">
-                          <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
-                            {rank.name}
-                          </span>
-                          <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
-                        </div>
-                        <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          <div className="flex justify-between">
-                            <span>Upgrade Cost:</span>
-                            <span className="font-medium">
-                              ${priceDifferenceUSD.toFixed(2)} USD
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>ITC Price:</span>
-                            <span className="font-medium">
-                              {priceDifferenceITC} ITC
-                            </span>
-                          </div>
-                        </div>
+                                  >
+                                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                                      <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
+                                        {rank.name}
+                                      </span>
+                                      <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
+                                    </div>
+                                    <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                      <div className="flex justify-between">
+                                        <span>Upgrade Cost:</span>
+                                        <span className="font-medium">
+                                          ${priceDifferenceUSD.toFixed(2)} USD
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>ITC Price:</span>
+                                        <span className="font-medium">
+                                          {priceDifferenceITC} ITC
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
 
-          {/* Enhanced Upgrade Button */}
-          <button
-            onClick={upgradeRank}
-            disabled={
-              !selectedRank ||
-              !userDetails ||
-              (parseFloat(userDetails.rewards || "0") < selectedRankPriceUSD &&
-                parseFloat(userDetails.rewards || "0") < selectedRankPriceITC)
-            }
-            className={`w-full px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium
+                      {/* Enhanced Upgrade Button */}
+                      <button
+                        onClick={upgradeRank}
+                        disabled={
+                          !selectedRank ||
+                          !userDetails ||
+                          (parseFloat(userDetails.rewards || "0") <
+                            selectedRankPriceUSD &&
+                            parseFloat(userDetails.rewards || "0") <
+                              selectedRankPriceITC)
+                        }
+                        className={`w-full px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium
             transition-all duration-300 transform hover:scale-[1.02]
             ${
               selectedRank &&
-              (parseFloat(userDetails?.rewards || "0") >= selectedRankPriceUSD ||
+              (parseFloat(userDetails?.rewards || "0") >=
+                selectedRankPriceUSD ||
                 parseFloat(userDetails?.rewards || "0") >= selectedRankPriceITC)
                 ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:from-purple-700 hover:to-pink-700"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
             }`}
-          >
-            Upgrade Rank
-          </button>
-        </div>
-      </div>
-    </Card>
-  </div>
-</div>
+                      >
+                        Upgrade Rank
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
           </div>
         </div>
       )}

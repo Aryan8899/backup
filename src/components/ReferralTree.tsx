@@ -43,7 +43,7 @@ const ReferralTree = () => {
     nickname: string;
     avatar: string;
   } | null>(null);
-  const [avatarSVG, setAvatarSVG] = useState<string>("");
+  //const [avatarSVG, setAvatarSVG] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoize heavy functions
@@ -57,6 +57,8 @@ const ReferralTree = () => {
         avatar: user.avatar || "",
         nickname: user.nickname || "Unknown",
       };
+
+      console.log(userData,isProviderReady,isScrollable)
     } catch (error) {
       console.error(`Error fetching user details for ${address}:`, error);
       return {

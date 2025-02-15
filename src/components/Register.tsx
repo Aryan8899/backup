@@ -197,40 +197,58 @@ const RegisterRank = () => {
 
   const handleRegistration = async () => {
     if (!contract || !referralAddress || !walletProvider) {
-      toast.error(
-        "Please connect wallet, select a rank, and enter referral address."
-      );
+      toast.error("Please connect wallet, select a rank, and enter referral address.");
       return;
     }
-
+ 
     try {
       setIsProcessing(true);
-
+ 
+      // First check if user exists in database
+      try {
+        const checkUserResponse = await axios.get(
+          `https://server.cryptomx.site/api/users/check/${address}`
+        );
+       
+        // If user exists in database but not in contract, delete from database
+        if (checkUserResponse.data.exists) {
+          const isRegisteredOnChain = await contract.users(address);
+          if (!isRegisteredOnChain.isActive) {
+            await axios.delete(
+              `https://server.cryptomx.site/api/users/${address}`
+            );
+          } else {
+            // User exists both in database and contract
+            toast.error("User already registered");
+            navigate("/dashboard");
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking user status:", error);
+        // Continue with registration if check fails
+      }
+ 
       const provider = new ethers.providers.Web3Provider(walletProvider);
       const signer = provider.getSigner();
       const tokenContract = new ethers.Contract(tokenAdd, tokenAbi, signer);
-
+ 
       const currentAllowance = await tokenContract.allowance(
         address,
         contractAddress
       );
-
+ 
       if (currentAllowance.eq(0)) {
         const maxUint256 = ethers.constants.MaxUint256;
-        const approveTx = await tokenContract.approve(
-          contractAddress,
-          maxUint256
-        );
+        const approveTx = await tokenContract.approve(contractAddress, maxUint256);
         await approveTx.wait();
       }
-
-      const tx = await contract.registerAndPurchaseRank(
-        referralAddress,
-        selectedRank
-      );
+ 
+      // Process contract registration
+      const tx = await contract.registerAndPurchaseRank(referralAddress, selectedRank);
       await tx.wait();
-      toast.success("Registration and purchase completed!");
-
+ 
+      // Only after successful contract registration, register in database
       try {
         const response = await axios.post(
           `https://server.cryptomx.site/api/users/register`,
@@ -238,13 +256,15 @@ const RegisterRank = () => {
             address: address,
           }
         );
-
+ 
         console.log("User registered:", response.data);
-        toast.success("User registered successfully!");
+        toast.success("Registration completed successfully!");
         navigate("/dashboard");
       } catch (error) {
-        console.error("Error during post request:", error);
-        toast.error("Error registering user. Please try again.");
+        console.error("Error during database registration:", error);
+        // Even if database registration fails, contract registration succeeded
+        toast.warning("Contract registration successful but database update failed. Please contact support.");
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error("Registration failed:", error);
