@@ -1,34 +1,73 @@
-import { memo, useEffect, useState } from "react";
-// import SimpleBar from "simplebar-react";
-import axios from "axios";
-// import "simplebar/dist/simplebar.min.css";
-//import React from "react";
-// import {
-//   Menu,
-//   X, // Add this import
-// } from "lucide-react";
-//import  useNavigate  from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
-import { Edit2 } from "lucide-react";
-import multiavatar from "@multiavatar/multiavatar";
-import "react-toastify/dist/ReactToastify.css";
-import { BigNumber, constants } from "ethers";
+declare function multiavatar(text: string): string;
+
+import { useEffect, useState, useRef } from "react";
+import { useDarkMode } from "../components/DarkModeContext";
+//import multiavatar from "@multiavatar/multiavatar";
+//import { usePriceData } from "../components/PriceContext.tsx";
+import rank4 from "../assets/rank4.png";
+import rank5 from "../assets/rank5.png";
+import rank6 from "../assets/rank6.png";
+import rank7 from "../assets/rank7.png";
+import rank8 from "../assets/rank8.png";
 import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
-// import { Play, Pause, RotateCcw } from "lucide-react";
-// import { ChevronDown, ChevronUp, MoreVertical } from "lucide-react";
+import axios from "axios"; // Import axios for making HTTP requests
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BigNumber } from "ethers";
+import { Loader2,CreditCard   } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import contractAbi from "./Props/contractAbi.ts"; // Adjust path as needed
 import contractAddress from "./Props/contractAddress.ts"; // Adjust path as needed
 // At the top of your component, modify the imports and provider handling
 import { useWeb3ModalProvider } from "@web3modal/ethers5/react"; // Add this import if not present
 import { Bar } from "react-chartjs-2";
-import { CheckCheck, Copy } from "lucide-react";
-import { useWindowSize } from "react-use";
-import Confetti from "react-confetti";
-// import ReferralTree from "./ReferralTree";
-// import { useNavigate } from "react-router-dom";
 
-// import Header from "./Header.tsx";
+
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  
+  Copy,
+  Wallet, 
+  User,
+  Award,
+  Trophy,
+
+  TrendingUp,
+  Gift,
+  ChevronUp,
+ 
+  DollarSign,
+
+
+ 
+  ChevronDown,
+  
+ 
+ 
+
+  Check,
+} from "lucide-react";
+import Confetti from "react-confetti";
+import { useWindowSize } from "react-use"; // Helps adjust confetti to screen size
+
+//import * as Tooltip from "@radix-ui/react-tooltip";
+import { cn } from "../../components/lib/utils";
+import { Camera } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/components/ui/dialog";
+import { Button } from "../../components/components/ui/button";
+import { Input } from "../../components/components/ui/input";
+import {
+  Card,
+
+} from "../../components/components/ui/card";
+
+//import { motion } from "framer-motion";
 
 import {
   Chart as ChartJS,
@@ -36,182 +75,11 @@ import {
   LinearScale,
   BarElement,
   Title,
-  Tooltip,
   Legend,
 } from "chart.js";
-import { useNavigate } from "react-router-dom";
 
 // Register chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-// interface Task {
-//   id: number;
-//   title: string;
-//   time: string;
-//   date: string;
-//   completed: boolean;
-// }
-
-// interface CircularProgressProps {
-//   percentage: number;
-//   color: string;
-//   ticker: "crypto" | "forex";
-// }
-
-const cryptoData = [
-  { icon: "₿", pair: "BTC/USDT", value: "42,389.50" },
-  { icon: "Ξ", pair: "ETH/USDT", value: "2,890.75" },
-  { icon: "○", pair: "DOT/USDT", value: "15.23" },
-  { icon: "Ł", pair: "LTC/USDT", value: "68.45" },
-  { icon: "●", pair: "BNB/USDT", value: "312.80" },
-];
-
-// const forexData = [
-//   { icon: "$", pair: "EUR/USD", value: "1.0924" },
-//   { icon: "£", pair: "GBP/USD", value: "1.2645" },
-//   { icon: "¥", pair: "USD/JPY", value: "148.12" },
-//   { icon: "₣", pair: "USD/CHF", value: "0.8851" },
-//   { icon: "$", pair: "AUD/USD", value: "0.6584" },
-// ];
-
-// Circular Progress Component
-interface TickerItem {
-  icon: string;
-  pair: string;
-  value: string;
-}
-
-interface TickerRowProps {
-  label: string;
-  items: TickerItem[];
-  tickerType: "crypto" | "forex"; // Changed 'type' to 'tickerType' to avoid conflicts
-}
-
-const TickerRow = memo(({ label, items, tickerType }: TickerRowProps) => {
-  const [position, setPosition] = useState(0);
-  const [width, setWidth] = useState(0);
-  const [containerWidth, setContainerWidth] = useState(0);
-
-  useEffect(() => {
-    const ticker = document.getElementById(`ticker-${label}`);
-    const container = document.getElementById(`container-${label}`);
-    if (ticker && container) {
-      setWidth(ticker.scrollWidth);
-      setContainerWidth(container.offsetWidth);
-    }
-  }, [label]);
-
-  useEffect(() => {
-    if (width > 0) {
-      const animation = setInterval(() => {
-        setPosition((prev) => {
-          if (prev <= -width) {
-            return containerWidth;
-          }
-          return prev - 1;
-        });
-      }, 10);
-
-      return () => clearInterval(animation);
-    }
-  }, [width, containerWidth]);
-
-  // Determine background and text colors based on tickerType
-  //const bgColor = tickerType === "crypto" ? "bg-gradient-to-r from-blue-100 to-blue-200" : "bg-pink-100";
-  const labelColor = tickerType === "crypto" ? "text-black" : "text-pink-600";
-  const valueColor =
-    tickerType === "crypto" ? "text-blue-900" : "text-pink-900";
-
-  return (
-    <div className={`p-4 relative overflow-hidden border rounded-lg shadow-md`}>
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <span className={`${labelColor} font-bold text-lg`}>{label}</span>
-        <div
-          id={`container-${label}`}
-          className="flex-1 overflow-hidden w-full"
-        >
-          <div
-            id={`ticker-${label}`}
-            className="flex items-center whitespace-nowrap gap-8"
-            style={{
-              transform: `translateX(${position}px)`,
-              transition:
-                position === containerWidth ? "none" : "transform 0.1s linear",
-            }}
-          >
-            {items.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <span className={`${labelColor} font-medium text-sm`}>
-                  {item.icon} {item.pair}:
-                </span>
-                <span className={`${valueColor} font-bold text-lg`}>
-                  {item.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-// Flip Button Component
-
-// Modified Progress Card Component
-
-// const CircularProgress = memo(
-//   ({ percentage, color }: CircularProgressProps) => {
-//     //const { isDark } = useTheme();
-//     // const baseCircleColor = isDark ? "#374151" : "#1f2937";
-
-//     return (
-//       <div className="relative w-24 h-24 sm:w-24 sm:h-24">
-//         <svg className="w-full h-full" viewBox="0 0 36 36">
-//           <circle
-//             cx="18"
-//             cy="18"
-//             r="15.9155"
-//             stroke="#000" // Black border
-//             strokeWidth="3"
-//             fill="none"
-//           />
-//           <circle
-//             cx="18"
-//             cy="18"
-//             r="15.9155"
-//             stroke={color}
-//             strokeWidth="3"
-//             fill="none"
-//             strokeDasharray={`${percentage}, 100`}
-//             transform="rotate(-90 18 18)"
-//           />
-//         </svg>
-//         <div
-//           className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}
-//         >
-//           {percentage}%
-//         </div>
-//       </div>
-//     );
-//   }
-// );
-
-// const recentBonuses = [
-//   { amount: 70, date: "22 May 2023", type: "Other Bonus" },
-//   { amount: 0.07, date: "24 Apr 2023", type: "Other Bonus" },
-//   { amount: 7, date: "18 Apr 2023", type: "Other Bonus" },
-//   { amount: 192500, date: "31 Jan 2023", type: "LTG Bonus" },
-//   { amount: 7, date: "18 Jan 2023", type: "Other Bonus" },
-//   { amount: 7, date: "16 Jan 2023", type: "Other Bonus" },
-// ];
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Legend);
 
 const ranks = [
   { name: "STAR", index: 0, color: "#B8B8B8" },
@@ -224,18 +92,6 @@ const ranks = [
   { name: "ROYAL_DIAMOND", index: 7, color: "#E6BE8A" },
   { name: "CROWN_DIAMOND", index: 8, color: "#8A2BE2" },
 ];
-
-// const getColor = (tier: string): string => {
-//   const colors: Record<string, string> = {
-//     Diamond: "#10B981",
-//     "Blue Diamond": "#0EA5E9",
-//     "Black Diamond": "#6B7280",
-//     "Royal Diamond": "#F59E0B",
-//     "Crown Diamond": "#6366F1",
-//   };
-//   return colors[tier] || "#6B7280";
-// };
-
 interface GraphData {
   labels: string[];
   datasets: Array<{
@@ -247,60 +103,254 @@ interface GraphData {
   }>;
 }
 
+interface Rank {
+  name: string;
+  index: number;
+  multiplier: number;
+}
+
+interface UserData {
+  nickname: string;
+  referralQR?: string;
+  profileImage?: string;
+  address?: string;
+  avatar?: string;
+}
+
+// interface ProfileSectionProps {
+//   address?: string;
+//   className?: string;
+// }
+
 const Dashboard = () => {
-  const [userData, setUserData] = useState<{
-    nickname: string;
-    avatar: string;
-    referralQR: string;
-  } | null>(null);
+  const [totalRab, setTotalRab] = useState<string>("Loading...");
+  const [showNicknameModal, setShowNicknameModal] = useState(false);
+  const [rankMessage, setRankMessage] = useState("");
+  const [showMarquee, setShowMarquee] = useState(false);
+  const [isRankExpired, setIsRankExpired] = useState<"loading" | boolean>(
+    "loading"
+  );
+  
+ // const { priceData } = usePriceData();
+  const [avatarSVG, setAvatarSVG] = useState<string>("");
+  const { darkMode } = useDarkMode();
+  const [backgroundKey, setBackgroundKey] = useState(
+    darkMode ? "dark" : "light"
+  );
+  const [newNickname, setNewNickname] = useState("");
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [usrCnt, setUsrCnt] = useState<number | null>(null);
-  const [arbPoolBalance, setArbPoolBalance] = useState("0");
-  const [isLoadingARB, setIsLoadingARB] = useState(false);
-  const [errorARB, setErrorARB] = useState<string | null>(null);
+  const [count, setCount] = useState(0);
+  const [rankDetails, setRankDetails] = useState<any[]>([]);
   const [totalPendingAmount, setTotalPendingAmount] =
     useState<string>("Loading...");
-
-  const [avatarSVG, setAvatarSVG] = useState<string>("");
-
-  const [count, setCount] = useState(0);
-  const [itcPrice, setItcPrice] = useState<number | null>(null);
-  const [rankDetails, setRankDetails] = useState<any[]>([]);
   const [totalInvestment, setTotalInvestment] = useState("0");
-
-  // const [rankData, setRankData] = useState<RankData[]>([]);
+  const navigate = useNavigate();
+  const [connectedAddress, setConnectedAddress] = useState<string>("");
   const [rankGraphData, setRankGraphData] = useState<GraphData>({
     labels: [],
     datasets: [],
   });
-
   const [countLTGPool, setCountLTGPool] = useState(0);
-  const [countRTGPool, setCountRTGPool] = useState(0); // State to animate RTG pool count
+  const [countRTGPool, setCountRTGPool] = useState(0);
   const [countLDPPool, setCountLDPPool] = useState(0);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // const [showReferralTree, setShowReferralTree] = useState(false);
-
-  // const navigate = useNavigate();
-
-  // const handleNavigateToReferralTree = () => {
-  //   navigate("/referral-tree");
-  // };
-
-  // const defaultUserDetails: UserDetails = {
-  //   referrer: "Not Available",
-  //   currentRank: "Not Available",
-  //   lastRankUpdateTime: "Not Available",
-  //   rankExpiryTime: "Not Available",
-  //   totalInvestment: "0",
-  //   isActive: false,
-  //   rewards: "0",
-  // };
-
-  interface Rank {
-    name: string;
-    index: number;
-    multiplier: number;
+  if (!avatarSVG && !setAvatarSVG && !totalInvestment && !totalPendingAmount && !setConnectedAddress) {
+    console.log("update!!");
   }
+
+  useEffect(() => {
+    console.log("Dark Mode Changed, Re-rendering Background");
+    setBackgroundKey(darkMode ? "dark" : "light");
+  }, [darkMode]);
+
+  if (!isRankExpired && !backgroundKey && !rankDetails && !qrCodeUrl) {
+    console.log("update!!");
+  }
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+    const [monthlyRab, setMonthlyRab] = useState<string>("Loading...");
+
+
+ 
+
+  useEffect(() => {
+    //console.log(avatarSVG,backgroundKey,totalInvestment,qrCodeUrl)
+    // console.log(totalInvestment, qrCodeUrl);
+    const registerUser = async (address: string) => {
+      try {
+        const response = await axios.get(
+          `https://server.cryptomx.site/api/users/${address}`
+        );
+
+        const user = response.data.data;
+        setUserData({
+          nickname: user.nickname,
+          referralQR: user.referralQR,
+          profileImage: user.profileImage,
+          avatar: user.avatar, // Make sure this is being set
+          address: address, // Add this line
+        });
+
+        if (user.avatar) {
+          setAvatarUrl(user.avatar);
+          //console.log('Setting avatar URL:', user.avatar);
+        }
+
+        // Keep your existing QR code URL setting
+        const url = `https://res.cloudinary.com/dygw3ixdr/image/upload/v1737705516/qr-codes/${address}.png`;
+        setQrCodeUrl(url);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // toast.error("Failed to load user data");
+      }
+    };
+
+    if (address) {
+      registerUser(address);
+    }
+  });
+
+  const [isNicknameLoading, setIsNicknameLoading] = useState(false);
+  const handleUpdateNickname = async () => {
+    if (!address) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      setIsNicknameLoading(true);
+      const response = await axios.put(
+        `https://server.cryptomx.site/api/users/update-nickname`,
+        {
+          nickname: newNickname,
+          address: address,
+        }
+      );
+
+      // ✅ Check response status instead of success field
+      if (response.status === 200) {
+        toast.success("Nickname updated successfully");
+        setUserData((prev) =>
+          prev ? { ...prev, nickname: newNickname } : null
+        );
+        setShowNicknameModal(false);
+      } else {
+        console.warn("Unexpected response structure:", response.data);
+        toast.error("Nickname update may not have been successful.");
+      }
+    } catch (error) {
+      console.error("Error updating nickname:", error);
+      toast.error("Something went wrong. Please try again.");
+      setIsNicknameLoading(false);
+    }
+  };
+
+  //const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null); // Define state
+
+  // First, update the state management for avatar
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Add this useEffect to handle initial avatar loading
+  useEffect(() => {
+    console.log(avatarUrl);
+    if (userData?.avatar) {
+      setAvatarUrl(userData.avatar);
+    }
+  }, [userData?.avatar]);
+
+  // Modify the handleImageUpload function
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Preview Image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    if (!address) {
+      toast.error("Wallet address not found. Cannot upload the image.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("avatar", file);
+      formData.append("address", address);
+
+      //console.log('Uploading avatar for address:', address);
+
+      const response = await axios.put(
+        "https://server.cryptomx.site/api/users/update-avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // Check if the response has the expected structure
+      if (response.data && response.data.data) {
+        const newAvatarUrl = response.data.data.avatar;
+        if (newAvatarUrl) {
+          // Update both states
+          setUserData((prev) => ({
+            ...prev!,
+            avatar: newAvatarUrl,
+          }));
+          setAvatarUrl(newAvatarUrl);
+          setPreviewImage(null);
+
+          // Fetch updated user data
+          const userResponse = await axios.get(
+            `https://server.cryptomx.site/api/users/${address}`
+          );
+
+          if (userResponse.data && userResponse.data.data) {
+            setUserData(userResponse.data.data);
+          }
+
+          toast.success("Avatar updated successfully!");
+        } else {
+          throw new Error("Avatar URL not found in response");
+        }
+      } else {
+        throw new Error("Invalid response structure");
+      }
+    } catch (error) {
+      console.error("Upload error details:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Response status:", error.response?.status);
+      }
+      // Only show error toast if the upload actually failed
+      if (
+        error instanceof Error &&
+        !error.message.includes("Avatar URL not found")
+      ) {
+        toast.error("Failed to upload image.");
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   interface RankTotals {
     [key: string]: string; // This allows string indexing
@@ -310,14 +360,6 @@ const Dashboard = () => {
     cnt: ethers.BigNumber;
     // Add other properties from your contract's rUC return type if any
   }
-
-  // interface DashboardProps {
-  //   isConnected: boolean;
-  //   walletProvider: any; // Replace with proper web3 provider type if available
-  //   isProviderReady: boolean;
-  //   contractAddress: string;
-  //   contractAbi: any[]; // Replace with your specific ABI type
-  // }
 
   interface RankData {
     name: string;
@@ -337,33 +379,15 @@ const Dashboard = () => {
 
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
-  // const [rankCounts, setRankCounts] = useState([]);
-  // //const [userDetails, setUserDetails] = useState(null);
-
-  // const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  // const dates = ["22", "23", "24", "25", "26", "27"];
-
   const [totalLTGPool, setTotalLTGPool] = useState<number | null>(null);
   const [totalRTGPool, setTotalRTGPool] = useState<number | null>(null);
   const [totalLDPPool, setTotalLDPPool] = useState<number | null>(null);
 
-  // const [rankTotals, setRankTotals] = useState<{ [key: string]: string }>({});
-  // const [totalPoolValue, setTotalPoolValue] = useState<string>("0");
-
-  // const [calculatedTotal, setCalculatedTotal] = useState("0");
-
-  //const { provider } = useWeb3Modal(); // Use the wallet provider from Web3Modal
-  // Add new state for RAB
-  // const [dropdownOpen, setDropdownOpen] = useState(false);
-  // const [selectedRank, setSelectedRank] = useState("STAR"); // Default rank
-
   const [withdrawalRAB, setWithdrawalRAB] = useState("0");
 
   const [withdrawalLevel, setWithdrawalLevel] = useState("0");
+  const [withdrawalRab, setWithdrawalRab] = useState("0");
   const [totalLevel, setTotalLevel] = useState("0");
-  // const [rankUserCounts, setRankUserCounts] = useState<Record<string, number>>(
-  //   {}
-  // );
 
   const [totalRAB, setTotalRAB] = useState("0");
   const [withdrawalBonus, setWithdrawalBonus] = useState("0");
@@ -378,116 +402,209 @@ const Dashboard = () => {
   const [inviteLink, setInviteLink] = useState(
     `https://cryptomx.site/#/register?referral=undefined`
   );
-  const [isCopied, setIsCopied] = useState(false);
-  const navigate = useNavigate();
+  //const [isCopied, setIsCopied] = useState(false);
+
+ 
+  if (!withdrawalRab && !withdrawalLevel && !totalLevel && !totalRAB && !isLoading  && totalBonus && withdrawalRAB && inviteLink ) {
+    console.log("update!!");
+  }
+
 
   useEffect(() => {
-    console.log(error);
-    const fetchAddress = async () => {
-      //console.log(withdrawalRab);
-      if (walletProvider) {
-        try {
-          const provider = new ethers.providers.Web3Provider(walletProvider);
-          const signer = provider.getSigner();
-          const address = await signer.getAddress(); // Get connected wallet address
-          console.log("the address is", address);
-          setConnectedAddress(address);
-          const avatar = multiavatar(address);
-          setAvatarSVG(avatar);
-        } catch (error) {
-          console.error("Error fetching connected address:", error);
+    const fetchContractData = async () => {
+      try {
+        if (!walletProvider) {
+          console.error("Provider is not available");
+          return;
         }
+
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider
+        );
+        const signer = ethersProvider.getSigner();
+        const contract = new ethers.Contract(
+          contractAddress,
+          contractAbi,
+          signer
+        );
+
+        const ttlRab = await contract.getTtlRabDstrbtd();
+        setTotalRab(parseFloat(ethers.utils.formatEther(ttlRab)).toFixed(2));
+
+        const mnthlyRab = await contract.getMnthlyRABPoolBalance();
+        setMonthlyRab(
+          parseFloat(ethers.utils.formatEther(mnthlyRab)).toFixed(2)
+        );
+      } catch (error) {
+        console.error("Error fetching contract data:", error);
+        setTotalRab("Error");
+        setMonthlyRab("Error");
       }
     };
-    fetchAddress();
+
+    fetchContractData();
   }, [walletProvider]);
 
-  const copyToClipboard = () => {
-    navigator.clipboard
-      .writeText(inviteLink)
-      .then(() => {
-        setIsCopied(true); // Change button to tick sign
-        setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
-      })
-      .catch((err) => {
-        console.error("Failed to copy: ", err);
-      });
-  };
+  if (!error && !withdrawalBonus) {
+    console.log("update!!");
+  }
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  // useEffect(() => {
+  //   const fetchAddress = async () => {
+  //     //console.log(withdrawalRab);
+  //     if (walletProvider) {
+  //       try {
+  //         const provider = new ethers.providers.Web3Provider(walletProvider);
+  //         const signer = provider.getSigner();
+  //         const address = await signer.getAddress(); // Get connected wallet address
+  //         // console.log("the address is", address);
+  //         setConnectedAddress(address);
+  //         const avatar = multiavatar(address);
+  //         setAvatarSVG(avatar);
+  //       } catch (error) {
+  //         console.error("Error fetching connected address:", error);
+  //       }
+  //     }
+  //   };
+  //   fetchAddress();
+  // }, [walletProvider]);
 
-  const fetchArbPoolBalance = async () => {
-    if (!isConnected || !walletProvider) {
-      console.warn("Wallet not connected or provider unavailable");
-      return;
-    }
-
-    setIsLoadingARB(true);
-    setErrorARB(null);
-
+  const fetchRankDetails = async () => {
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
+      if (!isConnected || !walletProvider || !isProviderReady) return;
+
+      const provider = new ethers.providers.Web3Provider(walletProvider);
+      const signer = provider.getSigner();
       const contract = new ethers.Contract(
         contractAddress,
         contractAbi,
         signer
       );
+      const details = [];
+      let pendingAmountTotal = ethers.BigNumber.from("0");
+      for (let i = 0; i <= 8; i++) {
+        const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
 
-      const arbPool = await contract.arbPool(); // Fetch ARB pool balance
-      setArbPoolBalance(ethers.utils.formatEther(arbPool)); // Convert to Ether and set state
-    } catch (error) {
-      console.error("Error fetching ARB pool balance:", error);
-      setErrorARB("Failed to fetch ARB pool balance.");
-      setArbPoolBalance("0");
-    } finally {
-      setIsLoadingARB(false);
-    }
-  };
+        // Add the pending amount to the total
+        if (i <= 7) {
+          pendingAmountTotal = pendingAmountTotal.add(response.pendingAmount);
+        }
 
-  const handleWithdrawARBPoolBalance = async () => {
-    if (!isConnected || !walletProvider) {
-      console.warn("Wallet not connected or provider unavailable");
-      return;
-    }
+        details.push({
+          id: i,
+          name: ranks[i].name,
+          count: response.count.toString(),
+          pendingAmount: ethers.utils.formatEther(response.pendingAmount),
+          totalDistributedAmount: ethers.utils.formatEther(
+            response.ttlDstrbtdAmount
+          ),
+        });
+      }
 
-    setIsLoadingARB(true);
+      let currentRankCumulativePrice = 0;
 
-    try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        signer
+      for (let i = 0; i < ranks.length; i++) {
+        try {
+          const rankDetail = await contract.rankDetails(i);
+          const cumulativePrice = parseFloat(
+            rankDetail.cumulativePrice.toString()
+          );
+
+          // Store the current rank cumulative price
+          if (ranks[i].name === userDetails?.currentRank) {
+            currentRankCumulativePrice = cumulativePrice;
+          }
+
+          // Calculate the rank upgrade price in USD
+          const rankUpgradePriceUSD =
+            cumulativePrice - currentRankCumulativePrice;
+
+          details.push({
+            id: i,
+            name: ranks[i].name,
+            rankUpgradePriceUSD: rankUpgradePriceUSD.toFixed(2), // Price in USD
+          });
+        } catch (error) {
+          console.error(`Error fetching rank ${i} details:`, error);
+        }
+      }
+
+      setRankDetails(details);
+      setTotalPendingAmount(
+        parseFloat(ethers.utils.formatEther(pendingAmountTotal)).toFixed(2)
       );
-
-      const tx = await contract.withdrawARBPoolBalance(); // Withdraw ARB pool balance
-      await tx.wait();
-
-      toast.success("ARB Pool balance withdrawn successfully!");
-      fetchArbPoolBalance(); // Refresh the balance after withdrawal
     } catch (error) {
-      console.error("Error withdrawing ARB pool balance:", error);
-      toast.error("Failed to withdraw ARB pool balance.");
-    } finally {
-      setIsLoadingARB(false);
+      console.error("Error initializing contract:", error);
     }
   };
 
   useEffect(() => {
-    fetchArbPoolBalance();
-  }, [isConnected, walletProvider]);
+    fetchRankDetails();
+  }, [isConnected, walletProvider, isProviderReady]);
+
+  // Notification for rank expiration
+
+  useEffect(() => {
+    if (userDetails?.rankExpiryTime && userDetails?.currentRank) {
+      const rankIndex = ranks.findIndex(
+        (rank) => rank.name === userDetails.currentRank
+      );
+      const goldRankIndex = ranks.findIndex((rank) => rank.name === "GOLD");
+      const diamondRankIndex = ranks.findIndex(
+        (rank) => rank.name === "DIAMOND"
+      );
+
+      // Set the rank-specific message
+      if (rankIndex < goldRankIndex) {
+        setRankMessage("Rank is going to expire. Upgrade your rank!");
+      } else if (rankIndex >= diamondRankIndex) {
+        setRankMessage(
+          "Rank is going to expire. Either upgrade your rank or join the elite rank referral program!"
+        );
+      } else {
+        setRankMessage(""); // No message for other cases
+      }
+
+      // Calculate time remaining
+      const expiryTime = new Date(userDetails.rankExpiryTime).getTime();
+      const currentTime = Date.now();
+      const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
+
+      // Show marquee only within 1 hour of expiry
+      if (currentTime >= oneHourBeforeExpiry && currentTime < expiryTime) {
+        setShowMarquee(true); // Show marquee during the 1-hour window
+      } else {
+        setShowMarquee(false); // Hide marquee otherwise
+      }
+    }
+  }, [userDetails?.rankExpiryTime, userDetails?.currentRank]);
+
+  // const copyToClipboard = () => {
+  //   navigator.clipboard
+  //     .writeText(inviteLink)
+  //     .then(() => {
+  //       setIsCopied(true); // Change button to tick sign
+  //       setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+  //     })
+  //     .catch((err) => {
+  //       console.error("Failed to copy: ", err);
+  //     });
+  // };
+
+ 
+
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const currentRankIndex = ranks.findIndex(
     (rank) => rank.name === userDetails?.currentRank
   );
 
-  //console.log("Current Rank Index:", currentRankIndex);
-
   // Filtered ranks greater than the user's current rank
   const filteredRanks = ranks.filter((rank) => rank.index > currentRankIndex);
-  //console.log("Filtered Ranks:", filteredRanks);
+
+  if(filteredRanks){
+    console.log("hi");
+  }
 
   useEffect(() => {
     if (isConnected) {
@@ -547,8 +664,6 @@ const Dashboard = () => {
     fetchUsrCnt();
   }, [isConnected, walletProvider, isProviderReady]);
 
-  const [connectedAddress, setConnectedAddress] = useState<string>("");
-
   useEffect(() => {
     if (usrCnt !== null) {
       let currentCount = 0;
@@ -568,80 +683,27 @@ const Dashboard = () => {
     }
   }, [usrCnt]);
 
-  const fetchRankDetails = async () => {
-    try {
-      if (!isConnected || !walletProvider || !isProviderReady) return;
+  // const darkenColor = (hex: string, amount: number) => {
+  //   let usePound = false;
+  //   if (hex[0] === "#") {
+  //     hex = hex.slice(1);
+  //     usePound = true;
+  //   }
 
-      const provider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
-      const details = [];
+  //   let num = parseInt(hex, 16);
+  //   let r = (num >> 16) + amount;
+  //   let g = ((num >> 8) & 0x00ff) + amount;
+  //   let b = (num & 0x0000ff) + amount;
 
-      let pendingAmountTotal = ethers.BigNumber.from("0");
-      for (let i = 0; i <= 8; i++) {
-        const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
-        //console.log("the ltg is", response);
+  //   r = Math.min(255, Math.max(0, r));
+  //   g = Math.min(255, Math.max(0, g));
+  //   b = Math.min(255, Math.max(0, b));
 
-        // Add the pending amount to the total
-        if (i <= 7) {
-          pendingAmountTotal = pendingAmountTotal.add(response.pendingAmount);
-        }
-
-        details.push({
-          id: i,
-          name: ranks[i].name,
-          count: response.count.toString(),
-          pendingAmount: ethers.utils.formatEther(response.pendingAmount),
-          totalDistributedAmount: ethers.utils.formatEther(
-            response.ttlDstrbtdAmount
-          ),
-        });
-      }
-
-      let currentRankCumulativePrice = 0;
-
-      for (let i = 0; i < ranks.length; i++) {
-        try {
-          const rankDetail = await contract.rankDetails(i);
-          const cumulativePrice = parseFloat(
-            rankDetail.cumulativePrice.toString()
-          );
-
-          // Store the current rank cumulative price
-          if (ranks[i].name === userDetails?.currentRank) {
-            currentRankCumulativePrice = cumulativePrice;
-          }
-
-          // Calculate the rank upgrade price in USD
-          const rankUpgradePriceUSD =
-            cumulativePrice - currentRankCumulativePrice;
-
-          details.push({
-            id: i,
-            name: ranks[i].name,
-            rankUpgradePriceUSD: rankUpgradePriceUSD.toFixed(2), // Price in USD
-          });
-        } catch (error) {
-          console.error(`Error fetching rank ${i} details:`, error);
-        }
-      }
-
-      setRankDetails(details);
-      setTotalPendingAmount(
-        parseFloat(ethers.utils.formatEther(pendingAmountTotal)).toFixed(2)
-      );
-    } catch (error) {
-      console.error("Error initializing contract:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchRankDetails();
-  }, [isConnected, walletProvider, isProviderReady]);
+  //   return (
+  //     (usePound ? "#" : "") +
+  //     ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
+  //   );
+  // };
 
   useEffect(() => {
     const generateRankGraphData = async () => {
@@ -724,7 +786,7 @@ const Dashboard = () => {
 
       setIsLoading(true);
       setError(null);
-      //console.log("Fetching total investment...", error);
+      // console.log("Fetching total investment...", error);
 
       try {
         const ethersProvider = new ethers.providers.Web3Provider(
@@ -743,7 +805,7 @@ const Dashboard = () => {
           ethers.utils.formatEther(totalInvestmentData || "0")
         ).toFixed(2); // Format to 2 decimal places
 
-        // console.log("Formatted total investment:", formattedInvestment);
+        //  console.log("Formatted total investment:", formattedInvestment);
         setTotalInvestment(formattedInvestment);
       } catch (error) {
         console.error("Error fetching total investment data:", error);
@@ -875,6 +937,8 @@ const Dashboard = () => {
   //   }
   // };
 
+  console.log(setSelectedRank);
+
   // Add a separate effect to handle provider initialization
   // Add provider initialization effect
   useEffect(() => {
@@ -889,7 +953,7 @@ const Dashboard = () => {
           walletProvider
         );
         const network = await ethersProvider.getNetwork();
-        console.log("Connected to network:", network.name);
+         console.log("Connected to network:", network.name);
         setIsProviderReady(true);
       } catch (error) {
         console.error("Error initializing provider:", error);
@@ -941,10 +1005,14 @@ const Dashboard = () => {
         contract.getUsrTtllvlrcvd(address), // Pass address here
       ]);
 
-      console.log("with", withdrawalBonus);
+      // console.log("with", withdrawalBonus);
 
       // Format the data
-
+      // setWithdrawalBonus(
+      //   parseFloat(
+      //     ethers.utils.formatEther(withdrawalBonusData || "0")
+      //   ).toFixed(4)
+      // );
       setTotalBonus(
         parseFloat(ethers.utils.formatEther(totalBonusData || "0")).toFixed(4)
       );
@@ -956,6 +1024,11 @@ const Dashboard = () => {
       setTotalRAB(
         parseFloat(ethers.utils.formatEther(totalRABData || "0")).toFixed(4)
       );
+
+      // console.log(
+      //   "the value issssss:",
+      //   ethers.utils.formatEther(withdrawalLevelData || "0")
+      // );
       setWithdrawalLevel(
         parseFloat(
           ethers.utils.formatEther(withdrawalLevelData || "0")
@@ -988,50 +1061,181 @@ const Dashboard = () => {
     }
   };
 
-  const [showNicknameModal, setShowNicknameModal] = useState(false);
-  const [newNickname, setNewNickname] = useState("");
+  interface UserAddress {
+    address: string;
+    nickname?: string;
+    avatar?: string;
+  }
 
-  const handleUpdateNickname = async () => {
-    if (!connectedAddress) {
-      toast.error("Wallet address not found. Please connect your wallet.");
+   const [rankAddresses, setRankAddresses] = useState<
+      Record<string, UserAddress[]>
+    >({});
+
+    interface UserAddress {
+  address: string;
+  nickname?: string;
+  avatar?: string;
+}
+ const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
+const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
+
+
+  const fetchCurrentMonthIndex = async () => {
+    if (!walletProvider) {
+      console.error("Wallet provider not available");
       return;
     }
 
     try {
-      // Make the PUT request to your backend
-      const response = await axios.put(
-        `https://itcback-production.up.railway.app/api/users/update`,
-        {
-          nickname: newNickname,
-          address: address,
-        }
+      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
+      const contract = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        ethersProvider
       );
 
-      // If successful, update local state and give user feedback
-      if (response.status === 200) {
-        toast.success("Nickname updated successfully!");
-
-        // Update your local user data with the new nickname
-        setUserData((prev) =>
-          prev
-            ? {
-                ...prev,
-                nickname: newNickname,
-                address: address,
-              }
-            : null
-        );
-
-        // Close the modal
-        setShowNicknameModal(false);
-      } else {
-        toast.error("Failed to update nickname. Please try again.");
-      }
+      const currentMonth = await contract.currentMonthIndex();
+      console.log("the current month is",currentMonth.toNumber());
+      setCurrentMonthIndex(currentMonth.toNumber() + 1);
+      setIsMonthIndexLoaded(true);
     } catch (error) {
-      console.error("Error updating nickname:", error);
-      toast.error("Error updating nickname. Check console for more details.");
+      console.error("Error fetching current month index:", error);
     }
   };
+
+  
+
+  useEffect(() => {
+    const fetchAllRankAddresses = async () => {
+      if (!walletProvider) {
+        setError("Wallet provider not available");
+        setIsLoading(false);
+        return;
+      }
+  
+      try {
+        setIsLoading(true);
+        const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
+        const contract = new ethers.Contract(contractAddress, contractAbi, ethersProvider);
+  
+        const addresses: Record<string, UserAddress[]> = {};
+  
+        // Fetch addresses for each elite rank
+        for (const rank of eliteRanks) {
+          const rankAddressesList: UserAddress[] = [];
+          let addressIndex = 0;
+  
+          while (true) {
+            try {
+              // Get eligible address for current month and rank
+              const userAddress = await contract.monthlyEligibleAddresses(
+                currentMonthIndex,
+                rank.id,
+                addressIndex
+              );
+  
+              // Break the loop if no more addresses
+              if (!userAddress || userAddress === ethers.constants.AddressZero) break;
+  
+              // Get user details from your backend
+              try {
+                const userResponse = await axios.get(
+                  `https://server.cryptomx.site/api/users/${userAddress}`
+                );
+                const userData = userResponse.data.data;
+  
+                rankAddressesList.push({
+                  address: userAddress,
+                  nickname: userData?.nickname,
+                  avatar: userData?.avatar || multiavatar(userAddress)
+                });
+              } catch (error) {
+                // If backend fails, still add address with default values
+                rankAddressesList.push({
+                  address: userAddress,
+                  avatar: multiavatar(userAddress)
+                });
+              }
+  
+              addressIndex++;
+            } catch (error) {
+              console.error(`Error fetching address for ${rank.name}:`, error);
+              break;
+            }
+          }
+  
+          addresses[rank.name] = rankAddressesList;
+        }
+  
+        setRankAddresses(addresses);
+      } catch (error) {
+        console.error("Error fetching eligible addresses:", error);
+        setError("Failed to fetch eligible addresses");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    // Only fetch addresses after month index is loaded
+    if (isMonthIndexLoaded && walletProvider) {
+      fetchAllRankAddresses();
+    }
+  }, [walletProvider, currentMonthIndex, isMonthIndexLoaded]);
+
+
+  useEffect(() => {
+    if (walletProvider) {
+      fetchCurrentMonthIndex();
+    }
+  }, [walletProvider]);
+
+  const eliteRanks = [
+    {
+      id: 4,
+      name: "DIAMOND",
+      image: rank4,
+      color: "from-cyan-500 to-blue-600",
+      minRank: 4,
+    },
+    {
+      id: 5,
+      name: "BLUE_DIAMOND",
+      image: rank5,
+      color: "from-blue-600 to-indigo-600",
+      minRank: 5,
+    },
+    {
+      id: 6,
+      name: "BLACK_DIAMOND",
+      image: rank6,
+      color: "from-gray-700 to-black",
+      minRank: 6,
+    },
+    {
+      id: 7,
+      name: "ROYAL_DIAMOND",
+      image: rank7,
+      color: "from-purple-600 to-violet-600",
+      minRank: 7,
+    },
+    {
+      id: 8,
+      name: "CROWN_DIAMOND",
+      image: rank8,
+      color: "from-yellow-500 to-red-500",
+      minRank: 8,
+    },
+  ];
+
+
+  interface RankSectionProps {
+    rank: (typeof eliteRanks)[0];
+    addresses: UserAddress[];
+    expanded: boolean;
+    onToggle: () => void;
+    onCopy: (address: string, key: string) => void;
+    copiedStates: Record<string, boolean>;
+  }
 
   useEffect(() => {
     fetchBonusData();
@@ -1075,72 +1279,72 @@ const Dashboard = () => {
   //   }
   // };
 
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [isLoadingLevel, setIsLoadingLevel] = useState(false);
-  const [isLoadingRab, setIsLoadingRab] = useState(false);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdownMenu = document.getElementById("rankDropdownMenu");
+      const dropdownButton = document.getElementById("rankDropdownButton");
 
-  const handleWithdrawRab = async () => {
-    console.log(qrCodeUrl);
-    if (!isConnected || !walletProvider || !isProviderReady || !address) {
-      console.warn(
-        "Wallet not connected, provider not ready, or address missing"
-      );
-      return;
+      // Check if the click is outside the dropdown menu and button
+      if (
+        dropdownMenu &&
+        dropdownButton &&
+        !dropdownMenu.contains(event.target as Node) &&
+        !dropdownButton.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false); // Close the dropdown
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
-    try {
-      setIsLoadingRab(true);
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+    return () => {
+      // Cleanup the event listener on unmount
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
-      const tx = await contract.claimMonthlyRab(); // Level Distribution Pool withdrawal function
-      await tx.wait();
+  // const handleWithdrawRAB = async () => {
+  //   if (!isConnected || !walletProvider || !isProviderReady || !address) {
+  //     console.warn(
+  //       "Wallet not connected, provider not ready, or address missing"
+  //     );
+  //     return;
+  //   }
 
-      console.log("Withdraw Level Transaction Hash:", tx.hash);
+  //   try {
+  //     setIsLoading(true);
+  //     const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
+  //     const signer = ethersProvider.getSigner();
+  //     const contract = new ethers.Contract(
+  //       contractAddress,
+  //       contractAbi,
+  //       signer
+  //     );
 
-      const updatedLevel = await contract.getUsrTtllvlrcvd(address);
-      setWithdrawalRAB(
-        parseFloat(ethers.utils.formatEther(updatedLevel || "0")).toFixed(4)
-      );
+  //     const tx = await contract.getWthlvlIncm(address); // Rank Achievement Bonus withdrawal function
+  //     await tx.wait();
 
-      setShowConfetti(true);
-      fetchBonusData();
+  //     console.log("Withdraw RAB Transaction Hash:", tx.hash);
 
-      setTimeout(() => {
-        setShowConfetti(false);
-        // Reload after animation
-      }, 5000);
+  //     const updatedRAB = await contract.getUsrTtlrabrcvd(address);
+  //     setWithdrawalRAB(
+  //       parseFloat(ethers.utils.formatEther(updatedRAB || "0")).toFixed(4)
+  //     );
 
-      toast.success("🎉RAB  withdrawn successfully!");
-      // window.location.reload();
-    } catch (error) {
-      console.error("Error during Level withdrawal:", error);
-      toast.error("Failed to withdraw RAB .");
-    } finally {
-      setIsLoadingRab(false);
-    }
-  };
-
-  const [selectedRankPriceUSD, setSelectedRankPriceUSD] = useState<number>(0); // Store USD price
-  const [selectedRankPriceITC, setSelectedRankPriceITC] = useState<number>(0); // Store ITC price
-  const handleRankSelection = (
-    rank: string,
-    priceUSD: number,
-    priceITC: number
-  ) => {
-    setSelectedRank(rank);
-    setSelectedRankPriceUSD(priceUSD);
-    setSelectedRankPriceITC(priceITC);
-    setDropdownOpen(false);
-  };
+  //     toast.success("Rank Achievement Bonus withdrawn successfully!");
+  //     window.location.reload();
+  //     console.log(handleWithdrawRAB); // This will make it "used" without executing
+  //   } catch (error) {
+  //     console.error("Error during RAB withdrawal:", error);
+  //     toast.error("Failed to withdraw Rank Achievement Bonus.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const upgradeRank = async () => {
-    console.log(handleRankSelection);
     if (!selectedRank) {
       toast.info("Please select a rank to upgrade.");
       return;
@@ -1174,13 +1378,17 @@ const Dashboard = () => {
 
       await tx.wait();
 
-      // console.log(
-      //   `Successfully upgraded to ${selectedRank}. Transaction:`,
-      //   tx.hash
-      // );
-      toast.success(`Successfully upgraded to ${selectedRank}.`);
+      console.log(
+        `Successfully upgraded to ${selectedRank}. Transaction:`,
+        tx.hash
+      );
+      setShowConfetti(true);
+      toast.success(`🎉Successfully upgraded to ${selectedRank}.`);
       //console.log("rank is upgraded in this");
-      window.location.reload();
+      setTimeout(() => {
+        setShowConfetti(false);
+        window.location.reload(); // Reload after animation
+      }, 5000);
     } catch (error) {
       console.error("Error upgrading rank:", error);
       toast.error("Failed to upgrade rank. Please try again.");
@@ -1188,6 +1396,10 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
+
+  const [isLoadingLevel, setIsLoadingLevel] = useState(false);
+  const [isLoadingRab, setIsLoadingRab] = useState(false);
+  //const [isLoadingBonus, setIsLoadingBonus] = useState(false);
 
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
@@ -1210,10 +1422,13 @@ const Dashboard = () => {
         signer
       );
 
+      // console.log("before");
       const tx = await contract.withdrawLevelIncome(); // Level Distribution Pool withdrawal function
       await tx.wait();
 
-      console.log("Withdraw Level Transaction Hashhhhhhh:", tx.hash);
+      // console.log("After ");
+
+      // console.log("Withdraw Level Transaction Hashhhhhhh:", tx.hash);
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
       setWithdrawalLevel(
@@ -1226,6 +1441,7 @@ const Dashboard = () => {
       setShowConfetti(true);
       fetchBonusData();
       toast.success("🎉Level Distribution Pool withdrawn successfully!");
+
       setTimeout(() => {
         setShowConfetti(false);
         // Reload after animation
@@ -1239,6 +1455,59 @@ const Dashboard = () => {
       setIsLoadingLevel(false);
     }
   };
+
+  const handleWithdrawRab = async () => {
+    if (!isConnected || !walletProvider || !isProviderReady || !address) {
+      console.warn(
+        "Wallet not connected, provider not ready, or address missing"
+      );
+      return;
+    }
+
+    try {
+      setIsLoadingRab(true);
+      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
+      const signer = ethersProvider.getSigner();
+      const contract = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        signer
+      );
+
+      const tx = await contract.claimMonthlyRab(); // Level Distribution Pool withdrawal function
+      await tx.wait();
+
+      // console.log("Withdraw Level Transaction Hash:", tx.hash);
+
+      const updatedLevel = await contract.getUsrTtllvlrcvd(address);
+      setWithdrawalRab(
+        parseFloat(ethers.utils.formatEther(updatedLevel || "0")).toFixed(4)
+      );
+
+      setShowConfetti(true);
+      fetchBonusData();
+
+      setTimeout(() => {
+        setShowConfetti(false);
+
+        // Reload after animation
+      }, 5000);
+
+      toast.success("🎉RAB  withdrawn successfully!");
+      // window.location.reload();
+    } catch (error) {
+      console.error("Error during RAB withdrawal:", error);
+      toast.error("Failed to withdraw RAB .");
+    } finally {
+      setIsLoadingRab(false);
+    }
+  };
+
+  if(isLoadingLevel && isLoadingRab){
+    handleWithdrawLevel();
+    handleWithdrawRab();
+    upgradeRank();
+  }
 
   // Toggle menu with proper event handling
 
@@ -1266,6 +1535,8 @@ const Dashboard = () => {
       return rank ? rank.name : "Unknown Rank";
     };
 
+    // ...
+
     const fetchUserDetails = async () => {
       if (!isConnected || !walletProvider || !isProviderReady || !address) {
         console.warn("Prerequisites not met for fetching user details");
@@ -1285,68 +1556,115 @@ const Dashboard = () => {
 
         // Fetch user data
         const userData = await contract.users(address);
-        //console.log("Raw user data:", userData);
+        // console.log("Raw user data:", userData);
 
-        const formatTimestamp = (timestamp: BigNumber): string => {
-          if (timestamp.eq(constants.MaxUint256)) {
-            return "Never";
+        const formatTimestamp = (timestamp: any): string => {
+          try {
+            // Log the incoming timestamp
+            //console.log("Original timestamp:", timestamp);
+
+            // Convert to number and log
+            const timestampNum = Number(timestamp);
+            // console.log("Converted to number:", timestampNum);
+
+            if (isNaN(timestampNum) || timestampNum === 0) {
+              //console.log("Invalid timestamp detected");
+              return "Not updated";
+            }
+
+            // Log milliseconds conversion
+            // console.log("In milliseconds:", timestampNum * 1000);
+
+            // Log final date
+            const finalDate = new Date(
+              timestampNum * 1000
+            ).toLocaleDateString();
+            // console.log("Final formatted date:", finalDate);
+
+            return finalDate;
+          } catch (error) {
+            //console.error('Error formatting timestamp:', error);
+            return "Invalid timestamp";
           }
-          const timestampInt = parseInt(timestamp.toString(), 10);
-          return timestampInt > 0
-            ? new Date(timestampInt * 1000).toLocaleDateString()
-            : "Not updated";
         };
+        // Then when using it:
+        //console.log("Raw userData.lastRankUpdateTime:", userData.lastRankUpdateTime);
+        // const formattedDate = formatTimestamp(Number(userData.lastRankUpdateTime));
+        // //console.log("Final result:", formattedDate);
 
+        // //console.log("Raw userData.rankExpiryTime:", userData.rankExpiryTime);
+        // const formattedDate2 = formatTimestamp(Number(userData.rankExpiryTime));
+        //console.log("Final result of Raw userData.rankExpiryTime:", formattedDate2);
+
+        const [totalBonusData, totalRABData, totalLevelData] =
+          await Promise.all([
+            // Pass address here
+            contract.getUsrTtlLtgrcvd(address), // Pass address here
+            // Pass address here
+            contract.getUsrTtlrabrcvd(address), // Pass address here
+            // Pass address here
+            contract.getUsrTtllvlrcvd(address), // Pass address here
+          ]);
+
+        const total =
+          parseFloat(ethers.utils.formatEther(totalBonusData || "0")) +
+          parseFloat(ethers.utils.formatEther(totalRABData || "0")) +
+          parseFloat(ethers.utils.formatEther(totalLevelData || "0"));
+
+        // console.log("the total is", total);
         // ─── 1) Build a total of rewards at indices [1], [3], [5] ────────────
-        let rewardSumBN = BigNumber.from(0);
-        if (Array.isArray(userData[6])) {
-          // Safely convert each element to a BigNumber if present, otherwise 0
-          const r1 = userData[6][1]
-            ? BigNumber.from(userData[6][1])
-            : BigNumber.from(0);
-          const r3 = userData[6][3]
-            ? BigNumber.from(userData[6][3])
-            : BigNumber.from(0);
-          const r5 = userData[6][5]
-            ? BigNumber.from(userData[6][5])
-            : BigNumber.from(0);
+        // let rewardSumBN = BigNumber.from(0);
+        // if (Array.isArray(userData[6])) {
+        //   // Safely convert each element to a BigNumber if present, otherwise 0
+        //   const r1 = userData[6][1]
+        //     ? BigNumber.from(userData[6][1])
+        //     : BigNumber.from(0);
+        //   const r3 = userData[6][3]
+        //     ? BigNumber.from(userData[6][2])
+        //     : BigNumber.from(0);
+        //   const r5 = userData[6][5]
+        //     ? BigNumber.from(userData[6][4])
+        //     : BigNumber.from(0);
 
-          // Sum them all
-          rewardSumBN = rewardSumBN.add(r1).add(r3).add(r5);
-        }
+        //   // Sum them all
+        //   rewardSumBN = rewardSumBN.add(r1).add(r3).add(r5);
+        // }
+
+        // console.log("the total purchase is", Number(userData.userTotalInvestment));
 
         // Extract the necessary details
-        const expectedTime = userData[2]; // Expected time (e.g., last rank update time)
-        const expiryTime = userData[3]; // Expiry time
+        const expectedTime = userData[0]?.toString(); // Expected time (e.g., last rank update time)
+        const expiryTime = userData.rankExpiryTime; // Expiry time
         // Ensure current time is an integer before creating a BigNumber
         const currentTime = BigNumber.from(Math.floor(Date.now() / 1000)); // Use Math.floor to remove decimals
 
-        // Compute active/inactive status
-        let isActive =
-          currentTime.gte(expectedTime) && currentTime.lt(expiryTime);
-        let isExpired = currentTime.gt(expiryTime);
+        // console.log("the excpeted time is",expectedTime);
+        // console.log("the  time is",expiryTime);
+        // console.log("the ime is",currentTime);
 
-        if (expiryTime.eq(constants.MaxUint256)) {
-          isActive = true; // Admin should always be active
-          isExpired = false;
-        }
+        // Compute active/inactive status
+        const isActive =
+          currentTime.gte(expectedTime) && currentTime.lt(expiryTime);
+        const isExpired = currentTime.gt(expiryTime);
 
         const formattedData = {
-          referrer: userData[0] || "No referrer",
-          currentRank: getRankName(userData[1]?.toString() || "0"),
-          lastRankUpdateTime: formatTimestamp(userData[2]),
-          rankExpiryTime: formatTimestamp(userData[3]),
+          referrer: userData[2] || "No referrer",
+          currentRank: getRankName(userData[0]?.toString() || "0"),
+          lastRankUpdateTime: formatTimestamp(
+            Number(userData.lastRankUpdateTime)
+          ),
+          rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
           totalInvestment: ethers.utils.formatEther(
-            userData[4]?.toString() || "0"
+            userData[5]?.toString() || "0"
           ),
           isActive: isActive && !isExpired,
           isExpired: isExpired,
 
           // ─── 3) Use the summed rewards for the 'rewards' field ─────────────
-          rewards: ethers.utils.formatEther(rewardSumBN),
+          rewards: total.toString(),
         };
 
-        //console.log("Formatted user data:::::", formattedData);
+        //console.log("Formatted user data:::::", formattedData.lastRankUpdateTime);
         setUserDetails(formattedData);
         setError(null);
       } catch (error) {
@@ -1366,6 +1684,75 @@ const Dashboard = () => {
 
     fetchUserDetails();
   }, [isConnected, walletProvider, isProviderReady, address]);
+
+  const ADMIN_ADDRESSES = [
+    "0x3E582a9FFD780A4DFC8AAb220A644596772B919E".toLowerCase(),
+    "0x0Ac0920459Ae9c1ABB3D866C1f772e7f0697B069".toLowerCase(),
+  ];
+  
+  useEffect(() => {
+  if (!address) {
+    navigate("/");
+    return;
+  }
+  
+  if (!ADMIN_ADDRESSES.includes(address.toLowerCase())) {
+    navigate("/");
+  }
+  }, [address, navigate]);
+
+  useEffect(() => {
+    if (userDetails?.rankExpiryTime && userDetails?.currentRank) {
+      const rankIndex = ranks.findIndex(
+        (rank) => rank.name === userDetails.currentRank
+      );
+      const goldRankIndex = ranks.findIndex((rank) => rank.name === "GOLD");
+      const diamondRankIndex = ranks.findIndex(
+        (rank) => rank.name === "DIAMOND"
+      );
+
+      // Set the rank-specific message
+      if (rankIndex < goldRankIndex) {
+        setRankMessage(
+          "Rank is going to expire. Either upgrade your rank or sponser a new Member!"
+        );
+      } else if (rankIndex >= diamondRankIndex) {
+        setRankMessage(
+          "Rank is going to expire. Either upgrade your rank or sponser a elite rank Member!"
+        );
+      } else {
+        setRankMessage(""); // No message for other cases
+      }
+
+      // Calculate time remaining
+      const expiryTime = new Date(
+        `${userDetails.rankExpiryTime} 23:59:59`
+      ).getTime();
+
+      //console.log("the expriy time is",expiryTime);
+      const currentTime = Date.now();
+      const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
+      //
+
+      // console.log("the current time is",currentTime);
+      // console.log("the expriy is",expiryTime);
+
+      if (currentTime > expiryTime) {
+        setIsRankExpired(true);
+        // console.log("expired");
+      } else {
+        setIsRankExpired(false);
+        // console.log("not expired");
+      }
+
+      // Show marquee only within 1 hour of expiry
+      if (currentTime >= oneHourBeforeExpiry && currentTime <= expiryTime) {
+        setShowMarquee(true);
+      } else {
+        setShowMarquee(false);
+      }
+    }
+  }, [userDetails?.rankExpiryTime, userDetails?.currentRank, ranks]);
 
   // Second useEffect for pool data
   useEffect(() => {
@@ -1441,7 +1828,7 @@ const Dashboard = () => {
         } else {
           clearInterval(interval); // Stop animation when the target value is reached
         }
-      }, 10); // Adjust the speed by changing this value
+      }, 15); // Adjust the speed by changing this value
 
       return () => clearInterval(interval);
     };
@@ -1501,12 +1888,12 @@ const Dashboard = () => {
         const totalPool = ltgValue + rtgValue + ldpValue;
         // setTotalPoolValue(totalPool.toFixed(4));
 
-        console.log("Pool values:", {
-          ltgValue,
-          rtgValue,
-          ldpValue,
-          totalPool,
-        });
+        // console.log("Pool values:", {
+        //   ltgValue,
+        //   rtgValue,
+        //   ldpValue,
+        //   totalPool,
+        // });
 
         const ranks = [
           { name: "STAR", index: 0, multiplier: 1 },
@@ -1567,45 +1954,6 @@ const Dashboard = () => {
     contractAddress,
     contractAbi,
   ]);
-  // useEffect(() => {
-  //   const fetchRankData = async () => {
-  //     console.log('Fetching rank data:', { isConnected, walletProvider, isProviderReady });
-  //     // ... rest of the function
-  //     console.log('Fetched data:', { totalPoolValue, rankTotals });
-  //   };
-  //   fetchRankData();
-  // }, [isConnected, walletProvider, isProviderReady]);
-
-  // useEffect(() => {
-  //   const fetchLifetimeGrowthBonus = async () => {
-  //     if (!isConnected || !provider) {
-  //       console.warn("Wallet not connected or provider unavailable");
-  //       return;
-  //     }
-
-  //     try {
-  //       // Create a contract instance
-  //       const signer = provider.getSigner();
-  //       const contract = new ethers.Contract(
-  //         contractAddress,
-  //         contractAbi,
-  //         signer
-  //       );
-
-  //       // Fetch the bonuses from the contract
-  //       const fetchedWithdrawalBonus = await contract.getWthltgbIncm();
-  //       const fetchedTotalBonus = await contract.getUsrTtlLtgrcvd();
-
-  //       // Convert fetched data to a readable format (assuming values are in Wei)
-  //       setWithdrawalBonus(ethers.utils.formatEther(fetchedWithdrawalBonus));
-  //       setTotalBonus(ethers.utils.formatEther(fetchedTotalBonus));
-  //     } catch (error) {
-  //       console.error("Error fetching Lifetime Growth Bonus data:", error);
-  //     }
-  //   };
-
-  //   fetchLifetimeGrowthBonus();
-  // }, [isConnected, provider]);
 
   useEffect(() => {
     const fetchRankCounts = async () => {
@@ -1634,7 +1982,7 @@ const Dashboard = () => {
               const rankStatus = await contract.rUC(rank.index);
               const count = rankStatus.toNumber();
               updatedRankCounts[rank.name] = count;
-              //console.log(`Rank: ${rank.name}, Count: ${count}`);
+              // console.log(`Rank: ${rank.name}, Count: ${count}`);
             } catch (error) {
               console.error(
                 `Error fetching rank data for ${rank.name}:`,
@@ -1662,26 +2010,41 @@ const Dashboard = () => {
     contractAbi,
   ]);
 
-  const fetchITCPrice = async () => {
-    try {
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=itc&vs_currencies=usd`
-      );
-      if (!response.ok) {
-        throw new Error(`Error fetching ITC price: ${response.statusText}`);
-      }
-      const data = await response.json();
-      console.log("the data iss", data.itc.usd);
-      setItcPrice(data.itc.usd);
-    } catch (error) {
-      console.error("Error fetching ITC price:", error);
-      setItcPrice(null); // Reset to null on error
-    }
-  };
 
-  useEffect(() => {
-    fetchITCPrice();
-  }, []);
+  // Add these state variables at the beginning of your Dashboard component
+const [addressToBlacklist, setAddressToBlacklist] = useState("");
+const [isBlacklistProcessing, setIsBlacklistProcessing] = useState(false);
+
+// Add this function to handle blacklisting
+const handleBlacklist = async () => {
+
+  if (!walletProvider) {
+    console.warn("Wallet not connected or provider not ready");
+    return;
+  }
+  if (!ethers.utils.isAddress(addressToBlacklist)) {
+    toast.error("Please enter a valid address");
+    return;
+  }
+
+  try {
+    setIsBlacklistProcessing(true);
+    const provider = new ethers.providers.Web3Provider(walletProvider);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractAbi, signer);
+
+    const tx = await contract.blacklistAddress(addressToBlacklist);
+    await tx.wait();
+
+    toast.success("Address has been blacklisted successfully!");
+    setAddressToBlacklist("");
+  } catch (error) {
+    console.error("Error blacklisting address:", error);
+    toast.error("Failed to blacklist address");
+  } finally {
+    setIsBlacklistProcessing(false);
+  }
+};
 
   const formatNumber = (num: number): string => {
     if (num >= 1_000_000_000) {
@@ -1696,6 +2059,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    // console.log(handleRankSelection);
     const handleClickOutside = (event: MouseEvent) => {
       const nav = document.getElementById("mobile-nav");
       const hamburger = document.getElementById("hamburger-button");
@@ -1711,7 +2075,7 @@ const Dashboard = () => {
         document.body.style.overflow = "unset";
       }
     };
-    console.log("menu", menuOpen);
+    //console.log("menu", menuOpen);
 
     document.addEventListener("mousedown", handleClickOutside);
 
@@ -1722,1147 +2086,694 @@ const Dashboard = () => {
     };
   }, [menuOpen]);
 
-  const [rankis, setrankis] = useState<
-    {
-      id: number;
-      name: string;
-      count: string;
-      pendingAmount: string;
-      totalDistributedAmount: string;
-    }[]
-  >([]);
+  // const [selectedRankPriceUSD, setSelectedRankPriceUSD] = useState<number>(0); // Store USD price
+  // const [selectedRankPriceITC, setSelectedRankPriceITC] = useState<number>(0); // Store ITC price
 
-  useEffect(() => {
-    const registerUser = async (address: string) => {
-      console.log(setTotalPendingAmount);
-      console.log(rankis);
-      console.log(setrankis);
-      try {
-        const response = await axios.get(
-          `https://itcback-production.up.railway.app/api/users/${address}`
-        );
 
-        // console.log("the reponse is",response);
-
-        // Extract the relevant user data
-        const user = response.data.data;
-        // console.log("User data:::::::::::::", user);
-
-        // Update the state with nickname and avatar
-        setUserData({
-          nickname: user.nickname,
-          avatar: user.avatar,
-          referralQR: user.referralQR,
-        });
-
-        const url = `https://res.cloudinary.com/dygw3ixdr/image/upload/v1737705516/qr-codes/${address}.png`;
-        console.log("url is ", url);
-        setQrCodeUrl(url);
-
-        // console.log("User registered:", user);
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error("Error message:", error.message);
-        } else {
-          console.error("Unknown error:", error);
-        }
-      }
-    };
-
-    if (address) {
-      registerUser(address);
-    }
-  });
-
-    useEffect(() => {
-      const checkRegistrationStatus = async (newAddress: string) => {
-        if (!isConnected || !walletProvider || !isProviderReady || !newAddress) {
-          console.warn("Wallet is not connected or provider is not ready.");
-          return;
-        }
-    
-        try {
-          console.log("Checking registration status for:", newAddress);
-    
-          // Initialize Web3 provider and contract
-          const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-          const signer = ethersProvider.getSigner();
-          const contract = new ethers.Contract(contractAddress, contractAbi, signer);
-    
-          // Fetch user details from the contract
-          const userData = await contract.users(newAddress);
-          console.log("Fetched User Data:", userData);
-    
-          // Ensure userData exists and check isActive status
-          if (!userData || !userData.isActive) {
-            console.log("User is NOT active. Redirecting to home...");
-            navigate("/"); // Redirect unregistered/inactive users
-          } else {
-            console.log("User is active. Staying on the dashboard.");
-          }
-        } catch (error) {
-          console.error("Error checking registration status:", error);
-          navigate("/"); // Redirect if there's an error
-        }
-      };
-    
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length > 0) {
-          console.log("MetaMask account changed to:", accounts[0]);
-          checkRegistrationStatus(accounts[0]); // Check if the new account is registered
-        } else {
-          console.log("No account connected, redirecting...");
-          navigate("/"); // Redirect if no account is connected
-        }
-      };
-    
-      if (walletProvider) {
-        const provider = new ethers.providers.Web3Provider(walletProvider as any);
-        const externalProvider = provider.provider as any;
-    
-        if (externalProvider?.on) {
-          externalProvider.on("accountsChanged", handleAccountsChanged);
-        }
-    
-        // Check registration on initial load
-        if (address) {
-          checkRegistrationStatus(address);
-        }
-    
-        return () => {
-          if (externalProvider?.removeListener) {
-            externalProvider.removeListener("accountsChanged", handleAccountsChanged);
-          }
-        };
-      }
-    }, [walletProvider, address, isConnected, isProviderReady, navigate]);
-    
-
-  // useEffect(() => {
-  //   console.log("Wallet Address:", address);
-  //   if (address) {
-  //     registerUser(address);
-  //   } else {
-  //     console.warn("No wallet address found");
-  //   }
-  // }, [address]);
-
-  // useEffect(() => {
-  //   console.log("User Data:", userData);
-  // }, [userData]);
-
-  // const stats = {
-  //   employees: 78,
-  //   hirings: 56,
-  //   projects: 203,
+  // if(!selectedRankPriceUSD && !selectedRankPriceITC){
+  //   console.log("err");
+  // }
+  // const handleRankSelection = (
+  //   rank: string,
+  //   priceUSD: number,
+  //   priceITC: number
+  // ) => {
+  //   setSelectedRank(rank);
+  //   setSelectedRankPriceUSD(priceUSD);
+  //   setSelectedRankPriceITC(priceITC);
+  //   setDropdownOpen(false);
   // };
-
-  // const onboardingTasks: Task[] = [
-  //   {
-  //     id: 1,
-  //     title: "Interview",
-  //     time: "08:30",
-  //     date: "Sep 13",
-  //     completed: true,
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Team Meeting",
-  //     time: "10:30",
-  //     date: "Sep 13",
-  //     completed: true,
-  //   },
-  //   {
-  //     id: 3,
-  //     title: "Project Update",
-  //     time: "13:00",
-  //     date: "Sep 13",
-  //     completed: false,
-  //   },
-  //   {
-  //     id: 4,
-  //     title: "Discuss Q3 Goals",
-  //     time: "14:45",
-  //     date: "Sep 13",
-  //     completed: false,
-  //   },
-  //   {
-  //     id: 5,
-  //     title: "HR Policy Review",
-  //     time: "16:30",
-  //     date: "Sep 13",
-  //     completed: false,
-  //   },
-  // ];
-  
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const dropdownMenu = document.getElementById("rankDropdownMenu");
-      const dropdownButton = document.getElementById("rankDropdownButton");
-
-      // Check if the click is outside the dropdown menu and button
-      if (
-        dropdownMenu &&
-        dropdownButton &&
-        !dropdownMenu.contains(event.target as Node) &&
-        !dropdownButton.contains(event.target as Node)
-      ) {
-        setDropdownOpen(false); // Close the dropdown
-      }
-    };
-
-    if (dropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      // Cleanup the event listener on unmount
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownOpen]);
 
   const closeToastManually = () => {
     toast.dismiss();
   };
 
-  return (
-    <>
-    {!isConnected ? (
-        navigate("/")
-      ) : (
-        <div> 
-      <ToastContainer
-        onClick={closeToastManually}
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-      />
-      <div className="w-full min-h-screen custom-gradient p-2 sm:p-4 md:p-6 font-poppins space-y-4 sm:space-y-8">
-        {showConfetti && <Confetti width={width} height={height} />}
-        {/* Navbar */}
+  interface StatCardProps {
+    icon: any;
+    value: string | number;
+    label: string;
+    gradient: string;
+  }
 
-        {/* Header */}
-        <br />
+    const [expandedRank, setExpandedRank] = useState<string | null>(null);
+     const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+    const handleCopy = async (address: string, key: string) => {
 
-        {/* Stats Section */}
+     // console.log(currentMonthIndex);
+      try {
+        await navigator.clipboard.writeText(address);
+        setCopiedStates((prev) => ({ ...prev, [key]: true }));
+        setTimeout(() => {
+          setCopiedStates((prev) => ({ ...prev, [key]: false }));
+        }, 2000);
+      } catch (error) {
+        console.error("Copy failed", error);
+      }
+    };
 
-        {/* Employee Stats */}
-
-        {/* Task Progress Section */}
-
-        <div
-          className="flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8 -mt-2"
-          style={{
-            marginTop: "0rem", // Adjust your desired margin value here
-          }}
+    const RankSection: React.FC<RankSectionProps> = ({
+      rank,
+      addresses,
+      expanded,
+      onToggle,
+      onCopy,
+      copiedStates,
+    }) => (
+      <div className="mb-4 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
+        <button
+          onClick={onToggle}
+          className={`w-full p-4 flex items-center justify-between bg-gradient-to-r ${rank.color} text-white`}
         >
-          {/* Global User Count */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 text-center md:text-left">
-            <h2 className="text-base font-semibold text-gray-800 whitespace-nowrap">
-              Global User Count 🌍
-            </h2>
-            <p className="text-lg text-black font-bold">
-              {usrCnt !== null ? count : "Loading..."}+
-            </p>
-          </div>
-
-          {/* Statistics */}
-          <div className="flex flex-wrap gap-4 justify-center md:justify-end items-center w-full md:w-auto">
-            {/* LTG Pool */}
-            <div className="flex flex-col items-center text-center space-y-2">
-              <svg
-                className="w-6 h-6 text-gray-500"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              <div>
-                <div className="text-2xl font-semibold text-gray-800">
-                  {isConnected ? formatNumber(countLTGPool) : "0"}+
-                </div>
-                <div className="text-sm text-gray-500">LTGB</div>
-              </div>
-            </div>
-
-            {/* RAB Pool */}
-            <div className="flex flex-col items-center text-center space-y-2">
-              <svg
-                className="w-6 h-6 text-gray-500"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0M3 20a6 6 0 0112 0v1H3v-1z"
-                />
-              </svg>
-              <div>
-                <div className="text-2xl font-semibold text-gray-800">
-                  {isConnected ? formatNumber(countRTGPool) : "0"}+
-                </div>
-                <div className="text-sm text-gray-500">RAB</div>
-              </div>
-            </div>
-
-            {/* LDP Pool */}
-            <div className="flex flex-col items-center text-center space-y-2">
-              <svg
-                className="w-6 h-6 text-gray-500"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                />
-              </svg>
-              <div>
-                <div className="text-2xl font-semibold text-gray-800">
-                  {isConnected ? formatNumber(countLDPPool) : "0"}+
-                </div>
-                <div className="text-sm text-gray-500">LB</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-6 gap-4 w-full">
-          {/* Profile Card */}
-          {/* Profile Card */}
-          <div className="col-span-1 lg:col-span-4 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4  gap-4 w-full">
-              <div className="relative flex items-center  justify-center  overflow-hidden   rounded-full border p-8 shadow-sm min-h-[220px] sm:h-[20rem] lg:h-full md:h-full">
-                {/* Background Image */}
-                <div className="absolute w-full inset-0 h-full">
-                  <img
-                    src={`data:image/svg+xml;utf8,${encodeURIComponent(
-                      avatarSVG
-                    )}`}
-                    alt="Background"
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Darker gradient overlay for better text visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-black/20 " />
-                </div>
-                {/* Content */}
-                <div className="absolute bottom-0 flex justify-center -mb-3 p-6 w-full">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-center">
-                      <h3 className="text-2xl  font-semibold text-white">
-                        {userData?.nickname || "Unknown User"}{" "}
-                        {/* Use dynamic nickname */}
-                      </h3>
-                      <Edit2
-                        className="text-white ml-2 w-3 h-53cursor-pointer hover:text-gray-300"
-                        onClick={() => setShowNicknameModal(true)}
-                        aria-label="Edit Nickname"
-                      />
-                    </div>
-
-                    {/* Added background and padding for better address visibility */}
-                    <div className="flex justify-center bg-black/40 px-3 py-1 rounded-full">
-                      <p className="text-sm font-medium text-white">
-                        {address
-                          ? `${address.slice(0, 6)}...${address.slice(-4)}`
-                          : "No wallet connected"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {showNicknameModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                  <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-                    <h2 className="text-xl font-semibold mb-4">
-                      Update Nickname
-                    </h2>
-
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      New Nickname
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full truncate px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      value={newNickname}
-                      onChange={(e) => {
-                        const inputValue = e.target.value;
-                        if (inputValue.length <= 8) {
-                          setNewNickname(inputValue);
-                        }
-                      }}
-                      maxLength={8}
-                    />
-
-                    <div className="flex items-center justify-end space-x-2 mt-4">
-                      <button
-                        onClick={() => setShowNicknameModal(false)}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleUpdateNickname}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
-                        Update
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* First Progress Card */}
-
-              {/* Level Distribution Pool Card */}
-              <div className="rounded-3xl border p-7 shadow-sm   bg-gradient-to-br from-white via-white to-yellow-50 flex flex-col justify-between">
-                <h3 className="text-base font-semibold mb-6">Level Bonus</h3>
-
-                {!isConnected ? (
-                  <div className="mt-4 text-center">
-                    <p className="text-sm text-gray-600">
-                      Connect wallet to view bonus details
-                    </p>
-                  </div>
-                ) : isLoadingLevel ? (
-                  <div className="mt-4 text-center">
-                    <p className="text-sm text-gray-600">Loading provider...</p>
-                  </div>
-                ) : (
-                  <div className="mt-4 space-y-3">
-                    <div>
-                      <span className="text-sm text-gray-600">
-                        Withdrawal Level Bonus:
-                      </span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-bold text-gray-900">
-                          {withdrawalLevel}
-                        </span>
-                      </div>
-                      <button
-                        onClick={handleWithdrawLevel}
-                        className="px-2 py-1 bg-yellow-100 text-black border border-gray-400 rounded-md hover:bg-yellow-400 disabled:opacity-50 transform transition-transform duration-300 active:scale-90"
-                      >
-                        Withdrawal
-                      </button>
-                    </div>
-
-                    <div>
-                      <span className="text-sm text-gray-600">
-                        Total Level:
-                      </span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-bold text-gray-900">
-                          {totalLevel}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div
-                  className=" bg-gray-100"
-                  // style={{ marginTop: "1rem" }}
-                ></div>
-
-                <div className="relative text-xs text-gray-500 mt-auto">
-                  Last updated: {new Date().toLocaleTimeString()}
-                </div>
-              </div>
-
-              {/* Second Progress Card */}
-              <div className="rounded-3xl border p-7 shadow-sm  bg-gradient-to-br from-white via-white to-yellow-50 flex flex-col justify-between">
-                <div className="mb-6">
-                  <h3 className="text-base font-semibold">
-                    Rank Achievement Bonus
-                  </h3>
-
-                  {!isConnected ? (
-                    <div className="mt-4 text-center">
-                      <p className="text-sm text-gray-600">
-                        Connect wallet to view bonus details
-                      </p>
-                    </div>
-                  ) : isLoadingRab ? (
-                    <div className="mt-4 text-center">
-                      <p className="text-sm text-gray-600">
-                        Loading provider...
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mt-4 space-y-3">
-                      <div>
-                        <span className="text-sm text-gray-600">
-                          Withdrawal RAB:
-                        </span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-xl font-bold text-gray-900">
-                            {withdrawalRAB === "Loading..." ? (
-                              <span className="text-gray-400">Loading...</span>
-                            ) : withdrawalRAB === "Error" ? (
-                              <span className="text-red-500">
-                                Error loading data
-                              </span>
-                            ) : (
-                              withdrawalRAB
-                            )}
-                          </span>
-                        </div>
-                        <button
-                          onClick={handleWithdrawRab}
-                          className="px-2 py-1 bg-yellow-100 text-black border border-gray-400 rounded-md hover:bg-yellow-400 disabled:opacity-50 transform transition-transform duration-300 active:scale-90"
-                        >
-                          Withdrawal
-                        </button>
-                      </div>
-
-                      <div>
-                        <span className="text-sm text-gray-600">
-                          Total RAB:
-                        </span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-xl font-bold text-gray-900">
-                            {totalRAB === "Loading..." ? (
-                              <span className="text-gray-400">Loading...</span>
-                            ) : totalRAB === "Error" ? (
-                              <span className="text-red-500">
-                                Error loading data
-                              </span>
-                            ) : (
-                              totalRAB
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div
-                  className="  bg-gray-100"
-                  // style={{ marginTop: "1rem" }}
-                ></div>
-
-                <div className="relative text-xs text-gray-500 mt-auto ">
-                  Last updated: {new Date().toLocaleTimeString()}
-                </div>
-              </div>
-
-              {/* Timer Card */}
-              {/* Progress Card */}
-              <div className="rounded-3xl p-6 border shadow-sm  bg-gradient-to-br from-white via-white to-yellow-50 flex flex-col justify-between">
-                <div>
-                  <div className="mb-6">
-                    <h3 className="text-base font-medium text-gray-900">
-                      Lifetime Growth Bonus
-                    </h3>
-
-                    {!isConnected ? (
-                      <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600">
-                          Connect wallet to view bonus details
-                        </p>
-                      </div>
-                    ) : isLoading ? (
-                      <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600">
-                          Loading provider...
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="mt-10 space-y-3">
-                        <div>
-                          <span className="text-sm text-gray-600">
-                            On Hold Bonus:
-                            <div className="relative group inline-block left-2">
-                              {/* Circle */}
-                              <div className="w-4 h-4 text-red-500 flex items-center border border-red-500 justify-center rounded-full text-[0.5rem] font-medium cursor-pointer">
-                                i
-                              </div>
-
-                              {/* Tooltip */}
-                              <div className="absolute bottom-full right-0 transform translate-y-2 px-2 max-w-[80vw] sm:max-w-xs md:max-w-sm lg:max-w-md bg-gradient-to-r from-yellow-200 to-yellow-400 text-slate-600 text-xs sm:text-sm md:text-base rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 shadow-lg shadow-gray-500 overflow-hidden whitespace-normal">
-                                <div className="relative w-full">
-                                  {/* Tooltip Arrow */}
-                                  <div className="absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 md:border-l-6 md:border-r-6 border-t-4 md:border-t-6 border-transparent border-t-yellow-300"></div>
-                                  {/* Tooltip Text */}
-                                  <p className="text-center leading-tight sm:leading-normal md:leading-relaxed">
-                                    After each two referrals, the amount will
-                                    directly transfer to your wallet.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </span>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-bold text-gray-900">
-                              {withdrawalBonus === "Loading..." ? (
-                                <span className="text-gray-400">
-                                  Loading...
-                                </span>
-                              ) : withdrawalBonus === "Error" ? (
-                                <span className="text-red-500">
-                                  Error loading data
-                                </span>
-                              ) : (
-                                totalPendingAmount
-                              )}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <span className="text-sm text-gray-600">
-                            Total Bonus:
-                          </span>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xl font-bold text-gray-900">
-                              {totalBonus === "Loading..." ? (
-                                <span className="text-gray-400">
-                                  Loading...
-                                </span>
-                              ) : totalBonus === "Error" ? (
-                                <span className="text-red-500">
-                                  Error loading data
-                                </span>
-                              ) : (
-                                totalBonus
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Last Updated Section (Pushed to the Bottom) */}
-                <div className="text-xs text-gray-500 mt-auto">
-                  Last updated: {new Date().toLocaleTimeString()}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-1 lg:col-span-2 md:grid-cols-1 w-full ">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 w-full md:min-h-2  ">
-              {/* Total Bonus Card */}
-              <div className=" rounded-3xl  border  lg:p-8 p-6 md:p-5    shadow-sm     bg-gradient-to-br from-white via-white to-yellow-50">
-                <h3 className="text-base font-semibold mb-6 text-center">
-                  Global Bonus
-                </h3>
-                <div className="flex flex-col items-center">
-                  <span className="text-5xl mb-6">🏛️</span>
-                  <div className="text-xl font-bold mb-3">
-                    {isConnected ? totalInvestment : "0"}
-                  </div>
-                  <p className="text-sm">Total Earnings</p>
-                </div>
-              </div>
-              <div className="rounded-3xl  border  lg:p-8 p-6  md:p-5   shadow-sm  bg-gradient-to-br from-white via-white to-yellow-50">
-                <h3 className="text-base font-semibold mb-6 text-center">
-                  Award & reward
-                </h3>
-                <div className="flex flex-col items-center">
-                  <span className="text-5xl mb-6">📊</span>
-                  <div className="text-2xl font-bold mb-3">
-                    {isConnected ? (
-                      isLoadingARB ? (
-                        <p className="text-gray-600">
-                          Loading ARB Pool Balance...
-                        </p>
-                      ) : (
-                        <div className="text-center">
-                          <span className="text-sm text-gray-600">
-                            Pool Balance:
-                          </span>
-                          <div className="text-xl font-bold mb-3">
-                            {parseFloat(arbPoolBalance).toFixed(2)}
-                          </div>
-                          <button
-                            onClick={handleWithdrawARBPoolBalance}
-                            className="px-3 py-1   bg-yellow-100 text-black border border-gray-400 rounded-md hover:bg-yellow-400 disabled:opacity-50 transform transition-transform duration-300 active:scale-90 text-sm"
-                            disabled={isLoadingARB}
-                          >
-                            {isLoadingARB ? "Processing..." : "Withdraw"}
-                          </button>
-                        </div>
-                      )
-                    ) : (
-                      <p className="text-sm text-gray-600">
-                        Connect wallet to view details
-                      </p>
-                    )}
-                  </div>
-                  {errorARB && (
-                    <div className="mt-4 text-sm text-red-500 text-center">
-                      {errorARB}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ... (previous code until the grid section) ... */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6  ">
-          {/* Left Menu Card - Made narrower */}
-          <div className="md:col-span-3 bg-gradient-to-br from-white via-white to-yellow-50 rounded-2xl p-4 shadow-sm overflow-y-hidden">
-            <div className="text-center mb-4">
-              <h4 className="text-lg font-semibold text-gray-700">
-                User details
-              </h4>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
-              <div className="bg-white/70 rounded-xl p-4 hover:bg-white/90 transition-all duration-200">
-                <h4 className="text-sm font-medium text-gray-600">Referrer:</h4>
-                <p className="text-sm font-mono bg-yellow-50/50 px-2 py-1 rounded-lg mt-2 overflow-hidden text-ellipsis">
-                  {userDetails?.referrer?.slice(0, 6)}...
-                  {userDetails?.referrer?.slice(-4)}
-                </p>
-              </div>
-
-              <div className="bg-white/70 rounded-xl p-4 hover:bg-white/90 transition-all duration-200">
-                <h4 className="text-sm font-medium text-gray-600">
-                  Current Rank:
-                </h4>
-                <div className="mt-1">
-                  <span className=" lg:px-1  lg:-ml-75 py-0.5 bg-violet-500 text-white text-xs rounded-full whitespace-nowrap  md:-ml-2 md:-mb-2 md:px-2 sm:px-2">
-                    {userDetails?.currentRank || "N/A"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white/70 rounded-xl p-3 hover:bg-white/90 transition-all duration-200">
-                <h4 className="text-sm font-medium text-gray-600">
-                  Last Rank Update:
-                </h4>
-                <p className="text-sm mt-1 truncate">
-                  {userDetails?.lastRankUpdateTime || "N/A"}
-                </p>
-              </div>
-
-              <div className="bg-white/70 rounded-xl p-3 hover:bg-white/90 transition-all duration-200 relative">
-                <h4 className="text-sm font-medium text-gray-600">
-                  Rank Expiry:
-                </h4>
-                <p className="text-sm mt-1">Never</p>
-              </div>
-
-              <div className="bg-white/70 rounded-xl p-3 hover:bg-white/90 transition-all duration-200">
-                <h4 className="text-sm font-medium text-gray-600">
-                  Total Purchase:
-                </h4>
-                <p className="text-sm font-mono mt-1">
-                  {Number(userDetails?.totalInvestment).toFixed(2) || "0.00"}
-                </p>
-              </div>
-
-              <div className="bg-white/70 rounded-xl p-3 hover:bg-white/90 transition-all duration-200">
-                <h4 className="text-sm font-medium text-gray-600">Status:</h4>
-                <span
-                  className={`mt-1 inline-block px-2 py-0.5 rounded-full text-sm ${"bg-green-100 text-green-700"}`}
-                >
-                  {"Active"}
-                </span>
-              </div>
-
-              <div className="bg-white/70 rounded-xl p-3 hover:bg-white/90 transition-all duration-200 sm:col-span-2 md:col-span-2 lg:col-span-2">
-                <h4 className="text-sm font-medium text-gray-600">Rewards:</h4>
-                <p className="text-sm font-mono mt-1">
-                  {Number(userDetails?.rewards).toFixed(2) || "0.00"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Calendar Card - Made wider */}
-          <div className="md:col-span-9 rounded-3xl p-6 bg-gradient-to-br from-white via-white to-yellow-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex justify-center items-center mb-6">
-              <span className="font-bold text-lg bg-gradient-to-r from-black to-yellow-800 bg-clip-text text-transparent">
-                Global Ranks Progression
+          <div className="flex items-center space-x-4">
+            <img
+              src={rank.image}
+              alt={rank.name}
+              className="w-10 h-10 object-contain rounded-full ring-2 ring-white/30"
+            />
+            <div className="flex items-center space-x-3">
+              <span className="font-semibold text-lg">
+                {rank.name.replace("_", " ")}
+              </span>
+              <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                {addresses.length} Users
               </span>
             </div>
-            <div className="h-80">
-              <Bar
-                data={rankGraphData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      ticks: {
-                        stepSize: 1,
-                        font: {
-                          size: 12,
-                        },
-                        color: "#4b5563",
-                        padding: 8,
-                      },
-                      title: {
-                        display: true,
-                        text: "Number of Users",
-                        font: {
-                          size: 14,
+          </div>
+          {expanded ? (
+            <ChevronUp className="w-6 h-6" />
+          ) : (
+            <ChevronDown className="w-6 h-6" />
+          )}
+        </button>
+    
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white dark:bg-gray-800"
+            >
+              <div className="max-h-64 overflow-y-auto">
+                {addresses.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500 dark:text-gray-400 flex flex-col items-center space-y-3">
+                    <Award className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+                    <p>No eligible users found for this rank</p>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {addresses.map((addr, idx) => (
+                      <li
+                        key={idx}
+                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-gray-700 bg-gray-100 dark:bg-gray-600" />
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white lg:text-xl">
+                                {`${addr.address.slice(0, 6)}...${addr.address.slice(-4)}`}
+                              </p>
+                              {addr.nickname && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {addr.nickname}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onCopy(addr.address, `${rank.name}-${idx}`)}
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                              copiedStates[`${rank.name}-${idx}`]
+                                ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                            }`}
+                          >
+                            {copiedStates[`${rank.name}-${idx}`] ? (
+                              <>
+                                <Check className="w-5 h-5" />
+                                <span>Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-5 h-5" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+    
 
-                          family: "'Inter', sans-serif",
-                        },
-                        color: "#374151",
-                        padding: 16,
-                      },
-                      grid: {
-                        color: "rgba(219, 234, 254, 0.4)",
-                        lineWidth: 1,
-                      },
-                    },
-                    x: {
-                      grid: {
-                        display: false,
-                      },
-                      ticks: {
-                        autoSkip: true,
-                        maxRotation: 30,
-                        minRotation: 0,
-                        font: {
-                          size: 10, // Adjust font size for smaller screens
-                        },
-
-                        color: "#4b5563",
-                        padding: 6,
-                      },
-                    },
-                  },
-                  plugins: {
-                    legend: {
-                      display: false,
-                    },
-                    tooltip: {
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      titleColor: "#1e293b",
-
-                      bodyColor: "#334155",
-
-                      borderColor: "#e2e8f0",
-                      borderWidth: 1,
-                      padding: 12,
-                      cornerRadius: 12,
-                      titleSpacing: 8,
-                      bodySpacing: 8,
-                      displayColors: true,
-
-                      callbacks: {
-                        label: function (context) {
-                          return `✨ Users: ${context.parsed.y}`;
-                        },
-                      },
-                    },
-                  },
-
-                  elements: {
-                    bar: {
-                      backgroundColor: "rgba(99, 102, 241, 0.8)",
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: "rgba(255, 255, 255, 0.4)",
-                      hoverBackgroundColor: "rgba(79, 70, 229, 1)",
-                      hoverBorderColor: "white",
-                      hoverBorderWidth: 2,
-                    },
-                  },
-                  hover: {
-                    mode: "index",
-                    intersect: false,
-                  },
-                }}
-              />
+  const StatCard: React.FC<StatCardProps> = ({ icon: Icon, value, label, gradient }) => (
+    <motion.div
+      whileHover={{ scale: 1.05, rotate: 0.5 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className={`relative overflow-hidden rounded-2xl p-6 transition-all duration-500 ${gradient} shadow-lg`}
+    >
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-md transition-opacity duration-500" />
+      <div className="relative flex items-start justify-between">
+        <div className="space-y-4">
+          <div className="rounded-xl bg-white/20 p-3 w-fit transition-transform duration-500 hover:scale-105">
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-white tracking-tight">
+              {value}
+              <span className="text-purple-300 ml-1">+</span>
             </div>
+            <div className="text-sm font-medium text-white/80 mt-1">{label}</div>
           </div>
         </div>
-        {/* Global Pool */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/10 to-white/5 rounded-full -mr-16 -mt-16 backdrop-blur-lg transition-all duration-500 group-hover:scale-110" />
+      </div>
+    </motion.div>
+  );
 
-        {/* <div className="text-black p-6 rounded-2xl border border-black">
-            <div>Global Pool</div>
-            <br />
-            {!isConnected ? (
-              <div className="text-center text-gray-500">
-                Wallet not connected. Unable to display pool data.
-              </div>
-            ) : isLoading ? (
-              <div className="text-center text-gray-500">
-                Loading pool data...
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center text-gray-400 mb-2">
-                  <span className="text-black">Total Pool</span>
-                  <span className="text-pink-500">{totalPoolValue}</span>
+  return (
+    <>
+      {!isConnected ? (
+        navigate("/")
+      ) : (
+        <div className="relative">
+          <ToastContainer
+            onClick={closeToastManually}
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            closeOnClick
+            pauseOnHover
+            draggable
+          />
+          {showConfetti && <Confetti width={width} height={height} />}
+
+          <div className="w-full min-h-screen p-4 md:p-6 font-poppins space-y-8">
+            {/* Marquee Alert */}
+            {showMarquee && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden rounded-xl bg-gradient-to-r from-yellow-100/90 to-amber-100/90 border border-yellow-200 shadow-lg backdrop-blur-sm"
+              >
+                <div className="p-4">
+                  <div className="marquee text-amber-900 font-semibold text-sm">
+                    {rankMessage}
+                  </div>
                 </div>
-                {Object.entries(rankUserCounts)
-                  .filter(([rank]) =>
-                    [
-                      "DIAMOND",
-                      "BLUE_DIAMOND",
-                      "BLACK_DIAMOND",
-                      "ROYAL_DIAMOND",
-                      "CROWN_DIAMOND",
-                    ].includes(rank)
-                  )
-                  .map(([rank, count]) => (
-                    <div
-                      key={rank}
-                      className="flex justify-between items-center"
-                    >
-                      <div>
-                        <div className="text-black">{rank}</div>
-                        <div className="text-sm text-black">
-                          {count} x {totalPoolValue}
+              </motion.div>
+            )}
+
+            {/* Main Stats Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+              
+              {/* Global Users Counter (Not inside StatCard) */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl p-6 backdrop-blur-xl border border-white/10 shadow-xl"
+              >
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                    Global User Count <span className="text-2xl">🌍</span>
+                  </h2>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {usrCnt !== null ? count : "Loading..."}
+                    <span className="text-purple-500">+</span>
+                  </p>
+                </div>
+              </motion.div>
+
+
+              {/* Bonus Stat Cards */}
+              <StatCard
+                icon={TrendingUp}
+                value={isConnected ? formatNumber(countLTGPool) : "0"}
+                label="LTGB"
+                gradient="bg-gradient-to-br from-blue-600 to-indigo-600"
+              />
+              <StatCard
+                icon={Award}
+                value={isConnected ? formatNumber(countRTGPool) : "0"}
+                label="RAB"
+                gradient="bg-gradient-to-br from-purple-600 to-pink-600"
+              />
+              <StatCard
+                icon={DollarSign}
+                value={isConnected ? formatNumber(countLDPPool) : "0"}
+                label="LB"
+                gradient="bg-gradient-to-br from-emerald-600 to-teal-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 md:grid-cols-1 gap-4 w-full relative ">
+              {/* Background Effects */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5 backdrop-blur-3xl" />
+
+              {/* Left Section - Main Content */}
+              <div className="col-span-1 lg:col-span-4 w-full relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                  {/* Profile Card */}
+                  <div
+                    className={cn(
+                      "relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg"
+                    )}
+                  >
+                    {/* Gradient Background */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 via-purple-600/20 to-indigo-600/20 group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-none" />
+
+                    {/* Content */}
+                    <div className="relative p-8 flex flex-col items-center justify-center min-h-[300px]">
+                      {/* Profile Image */}
+                      <div className="relative mb-6 group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
+                        <div className="relative">
+                          {isUploading ? (
+                            <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                            </div>
+                          ) : previewImage || userData?.avatar ? (
+                            <img
+                              src={previewImage || userData?.avatar}
+                              alt="Profile"
+                              className="w-24 h-24 object-cover rounded-full border-2 border-white/80"
+                              onError={(e) => {
+                                console.error("Image failed to load:", e);
+                                e.currentTarget.src = ""; // Clear the source on error
+                                setUserData((prev) =>
+                                  prev ? { ...prev, avatar: undefined } : null
+                                );
+                              }}
+                            />
+                          ) : (
+                            <div className="w-24 h-24 rounded-full border-2 border-white/80 flex items-center justify-center bg-gray-800">
+                              <User className="w-12 h-12 text-white/80" />
+                            </div>
+                          )}
+
+                          {/* Camera Icon Button */}
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full hover:bg-indigo-700 transition-colors duration-200"
+                          >
+                            <Camera className="w-4 h-4 text-white" />
+                          </button>
                         </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                        />
+                      </div>
+
+                      {/* User Info */}
+                      <h3 className="text-2xl font-bold text-white mb-3">
+                        {userData?.nickname || "Anonymous User"}
+                      </h3>
+                      <p className="text-sm text-white/80 bg-black/40 px-4 py-1.5 rounded-full mb-4">
+                        {address
+                          ? `${address.slice(0, 6)}...${address.slice(-4)}`
+                          : "Wallet not connected"}
+                      </p>
+                      <Button
+                        onClick={() => setShowNicknameModal(true)}
+                        variant="secondary"
+                        className="hover:bg-indigo-700 transition-colors duration-200"
+                      >
+                        Update Profile
+                      </Button>
+                    </div>
+
+                    {/* Nickname Modal */}
+                    <Dialog
+                      open={showNicknameModal}
+                      onOpenChange={setShowNicknameModal}
+                    >
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Update Your Profile</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <Input
+                              id="nickname"
+                              value={newNickname}
+                              onChange={(e) => setNewNickname(e.target.value)}
+                              placeholder="Enter new nickname"
+                              className="col-span-3"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowNicknameModal(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleUpdateNickname}
+                            disabled={isNicknameLoading}
+                          >
+                            {isNicknameLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              "Save Changes"
+                            )}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  {/* Level Bonus Card */}
+                  <Card className="relative overflow-hidden bg-slate-900/80 backdrop-blur-sm rounded-3xl border border-slate-800/50 p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="p-3 rounded-xl bg-purple-500/10">
+          <Trophy className="w-8 h-8 text-purple-400" />
+        </div>
+        <h3 className="lg:text-xl font-bold text-purple-400">
+          Blacklist Address
+        </h3>
+      </div>
+
+      
+      
+      <div className="space-y-6 lg:space-y-8 lg:mt-4 lg:mb-4 ">
+        <input
+          type="text"
+          value={addressToBlacklist}
+          onChange={(e) => setAddressToBlacklist(e.target.value)}
+          placeholder="Enter address to blacklist"
+          className="w-full px-6 py-4 rounded-xl text-lg bg-slate-800/50 border border-slate-700/50 
+            text-gray-200 placeholder:text-gray-500
+            focus:outline-none focus:ring-2 focus:ring-purple-500/20 
+            hover:bg-slate-800/70 transition-all duration-300"
+        />
+
+        <button
+          onClick={handleBlacklist}
+          disabled={isBlacklistProcessing || !addressToBlacklist || !ethers.utils.isAddress(addressToBlacklist)}
+          className={`w-full py-4 rounded-xl text-lg font-medium transition-all duration-300
+            ${!isBlacklistProcessing && addressToBlacklist && ethers.utils.isAddress(addressToBlacklist)
+              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:opacity-90"
+              : "bg-slate-700/50 text-gray-400 cursor-not-allowed"
+            }`}
+        >
+          {isBlacklistProcessing ? (
+            <div className="flex items-center justify-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+              <span className="text-lg">Processing...</span>
+            </div>
+          ) : (
+            "Blacklist Address"
+          )}
+        </button>
+      </div>
+    </Card>
+
+                  {/* RAB Card */}
+                  <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg h-full">
+                  <div className="absolute inset-0  bg-gradient-to-br from-blue-600/20 to-cyan-600/20  group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 backdrop-blur-xl" />
+                  <div className="relative p-8 flex flex-col items-center justify-center h-full">
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute -inset-1  rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
+                        < Wallet   className="w-16 h-16 text-blue-600 relative transform group-hover:scale-110 transition-transform duration-300" />
                       </div>
                     </div>
-                  ))}
-              </div>
-            )}
-          </div> */}
-
-        {/* Estimated ITCs & Points */}
-
-        {/* Elite Earnings */}
-
-        {/* Left Column */}
-        <div className="w-full p-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-1 animate-fade-left">
-            <div className="flex flex-col sm:flex-row w-full gap-4 sm:gap-6">
-              {/* Referral Link Section */}
-              <div className="text-black p-4 rounded-[1.5rem] border bg-gradient-to-br from-white via-yellow-50 to-yellow-50 shadow-lg hover:shadow-xl transition-shadow duration-300 w-full lg:w-[50%]">
-                <h3 className="text-black text-base md:text-lg mb-4">
-                  Referral Link
-                </h3>
-                <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
-                  <img
-                    src={userData?.referralQR}
-                    alt="QR Code"
-                    className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 border border-gray-200 rounded-lg flex-shrink-0 mx-auto md:mx-0"
-                  />
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="flex flex-col md:flex-row items-center md:gap-2">
-                      <input
-                        className="text-sm bg-gray-100 border border-gray-300 rounded-md px-2 py-1 w-full truncate"
-                        value={inviteLink}
-                        readOnly
-                      />
-                      <button
-                        onClick={copyToClipboard}
-                        className="px-3 py-1 bg-yellow-500 text-white rounded-md text-sm flex items-center justify-center mt-2 md:mt-0"
-                      >
-                        {isCopied ? (
-                          <CheckCheck className="w-4 h-4" /> // Show check mark when copied
-                        ) : (
-                          <Copy className="w-4 h-4" /> // Show copy icon when not copied
-                        )}
-                      </button>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    Total RAB
+                    </h3>
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                    {totalRab}
                     </div>
-                    <p className="text-gray-400 text-xs md:text-sm text-center md:text-left">
-                      Use referral link to build community
+                   
+                  </div>
+                </div>
+
+                  {/* Lifetime Growth Bonus Card */}
+                  <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg h-full">
+                  <div className="absolute inset-0  bg-gradient-to-br from-blue-600/20 to-cyan-600/20  group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 backdrop-blur-xl" />
+                  <div className="relative p-8 flex flex-col items-center justify-center h-full">
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute -inset-1  group-hover:scale-105 transition-transform duration-500" />
+                        <CreditCard className="w-16 h-16 text-blue-600 relative transform group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    Monthly RAB Pool
+                    </h3>
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                    {monthlyRab === "Loading..." ? "Loading..." : monthlyRab}
+                    </div>
+                  
+                  </div>
+                </div>
+                </div>
+              </div>
+
+              
+
+              {/* Right Section - Total Rewards Card */}
+              <div className="col-span-1 lg:col-span-1 w-full relative z-10">
+                <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg h-full">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 backdrop-blur-xl" />
+                  <div className="relative p-8 flex flex-col items-center justify-center h-full">
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
+                        <Gift className="w-16 h-16 text-purple-500 relative transform group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    Global Bonus
+                    </h3>
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                    {isConnected ? totalInvestment : "0"}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-white/70">
+                      Total Earnings
                     </p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Rank Update Section */}
-              <div className="text-black p-4 rounded-[1.5rem] bg-gradient-to-br from-white via-yellow-50 to-yellow-50 shadow-lg hover:shadow-xl transition-shadow duration-300 w-full sm:h-auto lg:h-[auto]">
-                <div className="flex justify-between items-center mb-4">
-                  {/* Rank Update Heading */}
-                  <h3 className="text-black text-lg sm:text-xl lg:text-2xl font-semibold">
-                    Rank Upgrade
-                  </h3>
-
-                  {/* Display Current Rank */}
-                  <div className="flex flex-col items-center sm:items-start sm:w-auto">
-                    <h4 className="text-sm font-medium text-gray-600">
-                      Current Rank:
-                    </h4>
-                    <span className="mt-1 inline-block px-3 py-1 bg-violet-500 text-white text-sm rounded-full">
-                      {userDetails?.currentRank || "Loading..."}
-                    </span>
-                  </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* User Details Card - Adjusted size */}
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+                  <h2 className="text-2xl font-bold mb-2 flex items-center space-x-3">
+                    <User className="w-8 h-8" />
+                    <span>Elite Ranks - Monthly Eligible Addresses</span>
+                  </h2>
+                  <p className="opacity-80 text-sm">
+                    Explore and manage eligible addresses across elite rank tiers
+                  </p>
                 </div>
+          
+                {eliteRanks.map((rank) => (
+                  <RankSection
+                    key={rank.name}
+                    rank={rank}
+                    addresses={rankAddresses[rank.name] || []}
+                    expanded={expandedRank === rank.name}
+                    onToggle={() =>
+                      setExpandedRank(expandedRank === rank.name ? null : rank.name)
+                    }
+                    onCopy={handleCopy}
+                    copiedStates={copiedStates}
+                  />
+                ))}
+              </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                  {/* Dropdown for ranks */}
-                  <div className="relative max-w-full w-full">
-                    <button
-                      id="rankDropdownButton"
-                      className="px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 text-gray-700 border border-gray-200 rounded-lg hover:shadow-md hover:from-blue-100 hover:to-indigo-100 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 flex items-center justify-between gap-2 w-full"
-                      onClick={() => setDropdownOpen((prev) => !prev)}
+              {/* Teams Ranks Progression Card - Enhanced dark mode and effects */}
+              <div className="md:col-span-2 rounded-3xl relative overflow-hidden group h-full">
+                
+                
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400 dark:from-slate-800/30 dark:to-slate-900/30" />
+               
+                <div
+                  className="relative p-3 sm:p-6 backdrop-blur-xl border-2 border-gray-300/10 
+  shadow-xl dark:shadow-slate-900/50 hover:shadow-2xl transition-all duration-500 h-full"
+                >
+                  <div className="flex justify-center items-center mb-4 sm:mb-6">
+                    <h2
+                      className="font-bold text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-blue-500 to-blue-600 
+    bg-clip-text text-transparent transition-colors duration-300 text-center px-2 py-1 leading-normal"
                     >
-                      <span className="font-medium">
-                        {selectedRank || "Select your rank"}
-                      </span>
-                      <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          dropdownOpen ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-                    {dropdownOpen && (
-                      <div
-                        id="rankDropdownMenu"
-                        className="absolute bottom-full mb-2 left-0 w-full bg-gradient-to-t from-yellow-50 to-white bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-10 backdrop-blur-sm bg-white/95"
-                      >
-                        {filteredRanks.map((rank, index) => {
-                          console.log("ITC Price:", itcPrice);
-                          const currentRankDetail = rankDetails.find(
-                            (detail) =>
-                              detail.name === userDetails?.currentRank &&
-                              detail.rankUpgradePriceUSD !== undefined // Ensure this field exists
-                          );
-
-                          const targetRankDetail = rankDetails.find(
-                            (detail) =>
-                              detail.name === rank.name &&
-                              detail.rankUpgradePriceUSD !== undefined // Ensure this field exists
-                          );
-
-                          const priceDifferenceUSD =
-                            currentRankDetail && targetRankDetail
-                              ? parseFloat(
-                                  targetRankDetail.rankUpgradePriceUSD
-                                ) -
-                                parseFloat(
-                                  currentRankDetail.rankUpgradePriceUSD
-                                )
-                              : 0;
-
-                          const priceDifferenceITC =
-                            priceDifferenceUSD && itcPrice
-                              ? (priceDifferenceUSD / itcPrice).toFixed(4)
-                              : "Loading...";
-
-                          console.log("Rank Details:", rankDetails);
-                          console.log(
-                            "Current Rank Detail:",
-                            currentRankDetail
-                          );
-                          console.log("Target Rank Detail:", targetRankDetail);
-                          console.log(
-                            "Price Difference USD:",
-                            priceDifferenceUSD
-                          );
-                          console.log(
-                            "Price Difference ITC:",
-                            priceDifferenceITC
-                          );
-
-                          return (
-                            <div
-                              key={index}
-                              className="group px-6 py-4 flex flex-col gap-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 rounded-lg mx-2 my-1"
-                              onClick={() => {
-                                setSelectedRank(rank.name);
-                                setDropdownOpen(false);
-                              }}
-                            >
-                              <span className="font-semibold text-gray-800 group-hover:text-blue-600 text-lg">
-                                {rank.name}
-                              </span>
-                              <div className="flex justify-between items-center text-sm text-gray-600 group-hover:text-gray-800">
-                                <span>Upgrade Price:</span>
-                                <span className="font-medium">
-                                  ${priceDifferenceUSD.toFixed(2)} USD
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center text-sm text-gray-600 group-hover:text-gray-800">
-                                <span>Price in ITC:</span>
-                                <span className="font-medium">
-                                  {priceDifferenceITC} ITC
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                      Teams Ranks Progression
+                    </h2>
                   </div>
 
-                  {/* Input for rank update */}
-                  {/* <div className="flex-grow">
-          <input
-            type="text"
-            placeholder="Please enter number of coins"
-            className="w-full text-black bg-transparent p-3 rounded-2xl border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div> */}
-                  <button
-                    onClick={upgradeRank}
-                    disabled={
-                      !selectedRank ||
-                      !userDetails ||
-                      (parseFloat(userDetails.rewards || "0") <
-                        selectedRankPriceUSD &&
-                        parseFloat(userDetails.rewards || "0") <
-                          selectedRankPriceITC)
-                    }
-                    className={`px-6 py-3 rounded-md w-full sm:w-auto lg:w-[12rem] transition-all duration-200 ${
-                      selectedRank &&
-                      (parseFloat(userDetails?.rewards || "0") >=
-                        selectedRankPriceUSD ||
-                        parseFloat(userDetails?.rewards || "0") >=
-                          selectedRankPriceITC)
-                        ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    }`}
-                  >
-                    Upgrade
-                  </button>
+                  <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">
+                    <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[500px]">
+                      <Bar
+                        data={rankGraphData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              ticks: {
+                                stepSize: 1,
+                                font: {
+                                  size: window.innerWidth < 640 ? 10 : 12,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 6 : 10,
+                              },
+                              title: {
+                                display: true,
+                                text: "Number of Users",
+                                font: {
+                                  size: window.innerWidth < 640 ? 12 : 14,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 8 : 12,
+                              },
+                              grid: {
+                                color: "rgba(255, 255, 255, 0.1)",
+                                lineWidth: 1,
+                              },
+                            },
+                            x: {
+                              grid: { display: false },
+                              ticks: {
+                                autoSkip: true,
+                                maxRotation: 30,
+                                minRotation: 0,
+                                font: {
+                                  size: window.innerWidth < 640 ? 8 : 10,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 4 : 8,
+                              },
+                            },
+                          },
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                              backgroundColor: "rgba(15, 23, 42, 0.95)",
+                              titleColor: "#FFFFFF",
+                              bodyColor: "#CBD5E1",
+                              borderColor: "#475569",
+                              borderWidth: 1,
+                              padding: window.innerWidth < 640 ? 8 : 12,
+                              cornerRadius: window.innerWidth < 640 ? 8 : 12,
+                              titleSpacing: window.innerWidth < 640 ? 6 : 8,
+                              bodySpacing: window.innerWidth < 640 ? 6 : 8,
+                              displayColors: true,
+                              callbacks: {
+                                label: function (context) {
+                                  return `✨ Users: ${context.parsed.y}`;
+                                },
+                              },
+                            },
+                          },
+                          elements: {
+                            bar: {
+                              backgroundColor: (context) => {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(
+                                  0,
+                                  0,
+                                  0,
+                                  window.innerWidth < 640 ? 200 : 300
+                                );
+                                gradient.addColorStop(
+                                  0,
+                                  "rgba(56, 189, 248, 0.9)"
+                                ); // Cyan
+                                gradient.addColorStop(
+                                  1,
+                                  "rgba(59, 130, 246, 0.9)"
+                                ); // Blue
+                                return gradient;
+                              },
+                              borderRadius: window.innerWidth < 640 ? 6 : 8,
+                              borderWidth: 0,
+                              hoverBackgroundColor: (context) => {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(
+                                  0,
+                                  0,
+                                  0,
+                                  window.innerWidth < 640 ? 200 : 300
+                                );
+                                gradient.addColorStop(
+                                  0,
+                                  "rgba(56, 189, 248, 1)"
+                                ); // Brighter Cyan
+                                gradient.addColorStop(
+                                  1,
+                                  "rgba(59, 130, 246, 1)"
+                                ); // Brighter Blue
+                                return gradient;
+                              },
+                              hoverBorderWidth: 2,
+                              hoverBorderColor: "#FFFFFF",
+                            },
+                          },
+                          hover: {
+                            mode: "index",
+                            intersect: false,
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="text-black mt-5  animate-fade-left">
-          <div className="text-black overflow-hidden">
-            <div className=" text-black">
-              <TickerRow
-                label="CRYPTO"
-                items={cryptoData}
-                tickerType="crypto"
-              />
-              {/* <TickerRow label="FOREX" items={forexData} tickerType="forex" /> */}
+            <div className="w-full space-y-4 sm:space-y-6">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
+                {/* Enhanced Referral Link Section */}
+             
+
+                {/* Enhanced Rank Update Section */}
+               
+
+               
+
+
+              </div>
             </div>
           </div>
+
+         
         </div>
-      </div>
-      </div>
       )}
+
     </>
   );
 };

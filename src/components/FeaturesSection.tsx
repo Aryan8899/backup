@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 
 const FeaturesSection = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [scrollPosition, setScrollPosition] = useState(0);
+  //const [scrollPosition, setScrollPosition] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    console.log(scrollPosition);
+    //console.log(scrollPosition);
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -19,20 +19,20 @@ const FeaturesSection = () => {
       }
     };
 
-    const handleScroll = () => {
-      setScrollPosition(window.scrollY);
-    };
+    // const handleScroll = () => {
+    //   setScrollPosition(window.scrollY);
+    // };
 
     // Initial mobile check
     checkMobile();
 
     window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("scroll", handleScroll);
+  
     window.addEventListener("resize", checkMobile);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("scroll", handleScroll);
+      
       window.removeEventListener("resize", checkMobile);
     };
   }, [isMobile]);

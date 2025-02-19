@@ -80,7 +80,7 @@ interface AddressData {
 }
 
 const ADMIN_ADDRESSES = [
-  "0x978ef2f8e2bb491adf7358be7ffb527e7bd47312",
+  "0x3E582a9FFD780A4DFC8AAb220A644596772B919E",
   "0x3e582a9ffd780a4dfc8aab220a644596772b919e",
 ];
 

@@ -24,6 +24,11 @@ interface ReferralNode {
   referrals: ReferralNode[];
 }
 
+// interface UserDetails {
+//   avatar: string;
+//   nickname: string;
+// }
+
 const ReferralTree = () => {
   const navigate = useNavigate();
   const { darkMode } = useDarkMode();
@@ -49,18 +54,30 @@ const ReferralTree = () => {
   // Memoize heavy functions
   const fetchUserDetails = useCallback(async (address: string) => {
     try {
+      if (!ethers.utils.isAddress(address)) {
+        return {
+          avatar: "",
+          nickname: "Unknown"
+        };
+      }
+      console.log("new one is")
       const response = await axios.get(
         `https://server.cryptomx.site/api/users/${address}`
       );
+  
       const user = response.data.data;
+      console.log("new is the api",user)
       return {
-        avatar: user.avatar || "",
+         avatar: user.avatar || "",
         nickname: user.nickname || "Unknown",
       };
 
       console.log(userData,isProviderReady,isScrollable)
     } catch (error) {
       console.error(`Error fetching user details for ${address}:`, error);
+      if (axios.isAxiosError(error) && error.response?.status !== 404) {
+        console.error(`Error fetching user details for ${address}:`, error);
+      }
       return {
         avatar: "",
         nickname: "Unknown",
@@ -96,20 +113,17 @@ const ReferralTree = () => {
         if (mounted) navigate("/");
       }
     };
+    
 
     checkRegistration();
     return () => {
       mounted = false;
     };
-  }, [isConnected, walletProvider, address]);
+  }, [userAddress,isConnected,isInitialized, fetchUserDetails,walletProvider, address]);
 
   // Set provider ready state
   useEffect(() => {
     setIsProviderReady(!!walletProvider);
-  }, [walletProvider]);
-
-  // Handle user data initialization
-  useEffect(() => {
     if (userAddress && isInitialized) {
       const initUser = async () => {
         try {
@@ -123,7 +137,14 @@ const ReferralTree = () => {
       };
       initUser();
     }
-  }, [userAddress, isInitialized]);
+
+    
+  }, [walletProvider,userAddress, isInitialized, fetchUserDetails]);
+
+  // Handle user data initialization
+  // useEffect(() => {
+   
+  // }, [userAddress, isInitialized]);
 
   const getRankName = (rankIndex: number) => {
     const ranks = [

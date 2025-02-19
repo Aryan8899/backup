@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef  } from "react";
 import { useDarkMode } from "../components/DarkModeContext";
 //import multiavatar from "@multiavatar/multiavatar";
 import { usePriceData } from "../components/PriceContext.tsx";
@@ -136,7 +136,7 @@ const Dashboard = () => {
     useState<string>("Loading...");
   const [totalInvestment, setTotalInvestment] = useState("0");
   const navigate = useNavigate();
-  const [connectedAddress, setConnectedAddress] = useState<string>("");
+  //const [connectedAddress, setConnectedAddress] = useState<string>("");
   const [rankGraphData, setRankGraphData] = useState<GraphData>({
     labels: [],
     datasets: [],
@@ -148,19 +148,39 @@ const Dashboard = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  console.log(setAvatarSVG)
+  
+  
   useEffect(() => {
     console.log("Dark Mode Changed, Re-rendering Background");
     setBackgroundKey(darkMode ? "dark" : "light");
-  }, [darkMode]);
 
-  if (!avatarSVG && !backgroundKey && !totalInvestment && !qrCodeUrl) {
+
+    console.log(avatarUrl);
+    if (userData?.avatar) {
+      setAvatarUrl(userData.avatar);
+    }
+
+
+    console.log(avatarUrl);
+    if (userData?.avatar) {
+      setAvatarUrl(userData.avatar);
+    }
+
+    const timeout = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timeout);
+
+    
+
+  }, [darkMode,userData?.avatar]);
+
+  if (!avatarSVG && !backgroundKey && !totalInvestment && !qrCodeUrl&& !count) {
     console.log("update!!");
   }
 
-  useEffect(() => {
-    const timeout = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(timeout);
-  }, []);
+  // useEffect(() => {
+
+  // }, []);
 
   useEffect(() => {
     //console.log(avatarSVG,backgroundKey,totalInvestment,qrCodeUrl)
@@ -240,95 +260,156 @@ const Dashboard = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // Add this useEffect to handle initial avatar loading
-  useEffect(() => {
-    console.log(avatarUrl);
-    if (userData?.avatar) {
-      setAvatarUrl(userData.avatar);
-    }
-  }, [userData?.avatar]);
+  // useEffect(() => {
+    
+  // }, [userData?.avatar]);
 
   // Modify the handleImageUpload function
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+ // Add these utility functions at the top of your file
+// Add these utility functions at the top of your file
 
-    // Preview Image
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
 
-    if (!address) {
-      toast.error("Wallet address not found. Cannot upload the image.");
-      return;
-    }
+// Safer memory cleanup function
+const clearMemory = () => {
+  if (window.URL) {
+    window.URL.revokeObjectURL('');
+  }
+};
 
-    try {
-      setIsUploading(true);
-      const formData = new FormData();
-      formData.append("avatar", file);
-      formData.append("address", address);
+// Optimized image compression
+const compressImage = async (file: File): Promise<File> => {
+  let objectUrl: string | null = null;
+  
+  try {
+    return await new Promise((resolve, reject) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 500;
+        let width = img.width;
+        let height = img.height;
 
-      //console.log('Uploading avatar for address:', address);
-
-      const response = await axios.put(
-        "https://server.cryptomx.site/api/users/update-avatar",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      // Check if the response has the expected structure
-      if (response.data && response.data.data) {
-        const newAvatarUrl = response.data.data.avatar;
-        if (newAvatarUrl) {
-          // Update both states
-          setUserData((prev) => ({
-            ...prev!,
-            avatar: newAvatarUrl,
-          }));
-          setAvatarUrl(newAvatarUrl);
-          setPreviewImage(null);
-
-          // Fetch updated user data
-          const userResponse = await axios.get(
-            `https://server.cryptomx.site/api/users/${address}`
-          );
-
-          if (userResponse.data && userResponse.data.data) {
-            setUserData(userResponse.data.data);
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round(height * MAX_SIZE / width);
+            width = MAX_SIZE;
           }
-
-          toast.success("Avatar updated successfully!");
         } else {
-          throw new Error("Avatar URL not found in response");
+          if (height > MAX_SIZE) {
+            width = Math.round(width * MAX_SIZE / height);
+            height = MAX_SIZE;
+          }
         }
-      } else {
-        throw new Error("Invalid response structure");
-      }
-    } catch (error) {
-      console.error("Upload error details:", error);
-      if (axios.isAxiosError(error)) {
-        console.error("Response data:", error.response?.data);
-        console.error("Response status:", error.response?.status);
-      }
-      // Only show error toast if the upload actually failed
-      if (
-        error instanceof Error &&
-        !error.message.includes("Avatar URL not found")
-      ) {
-        toast.error("Failed to upload image.");
-      }
-    } finally {
-      setIsUploading(false);
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            }));
+          } else {
+            reject(new Error('Compression failed'));
+          }
+          // Clean up canvas
+          canvas.width = 0;
+          canvas.height = 0;
+        }, 'image/jpeg', 0.5);
+      };
+
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+
+      objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+    });
+  } finally {
+    // Clean up object URL
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
     }
+  }
+};
+
+// Modified image upload handler
+const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file || !address) {
+    toast.error("Please select a file and ensure wallet is connected.");
+    return;
+  }
+
+  // Clear memory but don't touch DOM
+  clearMemory();
+  
+  // Reset states
+  setPreviewImage(null);
+  setAvatarUrl(null);
+  setUserData(prev => prev ? { ...prev, avatar: undefined } : null);
+  
+  try {
+    setIsUploading(true);
+
+    // Basic validation
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Please upload an image file');
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('File size should be less than 5MB');
+    }
+
+    // Compress and upload
+    const compressedFile = await compressImage(file);
+    const formData = new FormData();
+    formData.append("avatar", compressedFile);
+    formData.append("address", address);
+
+    const response = await axios.put(
+      "https://server.cryptomx.site/api/users/update-avatar",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / (progressEvent.total ?? 100)
+          );
+          console.log(`Upload: ${percent}%`);
+        }
+      }
+    );
+
+    if (response.data?.data?.avatar) {
+      const newUrl = `${response.data.data.avatar}?v=${Date.now()}`;
+      // Update states in a single batch
+      setUserData(prev => prev ? { ...prev, avatar: newUrl } : null);
+      setAvatarUrl(newUrl);
+      toast.success("Upload successful!");
+    }
+  } catch (error) {
+    console.error("Upload error:", error);
+    toast.error(error instanceof Error ? error.message : 'Upload failed. Please try again.');
+  } finally {
+    setIsUploading(false);
+    if (event.target) {
+      event.target.value = '';
+    }
+    clearMemory();
+  }
+};
+
+// Add cleanup effect for component unmount
+useEffect(() => {
+  return () => {
+    clearMemory();
   };
+}, []);
 
   interface RankTotals {
     [key: string]: string; // This allows string indexing
@@ -382,9 +463,11 @@ const Dashboard = () => {
   );
   const [isCopied, setIsCopied] = useState(false);
 
-  if (!error && !withdrawalBonus) {
+  if (!error && !withdrawalBonus && !withdrawalRab) {
     console.log("update!!");
   }
+
+  
 
   // useEffect(() => {
   //   const fetchAddress = async () => {
@@ -408,76 +491,117 @@ const Dashboard = () => {
 
   const fetchRankDetails = async () => {
     try {
-      if (!isConnected || !walletProvider || !isProviderReady) return;
-
+      // Early return if requirements aren't met
+      if (!isConnected || !walletProvider || !isProviderReady || !contractAddress) {
+        console.log("Prerequisites not met for contract initialization");
+        return;
+      }
+  
+      // Validate contract address
+      if (!ethers.utils.isAddress(contractAddress)) {
+        throw new Error("Invalid contract address");
+      }
+  
       const provider = new ethers.providers.Web3Provider(walletProvider);
       const signer = provider.getSigner();
+      
+      // Validate connected address
+      const connectedAddress = await signer.getAddress();
+      if (!ethers.utils.isAddress(connectedAddress)) {
+        throw new Error("Invalid connected address");
+      }
+  
       const contract = new ethers.Contract(
         contractAddress,
         contractAbi,
         signer
       );
+  
       const details = [];
       let pendingAmountTotal = ethers.BigNumber.from("0");
+  
+      // Fetch rank LTG details
       for (let i = 0; i <= 8; i++) {
-        const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
-
-        // Add the pending amount to the total
-        if (i <= 7) {
-          pendingAmountTotal = pendingAmountTotal.add(response.pendingAmount);
+        try {
+          const response = await contract.getRankLTG(connectedAddress, i);
+          
+          if (i <= 7) {
+            pendingAmountTotal = pendingAmountTotal.add(response.pendingAmount);
+          }
+  
+          details.push({
+            id: i,
+            name: ranks[i]?.name || `Rank ${i}`,
+            count: response.count.toString(),
+            pendingAmount: ethers.utils.formatEther(response.pendingAmount),
+            totalDistributedAmount: ethers.utils.formatEther(
+              response.ttlDstrbtdAmount
+            ),
+          });
+        } catch (error) {
+          console.error(`Error fetching LTG for rank ${i}:`, error);
         }
-
-        details.push({
-          id: i,
-          name: ranks[i].name,
-          count: response.count.toString(),
-          pendingAmount: ethers.utils.formatEther(response.pendingAmount),
-          totalDistributedAmount: ethers.utils.formatEther(
-            response.ttlDstrbtdAmount
-          ),
-        });
       }
-
+  
+      // Fetch rank details and calculate upgrade prices
       let currentRankCumulativePrice = 0;
-
-      for (let i = 0; i < ranks.length; i++) {
+      const rankDetailsPromises = ranks.map(async (rank, i) => {
         try {
           const rankDetail = await contract.rankDetails(i);
           const cumulativePrice = parseFloat(
             rankDetail.cumulativePrice.toString()
           );
-
-          // Store the current rank cumulative price
-          if (ranks[i].name === userDetails?.currentRank) {
+  
+          if (rank.name === userDetails?.currentRank) {
             currentRankCumulativePrice = cumulativePrice;
           }
-
-          // Calculate the rank upgrade price in USD
-          const rankUpgradePriceUSD =
-            cumulativePrice - currentRankCumulativePrice;
-
-          details.push({
+  
+          const rankUpgradePriceUSD = cumulativePrice - currentRankCumulativePrice;
+  
+          return {
             id: i,
-            name: ranks[i].name,
-            rankUpgradePriceUSD: rankUpgradePriceUSD.toFixed(2), // Price in USD
-          });
+            name: rank.name,
+            rankUpgradePriceUSD: rankUpgradePriceUSD.toFixed(2),
+          };
         } catch (error) {
           console.error(`Error fetching rank ${i} details:`, error);
+          return null;
         }
-      }
-
-      setRankDetails(details);
+      });
+  
+      const rankDetailsResults = await Promise.all(rankDetailsPromises);
+      const validRankDetails = rankDetailsResults.filter(detail => detail !== null);
+      
+      setRankDetails([...details, ...validRankDetails]);
       setTotalPendingAmount(
         parseFloat(ethers.utils.formatEther(pendingAmountTotal)).toFixed(2)
       );
+  
     } catch (error) {
-      console.error("Error initializing contract:", error);
+      console.error("Error in fetchRankDetails:", error);
+      // You might want to set some error state here
+      // setError(error.message);
     }
   };
-
+  
+  // Use cleanup in useEffect to prevent memory leaks
   useEffect(() => {
-    fetchRankDetails();
-  }, [isConnected, walletProvider, isProviderReady]);
+    let mounted = true;
+  
+    const fetchData = async () => {
+      if (mounted) {
+        await fetchRankDetails();
+      }
+    };
+  
+    if (isConnected && walletProvider && isProviderReady) {
+      fetchData();
+    }
+  
+    return () => {
+      mounted = false;
+    };
+  }, [isConnected, walletProvider, isProviderReady, contractAddress]);
 
   // Notification for rank expiration
 
@@ -937,7 +1061,7 @@ const Dashboard = () => {
           walletProvider
         );
         const network = await ethersProvider.getNetwork();
-        // console.log("Connected to network:", network.name);
+         console.log("Connected to network:", network.name);
         setIsProviderReady(true);
       } catch (error) {
         console.error("Error initializing provider:", error);
@@ -1926,6 +2050,11 @@ const Dashboard = () => {
     toast.dismiss();
   };
 
+  if(!selectedRankPriceITC){
+       console.log("hi");
+       handleRankSelection("Gold", 99.99, 1000);
+  }
+
   interface StatCardProps {
     icon: any;
     value: string | number;
@@ -2002,9 +2131,9 @@ const Dashboard = () => {
             )}
 
             {/* Main Stats Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-flow-row-dense md:grid-cols-3 gap-6">
               {/* Global Users Counter (Not inside StatCard) */}
-              <motion.div
+              {/* <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl p-6 backdrop-blur-xl border border-white/10 shadow-xl"
@@ -2018,7 +2147,7 @@ const Dashboard = () => {
                     <span className="text-purple-500">+</span>
                   </p>
                 </div>
-              </motion.div>
+              </motion.div> */}
 
               {/* Bonus Stat Cards */}
               <StatCard
@@ -2074,7 +2203,7 @@ const Dashboard = () => {
                             <img
                               src={previewImage || userData?.avatar}
                               alt="Profile"
-                              className="w-24 h-24 object-cover rounded-full border-2 border-white/80"
+                              className="w-28 h-28 object-cover rounded-full border-2 border-white/80"
                               onError={(e) => {
                                 console.error("Image failed to load:", e);
                                 e.currentTarget.src = ""; // Clear the source on error
@@ -2515,7 +2644,7 @@ const Dashboard = () => {
                       className="font-bold text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-blue-500 to-blue-600 
     bg-clip-text text-transparent transition-colors duration-300 text-center px-2 py-1 leading-normal"
                     >
-                      Teams Ranks Progression
+                       Global Ranks Progression
                     </h2>
                   </div>
 

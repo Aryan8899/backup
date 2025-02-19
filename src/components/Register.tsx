@@ -97,8 +97,8 @@ interface RankDetail {
 }
 
 const ADMIN_ADDRESSES = [
-  "0x978ef2f8e2BB491Adf7358be7fFB527E7bD47312".toLowerCase(),
   "0x3E582a9FFD780A4DFC8AAb220A644596772B919E".toLowerCase(),
+  "0x0Ac0920459Ae9c1ABB3D866C1f772e7f0697B069".toLowerCase(),
 ];
 
 const RegisterRank = () => {
@@ -124,14 +124,15 @@ const RegisterRank = () => {
   }, [location]);
 
   useEffect(() => {
+    // Check for admin status first
+    if (address && ADMIN_ADDRESSES.includes(address.toLowerCase())) {
+      navigate("/admin/dashboard");
+      return; // Exit early for admin addresses
+    }
+  
     const checkIfUserIsRegistered = async () => {
       if (contract && address) {
         try {
-          if (ADMIN_ADDRESSES.includes(address.toLowerCase())) {
-            navigate("/admin/dashboard");
-            return;
-          }
-
           const isRegistered = await contract.users(address);
           if (isRegistered.isActive) {
             navigate("/dashboard");
@@ -141,7 +142,7 @@ const RegisterRank = () => {
         }
       }
     };
-
+  
     checkIfUserIsRegistered();
   }, [contract, address, navigate]);
 
@@ -198,6 +199,11 @@ const RegisterRank = () => {
   const handleRegistration = async () => {
     if (!contract || !referralAddress || !walletProvider) {
       toast.error("Please connect wallet, select a rank, and enter referral address.");
+      return;
+    }
+
+    if (address && ADMIN_ADDRESSES.includes(address.toLowerCase())) {
+      navigate("/admin/dashboard");
       return;
     }
  
