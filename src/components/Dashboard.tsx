@@ -2084,7 +2084,7 @@ const Dashboard = () => {
 
   if (!selectedRankPriceITC) {
     console.log("hi");
-    // handleRankSelection("Gold", 99.99, 1000);
+     handleRankSelection("Gold", 99.99, 1000);
   }
 
   interface StatCardProps {
