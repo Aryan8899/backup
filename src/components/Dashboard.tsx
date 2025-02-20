@@ -627,7 +627,9 @@ useEffect(() => {
       }
 
       // Calculate time remaining
-      const expiryTime = new Date(userDetails.rankExpiryTime).getTime();
+      const expiryTime = new Date(
+        `${userDetails.rankExpiryTime} 23:59:59`
+      ).getTime();
       const currentTime = Date.now();
       const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
 
@@ -885,6 +887,7 @@ useEffect(() => {
 
     generateRankGraphData();
   }, [isConnected, walletProvider, isProviderReady, address]);
+  
   useEffect(() => {
     const fetchTotalInvestment = async () => {
       if (!isConnected || !walletProvider || !isProviderReady || !address) {
@@ -1344,6 +1347,11 @@ useEffect(() => {
       return;
     }
 
+    if (isRankExpired === true) {
+      toast.error("Cannot withdraw - your rank has expired. Please upgrade your rank first.");
+      return;
+    }
+
     try {
       setIsLoadingLevel(true);
       const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
@@ -1393,6 +1401,11 @@ useEffect(() => {
       console.warn(
         "Wallet not connected, provider not ready, or address missing"
       );
+      return;
+    }
+
+    if (isRankExpired === true) {
+      toast.error("Cannot withdraw - your rank has expired. Please upgrade your rank first.");
       return;
     }
 

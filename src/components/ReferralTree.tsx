@@ -86,40 +86,40 @@ const ReferralTree = () => {
   }, []);
 
   // Check registration status once on mount
-  useEffect(() => {
-    let mounted = true;
+  // useEffect(() => {
+  //   let mounted = true;
 
-    const checkRegistration = async () => {
-      if (!isConnected || !walletProvider || !address) return;
+  //   const checkRegistration = async () => {
+  //     if (!isConnected || !walletProvider || !address) return;
 
-      try {
-        const provider = new ethers.providers.Web3Provider(walletProvider);
-        const contract = new ethers.Contract(
-          contractAddress,
-          contractAbi,
-          provider
-        );
-        const userData = await contract.users(address);
+  //     try {
+  //       const provider = new ethers.providers.Web3Provider(walletProvider);
+  //       const contract = new ethers.Contract(
+  //         contractAddress,
+  //         contractAbi,
+  //         provider
+  //       );
+  //       const userData = await contract.users(address);
 
-        if (mounted) {
-          if (!userData || !userData.isActive) {
-            navigate("/");
-          } else {
-            setIsInitialized(true);
-          }
-        }
-      } catch (error) {
-        console.error("Registration check error:", error);
-        if (mounted) navigate("/");
-      }
-    };
+  //       if (mounted) {
+  //         if (!userData || !userData.isActive) {
+  //           navigate("/");
+  //         } else {
+  //           setIsInitialized(true);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("Registration check error:", error);
+  //       if (mounted) navigate("/");
+  //     }
+  //   };
     
 
-    checkRegistration();
-    return () => {
-      mounted = false;
-    };
-  }, [userAddress,isConnected,isInitialized, fetchUserDetails,walletProvider, address]);
+  //   checkRegistration();
+  //   return () => {
+  //     mounted = false;
+  //   };
+  // }, [userAddress,isConnected,isInitialized, fetchUserDetails,walletProvider, address]);
 
   // Set provider ready state
   useEffect(() => {
@@ -162,64 +162,159 @@ const ReferralTree = () => {
   };
 
   // Tree data loading
+  // useEffect(() => {
+  //   let mounted = true;
+
+  //   const loadTreeData = async () => {
+  //     if (!userAddress || !walletProvider || !isInitialized) return;
+
+  //     try {
+  //       setIsLoading(true);
+  //       const provider = new ethers.providers.Web3Provider(walletProvider);
+  //       const contract = new ethers.Contract(
+  //         contractAddress,
+  //         contractAbi,
+  //         provider
+  //       );
+
+  //       const fetchReferrals = async (
+  //         address: string
+  //       ): Promise<ReferralNode> => {
+  //         const referrals = await contract.getUserReferrals(address);
+  //         const userData = await contract.users(address);
+  //         const rankIndex = Number(userData[0]?.toString() || "0");
+  //         const rank = getRankName(rankIndex);
+
+  //         const details = await fetchUserDetails(address);
+  //         if (mounted) {
+  //           setUserDetails((prev) => ({
+  //             ...prev,
+  //             [address]: details,
+  //           }));
+  //         }
+
+  //         const referralNodes = await Promise.all(
+  //           referrals.map((referral: any) => fetchReferrals(referral))
+  //         );
+
+  //         return { address, rank, referrals: referralNodes };
+  //       };
+
+  //       const tree = await fetchReferrals(userAddress);
+  //       if (mounted) {
+  //         setTreeData(tree);
+  //         setIsScrollable(calculateTreeDepth(tree) > 3);
+  //         setIsLoading(false);
+  //       }
+  //     } catch (error) {
+  //       console.error("Tree data loading error:", error);
+  //       if (mounted) {
+  //         setError("Failed to load referral tree.");
+  //         setIsLoading(false);
+  //       }
+  //     }
+  //   };
+
+  //   loadTreeData();
+  //   return () => {
+  //     mounted = false;
+  //   };
+  // }, [userAddress, walletProvider, isInitialized, fetchUserDetails]);
+
+
   useEffect(() => {
     let mounted = true;
-
-    const loadTreeData = async () => {
-      if (!userAddress || !walletProvider || !isInitialized) return;
-
+    
+    const initialize = async () => {
+      if (!isConnected || !walletProvider || !address) return;
+      
       try {
         setIsLoading(true);
+        setIsProviderReady(!!walletProvider);
+        
+        // Step 1: Check registration
         const provider = new ethers.providers.Web3Provider(walletProvider);
         const contract = new ethers.Contract(
           contractAddress,
           contractAbi,
           provider
         );
-
-        const fetchReferrals = async (
-          address: string
-        ): Promise<ReferralNode> => {
-          const referrals = await contract.getUserReferrals(address);
-          const userData = await contract.users(address);
-          const rankIndex = Number(userData[0]?.toString() || "0");
-          const rank = getRankName(rankIndex);
-
-          const details = await fetchUserDetails(address);
-          if (mounted) {
-            setUserDetails((prev) => ({
-              ...prev,
-              [address]: details,
-            }));
-          }
-
-          const referralNodes = await Promise.all(
-            referrals.map((referral: any) => fetchReferrals(referral))
-          );
-
-          return { address, rank, referrals: referralNodes };
-        };
-
-        const tree = await fetchReferrals(userAddress);
+        const userData = await contract.users(address);
+        
+        if (!userData || !userData.isActive) {
+          if (mounted) navigate("/");
+          return;
+        }
+        
+        // Step 2: Get user data
         if (mounted) {
-          setTreeData(tree);
-          setIsScrollable(calculateTreeDepth(tree) > 3);
+          try {
+            const response = await axios.get(
+              `https://server.cryptomx.site/api/users/${address}`
+            );
+            setUserData(response.data.data);
+          } catch (error) {
+            console.error("User data fetch error:", error);
+          }
+        }
+        
+        // Step 3: Load tree data
+        if (mounted) {
+          try {
+            const fetchReferrals = async (address: string): Promise<ReferralNode> => {
+              const referrals = await contract.getUserReferrals(address);
+              const userData = await contract.users(address);
+              const rankIndex = Number(userData[0]?.toString() || "0");
+              const rank = getRankName(rankIndex);
+              
+              const details = await fetchUserDetails(address);
+              if (mounted) {
+                setUserDetails((prev) => ({
+                  ...prev,
+                  [address]: details,
+                }));
+              }
+              
+              const referralNodes = await Promise.all(
+                referrals.map((referral: any) => fetchReferrals(referral))
+              );
+              
+              return { address, rank, referrals: referralNodes };
+            };
+            
+            const tree = await fetchReferrals(address);
+            if (mounted) {
+              setTreeData(tree);
+              setIsScrollable(calculateTreeDepth(tree) > 3);
+            }
+          } catch (error) {
+            console.error("Tree data loading error:", error);
+            if (mounted) {
+              setError("Failed to load referral tree.");
+            }
+          }
+        }
+        
+        if (mounted) {
+          setIsInitialized(true);
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Tree data loading error:", error);
+        console.error("Initialization error:", error);
         if (mounted) {
-          setError("Failed to load referral tree.");
+          setError("Failed to initialize");
           setIsLoading(false);
+          navigate("/");
         }
       }
     };
-
-    loadTreeData();
+    
+    initialize();
+    
     return () => {
       mounted = false;
     };
-  }, [userAddress, walletProvider, isInitialized, fetchUserDetails]);
+  }, [isConnected, walletProvider, address, navigate, fetchUserDetails]);
 
   const toggleNodeExpansion = (address: string) => {
     setExpandedNodes((prev) => {
