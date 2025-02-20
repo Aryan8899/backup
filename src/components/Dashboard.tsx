@@ -2052,7 +2052,7 @@ useEffect(() => {
 
   if(!selectedRankPriceITC){
        console.log("hi");
-       handleRankSelection("Gold", 99.99, 1000);
+      // handleRankSelection("Gold", 99.99, 1000);
   }
 
   interface StatCardProps {
@@ -2644,7 +2644,7 @@ useEffect(() => {
                       className="font-bold text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-blue-500 to-blue-600 
     bg-clip-text text-transparent transition-colors duration-300 text-center px-2 py-1 leading-normal"
                     >
-                       Global Ranks Progression
+                       Team Ranks Progression
                     </h2>
                   </div>
 
