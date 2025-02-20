@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef  } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDarkMode } from "../components/DarkModeContext";
 //import multiavatar from "@multiavatar/multiavatar";
 import { usePriceData } from "../components/PriceContext.tsx";
@@ -148,19 +148,16 @@ const Dashboard = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  console.log(setAvatarSVG)
-  
-  
+  console.log(setAvatarSVG);
+
   useEffect(() => {
     console.log("Dark Mode Changed, Re-rendering Background");
     setBackgroundKey(darkMode ? "dark" : "light");
-
 
     console.log(avatarUrl);
     if (userData?.avatar) {
       setAvatarUrl(userData.avatar);
     }
-
 
     console.log(avatarUrl);
     if (userData?.avatar) {
@@ -169,12 +166,15 @@ const Dashboard = () => {
 
     const timeout = setTimeout(() => setIsLoading(false), 2000);
     return () => clearTimeout(timeout);
+  }, [darkMode, userData?.avatar]);
 
-    
-
-  }, [darkMode,userData?.avatar]);
-
-  if (!avatarSVG && !backgroundKey && !totalInvestment && !qrCodeUrl&& !count) {
+  if (
+    !avatarSVG &&
+    !backgroundKey &&
+    !totalInvestment &&
+    !qrCodeUrl &&
+    !count
+  ) {
     console.log("update!!");
   }
 
@@ -261,155 +261,166 @@ const Dashboard = () => {
 
   // Add this useEffect to handle initial avatar loading
   // useEffect(() => {
-    
+
   // }, [userData?.avatar]);
 
   // Modify the handleImageUpload function
- // Add these utility functions at the top of your file
-// Add these utility functions at the top of your file
+  // Add these utility functions at the top of your file
+  // Add these utility functions at the top of your file
 
-
-// Safer memory cleanup function
-const clearMemory = () => {
-  if (window.URL) {
-    window.URL.revokeObjectURL('');
-  }
-};
-
-// Optimized image compression
-const compressImage = async (file: File): Promise<File> => {
-  let objectUrl: string | null = null;
-  
-  try {
-    return await new Promise((resolve, reject) => {
-      const img = new Image();
-      
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_SIZE = 500;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_SIZE) {
-            height = Math.round(height * MAX_SIZE / width);
-            width = MAX_SIZE;
-          }
-        } else {
-          if (height > MAX_SIZE) {
-            width = Math.round(width * MAX_SIZE / height);
-            height = MAX_SIZE;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now()
-            }));
-          } else {
-            reject(new Error('Compression failed'));
-          }
-          // Clean up canvas
-          canvas.width = 0;
-          canvas.height = 0;
-        }, 'image/jpeg', 0.5);
-      };
-
-      img.onerror = () => {
-        reject(new Error('Failed to load image'));
-      };
-
-      objectUrl = URL.createObjectURL(file);
-      img.src = objectUrl;
-    });
-  } finally {
-    // Clean up object URL
-    if (objectUrl) {
-      URL.revokeObjectURL(objectUrl);
+  // Safer memory cleanup function
+  const clearMemory = () => {
+    if (window.URL) {
+      window.URL.revokeObjectURL("");
     }
-  }
-};
-
-// Modified image upload handler
-const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  const file = event.target.files?.[0];
-  if (!file || !address) {
-    toast.error("Please select a file and ensure wallet is connected.");
-    return;
-  }
-
-  // Clear memory but don't touch DOM
-  clearMemory();
-  
-  // Reset states
-  setPreviewImage(null);
-  setAvatarUrl(null);
-  setUserData(prev => prev ? { ...prev, avatar: undefined } : null);
-  
-  try {
-    setIsUploading(true);
-
-    // Basic validation
-    if (!file.type.startsWith('image/')) {
-      throw new Error('Please upload an image file');
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error('File size should be less than 5MB');
-    }
-
-    // Compress and upload
-    const compressedFile = await compressImage(file);
-    const formData = new FormData();
-    formData.append("avatar", compressedFile);
-    formData.append("address", address);
-
-    const response = await axios.put(
-      "https://server.cryptomx.site/api/users/update-avatar",
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (progressEvent) => {
-          const percent = Math.round(
-            (progressEvent.loaded * 100) / (progressEvent.total ?? 100)
-          );
-          console.log(`Upload: ${percent}%`);
-        }
-      }
-    );
-
-    if (response.data?.data?.avatar) {
-      const newUrl = `${response.data.data.avatar}?v=${Date.now()}`;
-      // Update states in a single batch
-      setUserData(prev => prev ? { ...prev, avatar: newUrl } : null);
-      setAvatarUrl(newUrl);
-      toast.success("Upload successful!");
-    }
-  } catch (error) {
-    console.error("Upload error:", error);
-    toast.error(error instanceof Error ? error.message : 'Upload failed. Please try again.');
-  } finally {
-    setIsUploading(false);
-    if (event.target) {
-      event.target.value = '';
-    }
-    clearMemory();
-  }
-};
-
-// Add cleanup effect for component unmount
-useEffect(() => {
-  return () => {
-    clearMemory();
   };
-}, []);
+
+  // Optimized image compression
+  const compressImage = async (file: File): Promise<File> => {
+    let objectUrl: string | null = null;
+
+    try {
+      return await new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_SIZE = 500;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(
+                  new File([blob], file.name, {
+                    type: "image/jpeg",
+                    lastModified: Date.now(),
+                  })
+                );
+              } else {
+                reject(new Error("Compression failed"));
+              }
+              // Clean up canvas
+              canvas.width = 0;
+              canvas.height = 0;
+            },
+            "image/jpeg",
+            0.5
+          );
+        };
+
+        img.onerror = () => {
+          reject(new Error("Failed to load image"));
+        };
+
+        objectUrl = URL.createObjectURL(file);
+        img.src = objectUrl;
+      });
+    } finally {
+      // Clean up object URL
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+  };
+
+  // Modified image upload handler
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !address) {
+      toast.error("Please select a file and ensure wallet is connected.");
+      return;
+    }
+
+    // Clear memory but don't touch DOM
+    clearMemory();
+
+    // Reset states
+    setPreviewImage(null);
+    setAvatarUrl(null);
+    setUserData((prev) => (prev ? { ...prev, avatar: undefined } : null));
+
+    try {
+      setIsUploading(true);
+
+      // Basic validation
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Please upload an image file");
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("File size should be less than 5MB");
+      }
+
+      // Compress and upload
+      const compressedFile = await compressImage(file);
+      const formData = new FormData();
+      formData.append("avatar", compressedFile);
+      formData.append("address", address);
+
+      const response = await axios.put(
+        "https://server.cryptomx.site/api/users/update-avatar",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total ?? 100)
+            );
+            console.log(`Upload: ${percent}%`);
+          },
+        }
+      );
+
+      if (response.data?.data?.avatar) {
+        const newUrl = `${response.data.data.avatar}?v=${Date.now()}`;
+        // Update states in a single batch
+        setUserData((prev) => (prev ? { ...prev, avatar: newUrl } : null));
+        setAvatarUrl(newUrl);
+        toast.success("Upload successful!");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Upload failed. Please try again."
+      );
+    } finally {
+      setIsUploading(false);
+      if (event.target) {
+        event.target.value = "";
+      }
+      clearMemory();
+    }
+  };
+
+  // Add cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      clearMemory();
+    };
+  }, []);
 
   interface RankTotals {
     [key: string]: string; // This allows string indexing
@@ -467,8 +478,6 @@ useEffect(() => {
     console.log("update!!");
   }
 
-  
-
   // useEffect(() => {
   //   const fetchAddress = async () => {
   //     //console.log(withdrawalRab);
@@ -492,43 +501,48 @@ useEffect(() => {
   const fetchRankDetails = async () => {
     try {
       // Early return if requirements aren't met
-      if (!isConnected || !walletProvider || !isProviderReady || !contractAddress) {
+      if (
+        !isConnected ||
+        !walletProvider ||
+        !isProviderReady ||
+        !contractAddress
+      ) {
         console.log("Prerequisites not met for contract initialization");
         return;
       }
-  
+
       // Validate contract address
       if (!ethers.utils.isAddress(contractAddress)) {
         throw new Error("Invalid contract address");
       }
-  
+
       const provider = new ethers.providers.Web3Provider(walletProvider);
       const signer = provider.getSigner();
-      
+
       // Validate connected address
       const connectedAddress = await signer.getAddress();
       if (!ethers.utils.isAddress(connectedAddress)) {
         throw new Error("Invalid connected address");
       }
-  
+
       const contract = new ethers.Contract(
         contractAddress,
         contractAbi,
         signer
       );
-  
+
       const details = [];
       let pendingAmountTotal = ethers.BigNumber.from("0");
-  
+
       // Fetch rank LTG details
       for (let i = 0; i <= 8; i++) {
         try {
           const response = await contract.getRankLTG(connectedAddress, i);
-          
+
           if (i <= 7) {
             pendingAmountTotal = pendingAmountTotal.add(response.pendingAmount);
           }
-  
+
           details.push({
             id: i,
             name: ranks[i]?.name || `Rank ${i}`,
@@ -542,7 +556,7 @@ useEffect(() => {
           console.error(`Error fetching LTG for rank ${i}:`, error);
         }
       }
-  
+
       // Fetch rank details and calculate upgrade prices
       let currentRankCumulativePrice = 0;
       const rankDetailsPromises = ranks.map(async (rank, i) => {
@@ -551,13 +565,14 @@ useEffect(() => {
           const cumulativePrice = parseFloat(
             rankDetail.cumulativePrice.toString()
           );
-  
+
           if (rank.name === userDetails?.currentRank) {
             currentRankCumulativePrice = cumulativePrice;
           }
-  
-          const rankUpgradePriceUSD = cumulativePrice - currentRankCumulativePrice;
-  
+
+          const rankUpgradePriceUSD =
+            cumulativePrice - currentRankCumulativePrice;
+
           return {
             id: i,
             name: rank.name,
@@ -568,36 +583,37 @@ useEffect(() => {
           return null;
         }
       });
-  
+
       const rankDetailsResults = await Promise.all(rankDetailsPromises);
-      const validRankDetails = rankDetailsResults.filter(detail => detail !== null);
-      
+      const validRankDetails = rankDetailsResults.filter(
+        (detail) => detail !== null
+      );
+
       setRankDetails([...details, ...validRankDetails]);
       setTotalPendingAmount(
         parseFloat(ethers.utils.formatEther(pendingAmountTotal)).toFixed(2)
       );
-  
     } catch (error) {
       console.error("Error in fetchRankDetails:", error);
       // You might want to set some error state here
       // setError(error.message);
     }
   };
-  
+
   // Use cleanup in useEffect to prevent memory leaks
   useEffect(() => {
     let mounted = true;
-  
+
     const fetchData = async () => {
       if (mounted) {
         await fetchRankDetails();
       }
     };
-  
+
     if (isConnected && walletProvider && isProviderReady) {
       fetchData();
     }
-  
+
     return () => {
       mounted = false;
     };
@@ -887,7 +903,6 @@ useEffect(() => {
 
     generateRankGraphData();
   }, [isConnected, walletProvider, isProviderReady, address]);
-  
   useEffect(() => {
     const fetchTotalInvestment = async () => {
       if (!isConnected || !walletProvider || !isProviderReady || !address) {
@@ -1064,7 +1079,7 @@ useEffect(() => {
           walletProvider
         );
         const network = await ethersProvider.getNetwork();
-         console.log("Connected to network:", network.name);
+        console.log("Connected to network:", network.name);
         setIsProviderReady(true);
       } catch (error) {
         console.error("Error initializing provider:", error);
@@ -1348,7 +1363,9 @@ useEffect(() => {
     }
 
     if (isRankExpired === true) {
-      toast.error("Cannot withdraw - your rank has expired. Please upgrade your rank first.");
+      toast.error(
+        "Cannot withdraw - your rank has expired. Please upgrade your rank first."
+      );
       return;
     }
 
@@ -1405,7 +1422,9 @@ useEffect(() => {
     }
 
     if (isRankExpired === true) {
-      toast.error("Cannot withdraw - your rank has expired. Please upgrade your rank first.");
+      toast.error(
+        "Cannot withdraw - your rank has expired. Please upgrade your rank first."
+      );
       return;
     }
 
@@ -2063,9 +2082,9 @@ useEffect(() => {
     toast.dismiss();
   };
 
-  if(!selectedRankPriceITC){
-       console.log("hi");
-      // handleRankSelection("Gold", 99.99, 1000);
+  if (!selectedRankPriceITC) {
+    console.log("hi");
+    // handleRankSelection("Gold", 99.99, 1000);
   }
 
   interface StatCardProps {
@@ -2657,7 +2676,7 @@ useEffect(() => {
                       className="font-bold text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-blue-500 to-blue-600 
     bg-clip-text text-transparent transition-colors duration-300 text-center px-2 py-1 leading-normal"
                     >
-                       Team Ranks Progression
+                      Team Ranks Progression
                     </h2>
                   </div>
 
