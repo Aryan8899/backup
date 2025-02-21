@@ -1578,6 +1578,19 @@ const RankPayoutsTable: React.FC<RankPayoutsTableProps> = ({
     "0x3e582a9ffd780a4dfc8aab220a644596772b919e",
   ];
 
+  // Function to format payout values
+  const formatPayoutValue = (value: string) => {
+    if (!value || value === "Loading...") return "Loading...";
+    if (value === "Error") return "Error";
+    if (value === "Not Available") return "Not Available";
+    
+    // Check if the value is extremely large (threshold can be adjusted)
+    const numValue = parseInt(value);
+    if (numValue > 100) return "MAX";
+    
+    return value;
+  };
+
   // Rank details with colors and logos
   const rankDetails = [
     {
@@ -1699,7 +1712,7 @@ const RankPayoutsTable: React.FC<RankPayoutsTableProps> = ({
                         {isAdmin
                           ? "MAX"
                           : isAvailable
-                          ? remainingPayouts[rank.name] || "Loading..."
+                          ? formatPayoutValue(remainingPayouts[rank.name] || "Loading...")
                           : "Not Available"}
                       </span>
                     </td>
@@ -1716,7 +1729,7 @@ const RankPayoutsTable: React.FC<RankPayoutsTableProps> = ({
                         {isAdmin
                           ? "MAX"
                           : isAvailable
-                          ? maxPayouts[rank.name] || "Loading..."
+                          ? formatPayoutValue(maxPayouts[rank.name] || "Loading...")
                           : "Not Available"}
                       </span>
                     </td>

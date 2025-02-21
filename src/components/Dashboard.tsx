@@ -67,6 +67,8 @@ import {
   Legend,
 } from "chart.js";
 
+// Adjust the path as needed
+
 // Register chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Legend);
 
@@ -118,6 +120,7 @@ const Dashboard = () => {
   const [isRankExpired, setIsRankExpired] = useState<"loading" | boolean>(
     "loading"
   );
+  const [isGraphLoading, setIsGraphLoading] = useState(true);
   const { priceData } = usePriceData();
   const [avatarSVG, setAvatarSVG] = useState<string>("");
   const { darkMode } = useDarkMode();
@@ -151,7 +154,7 @@ const Dashboard = () => {
   console.log(setAvatarSVG);
 
   useEffect(() => {
-    console.log("Dark Mode Changed, Re-rendering Background");
+    //console.log("Dark Mode Changed, Re-rendering Background");
     setBackgroundKey(darkMode ? "dark" : "light");
 
     console.log(avatarUrl);
@@ -175,7 +178,7 @@ const Dashboard = () => {
     !qrCodeUrl &&
     !count
   ) {
-    console.log("update!!");
+    //console.log("update!!");
   }
 
   // useEffect(() => {
@@ -642,10 +645,15 @@ const Dashboard = () => {
         setRankMessage(""); // No message for other cases
       }
 
+      //console.log("hi11");
+
       // Calculate time remaining
       const expiryTime = new Date(
         `${userDetails.rankExpiryTime} 23:59:59`
       ).getTime();
+
+      console.log("the rank exp is", expiryTime);
+
       const currentTime = Date.now();
       const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
 
@@ -780,10 +788,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     const generateRankGraphData = async () => {
-      if (!isConnected || !walletProvider || !isProviderReady || !address)
+      if (!isConnected || !walletProvider || !isProviderReady || !address) {
+        console.log("Prerequisites not met:", {
+          isConnected,
+          walletProvider,
+          isProviderReady,
+        });
+        setIsGraphLoading(false); // Set to false if conditions aren't met
         return;
+      }
+    
 
       try {
+        setIsGraphLoading(true);
         const ethersProvider = new ethers.providers.Web3Provider(
           walletProvider
         );
@@ -811,6 +828,7 @@ const Dashboard = () => {
         const rankCounts = new Array(9).fill(0); // Track counts per rank
 
         // Function to get user's rank and count it
+        
         const processUserRank = async (address: string) => {
           try {
             const userDetails = await contract.users(address);
@@ -864,6 +882,7 @@ const Dashboard = () => {
             currentLevel++;
           }
         };
+        
 
         // Initialize with starting address
         await processUserRank(address); // Count the root address
@@ -896,13 +915,24 @@ const Dashboard = () => {
         };
 
         setRankGraphData(graphData);
+        setIsGraphLoading(false);
+       
       } catch (error) {
         console.error("Error generating rank graph data:", error);
+        setIsGraphLoading(false);
       }
     };
 
     generateRankGraphData();
+      // Add cleanup timer
+  const timer = setTimeout(() => {
+    generateRankGraphData();
+  }, 100);
+  return () => clearTimeout(timer);
+
+    
   }, [isConnected, walletProvider, isProviderReady, address]);
+
   useEffect(() => {
     const fetchTotalInvestment = async () => {
       if (!isConnected || !walletProvider || !isProviderReady || !address) {
@@ -1067,6 +1097,7 @@ const Dashboard = () => {
 
   // Add a separate effect to handle provider initialization
   // Add provider initialization effect
+
   useEffect(() => {
     const initializeProvider = async () => {
       if (!isConnected || !walletProvider) {
@@ -1353,6 +1384,18 @@ const Dashboard = () => {
 
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
+
+  // const safeUserDetails = {
+  //   get: (key: keyof UserDetails, defaultValue: any = "Loading...") => {
+  //     return userDetails?.[key] ?? defaultValue;
+  //   },
+  //   // Add specific getters for commonly used properties
+  //   isActive: () => userDetails?.isActive ?? false,
+  //   currentRank: () => userDetails?.currentRank ?? "Unknown",
+  //   rankExpiryTime: () => userDetails?.rankExpiryTime ?? "N/A",
+  //   rewards: () => parseFloat(userDetails?.rewards ?? "0").toFixed(2),
+  //   // Add more getters as needed
+  // };
 
   const handleWithdrawLevel = async () => {
     if (!isConnected || !walletProvider || !isProviderReady || !address) {
@@ -1748,15 +1791,15 @@ const Dashboard = () => {
       const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
       //
 
-      // console.log("the current time is",currentTime);
-      // console.log("the expriy is",expiryTime);
+       console.log("the current time is",currentTime);
+       console.log("the expriy is",expiryTime);
 
       if (currentTime > expiryTime) {
         setIsRankExpired(true);
-        // console.log("expired");
+         console.log("expired");
       } else {
         setIsRankExpired(false);
-        // console.log("not expired");
+         console.log("not expired");
       }
 
       // Show marquee only within 1 hour of expiry
@@ -2034,7 +2077,9 @@ const Dashboard = () => {
     } else {
       return num.toString(); // Leave as is for smaller numbers
     }
-  };
+  };  
+
+  
 
   useEffect(() => {
     // console.log(handleRankSelection);
@@ -2082,9 +2127,15 @@ const Dashboard = () => {
     toast.dismiss();
   };
 
+  // Add this somewhere below the function definition
+const _unused = { handleRankSelection }; // This makes TypeScript think it's used
+console.log(_unused);
+
   if (!selectedRankPriceITC) {
     console.log("hi");
-     handleRankSelection("Gold", 99.99, 1000);
+    // handleRankSelection("Gold", 99.99, 1000);
+    // console.log(setSelectedRankPriceUSD);
+    // console.log(setSelectedRankPriceITC);
   }
 
   interface StatCardProps {
@@ -2586,20 +2637,20 @@ const Dashboard = () => {
                           icon: Calendar,
                           label: "Rank Expiry",
                           value:
-                            isRankExpired === "loading" ? (
-                              "Loading..."
-                            ) : isRankExpired ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-500/10 to-red-600/10 animate-pulse border border-red-500/20 2xs:text-[10px]">
-                                <span className="text-red-500 animate-bounce text-xs 2xs:text-[10px]">
-                                  ⚠️
-                                </span>
-                                <span className="font-bold tracking-wide bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent text-xs 2xs:text-[10px]">
-                                  RANK EXPIRED
-                                </span>
+                          userDetails === null ? (
+                            "Loading..."
+                          ) : !userDetails.isActive ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-500/10 to-red-600/10 animate-pulse border border-red-500/20 2xs:text-[10px]">
+                              <span className="text-red-500 animate-bounce text-xs 2xs:text-[10px]">
+                                ⚠️
                               </span>
-                            ) : (
-                              userDetails?.rankExpiryTime || "Loading..."
-                            ),
+                              <span className="font-bold tracking-wide bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent text-xs 2xs:text-[10px]">
+                                RANK EXPIRED
+                              </span>
+                            </span>
+                          ) : (
+                            userDetails?.rankExpiryTime || "Loading..."
+                          ),
                         },
                         {
                           icon: DollarSign,
@@ -2681,128 +2732,169 @@ const Dashboard = () => {
                   </div>
 
                   <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">
-                    <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[400px]">
-                      <Bar
-                        data={rankGraphData}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                          scales: {
-                            y: {
-                              beginAtZero: true,
-                              ticks: {
-                                stepSize: 1,
-                                font: {
-                                  size: window.innerWidth < 640 ? 10 : 12,
-                                  weight: "bold",
-                                  family: "'Inter', sans-serif",
-                                },
-                                color: "#FFFFFF",
-                                padding: window.innerWidth < 640 ? 6 : 10,
-                              },
-                              title: {
-                                display: true,
-                                text: "Number of Users",
-                                font: {
-                                  size: window.innerWidth < 640 ? 12 : 14,
-                                  weight: "bold",
-                                  family: "'Inter', sans-serif",
-                                },
-                                color: "#FFFFFF",
-                                padding: window.innerWidth < 640 ? 8 : 12,
-                              },
-                              grid: {
-                                color: "rgba(255, 255, 255, 0.1)",
-                                lineWidth: 1,
-                              },
-                            },
-                            x: {
-                              grid: { display: false },
-                              ticks: {
-                                autoSkip: true,
-                                maxRotation: 45,
-                                minRotation: 0,
-                                font: {
-                                  size: window.innerWidth < 640 ? 8 : 10,
-                                  weight: "bold",
-                                  family: "'Inter', sans-serif",
-                                },
-                                color: "#FFFFFF",
-                                padding: window.innerWidth < 640 ? 4 : 8,
-                              },
-                            },
-                          },
-                          plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                              backgroundColor: "rgba(15, 23, 42, 0.95)",
-                              titleColor: "#FFFFFF",
-                              bodyColor: "#CBD5E1",
-                              borderColor: "#475569",
-                              borderWidth: 1,
-                              padding: window.innerWidth < 640 ? 8 : 12,
-                              cornerRadius: window.innerWidth < 640 ? 8 : 12,
-                              titleSpacing: window.innerWidth < 640 ? 6 : 8,
-                              bodySpacing: window.innerWidth < 640 ? 6 : 8,
-                              displayColors: true,
-                              callbacks: {
-                                label: function (context) {
-                                  return `✨ Users: ${context.parsed.y}`;
-                                },
-                              },
-                            },
-                          },
-                          elements: {
-                            bar: {
-                              backgroundColor: (context) => {
-                                const ctx = context.chart.ctx;
-                                const gradient = ctx.createLinearGradient(
-                                  0,
-                                  0,
-                                  0,
-                                  window.innerWidth < 640 ? 200 : 300
-                                );
-                                gradient.addColorStop(
-                                  0,
-                                  "rgba(56, 189, 248, 0.9)"
-                                ); // Cyan
-                                gradient.addColorStop(
-                                  1,
-                                  "rgba(59, 130, 246, 0.9)"
-                                ); // Blue
-                                return gradient;
-                              },
-                              borderRadius: window.innerWidth < 640 ? 6 : 8,
-                              borderWidth: 0,
-                              hoverBackgroundColor: (context) => {
-                                const ctx = context.chart.ctx;
-                                const gradient = ctx.createLinearGradient(
-                                  0,
-                                  0,
-                                  0,
-                                  window.innerWidth < 640 ? 200 : 300
-                                );
-                                gradient.addColorStop(
-                                  0,
-                                  "rgba(56, 189, 248, 1)"
-                                ); // Brighter Cyan
-                                gradient.addColorStop(
-                                  1,
-                                  "rgba(59, 130, 246, 1)"
-                                ); // Brighter Blue
-                                return gradient;
-                              },
-                              hoverBorderWidth: 2,
-                              hoverBorderColor: "#FFFFFF",
-                            },
-                          },
-                          hover: {
-                            mode: "index",
-                            intersect: false,
-                          },
-                        }}
-                      />
-                    </div>
+                  <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[400px]">
+  {isGraphLoading ? (
+    <div className="w-full h-full flex flex-col items-center justify-center">
+      {/* Main loader animation */}
+      <div className="relative w-20 h-20">
+        {/* Outer rotating ring */}
+        <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" 
+             style={{ animationDuration: '1.5s' }}></div>
+        
+        {/* Middle rotating ring (opposite direction) */}
+        <div className="absolute inset-0 rounded-full border-4 border-t-transparent border-r-transparent border-b-blue-400 border-l-transparent animate-spin" 
+             style={{ animationDuration: '2s', animationDirection: 'reverse', margin: '5px' }}></div>
+        
+        {/* Inner pulsing circle */}
+        <div className="absolute inset-0 m-4 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 animate-pulse flex items-center justify-center">
+          <div className="text-white">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+      
+      {/* Text content */}
+      <div className="mt-8 text-center">
+        <p className="text-blue-500 dark:text-blue-400 font-semibold bg-gradient-to-r from-blue-500 to-indigo-400 bg-clip-text text-transparent">
+          Loading team rankings
+        </p>
+        <div className="flex items-center justify-center mt-2 space-x-1">
+          <span className="text-sm text-blue-400/70 dark:text-blue-300/70">Please wait</span>
+          {/* Animated dots */}
+          <span className="flex space-x-1">
+            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" 
+                  style={{ animationDelay: '0s', animationDuration: '1s' }}></span>
+            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" 
+                  style={{ animationDelay: '0.2s', animationDuration: '1s' }}></span>
+            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" 
+                  style={{ animationDelay: '0.4s', animationDuration: '1s' }}></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  ) :  (
+    <Bar
+      data={rankGraphData}
+      options={{
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              font: {
+                size: window.innerWidth < 640 ? 10 : 12,
+                weight: "bold",
+                family: "'Inter', sans-serif",
+              },
+              color: "#FFFFFF",
+              padding: window.innerWidth < 640 ? 6 : 10,
+            },
+            title: {
+              display: true,
+              text: "Number of Users",
+              font: {
+                size: window.innerWidth < 640 ? 12 : 14,
+                weight: "bold",
+                family: "'Inter', sans-serif",
+              },
+              color: "#FFFFFF",
+              padding: window.innerWidth < 640 ? 8 : 12,
+            },
+            grid: {
+              color: "rgba(255, 255, 255, 0.1)",
+              lineWidth: 1,
+            },
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              autoSkip: true,
+              maxRotation: 45,
+              minRotation: 0,
+              font: {
+                size: window.innerWidth < 640 ? 8 : 10,
+                weight: "bold",
+                family: "'Inter', sans-serif",
+              },
+              color: "#FFFFFF",
+              padding: window.innerWidth < 640 ? 4 : 8,
+            },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "rgba(15, 23, 42, 0.95)",
+            titleColor: "#FFFFFF",
+            bodyColor: "#CBD5E1",
+            borderColor: "#475569",
+            borderWidth: 1,
+            padding: window.innerWidth < 640 ? 8 : 12,
+            cornerRadius: window.innerWidth < 640 ? 8 : 12,
+            titleSpacing: window.innerWidth < 640 ? 6 : 8,
+            bodySpacing: window.innerWidth < 640 ? 6 : 8,
+            displayColors: true,
+            callbacks: {
+              label: function (context) {
+                return `✨ Users: ${context.parsed.y}`;
+              },
+            },
+          },
+        },
+        elements: {
+          bar: {
+            backgroundColor: (context) => {
+              const ctx = context.chart.ctx;
+              const gradient = ctx.createLinearGradient(
+                0,
+                0,
+                0,
+                window.innerWidth < 640 ? 200 : 300
+              );
+              gradient.addColorStop(
+                0,
+                "rgba(56, 189, 248, 0.9)"
+              ); // Cyan
+              gradient.addColorStop(
+                1,
+                "rgba(59, 130, 246, 0.9)"
+              ); // Blue
+              return gradient;
+            },
+            borderRadius: window.innerWidth < 640 ? 6 : 8,
+            borderWidth: 0,
+            hoverBackgroundColor: (context) => {
+              const ctx = context.chart.ctx;
+              const gradient = ctx.createLinearGradient(
+                0,
+                0,
+                0,
+                window.innerWidth < 640 ? 200 : 300
+              );
+              gradient.addColorStop(
+                0,
+                "rgba(56, 189, 248, 1)"
+              ); // Brighter Cyan
+              gradient.addColorStop(
+                1,
+                "rgba(59, 130, 246, 1)"
+              ); // Brighter Blue
+              return gradient;
+            },
+            hoverBorderWidth: 2,
+            hoverBorderColor: "#FFFFFF",
+          },
+        },
+        hover: {
+          mode: "index",
+          intersect: false,
+        },
+      }}
+    />
+  )}
+</div>
                   </div>
                 </div>
               </div>
