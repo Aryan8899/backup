@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { ethers } from "ethers";
+//import { ethers } from "ethers";
 import "simplebar/dist/simplebar.min.css";
 import multiavatar from "@multiavatar/multiavatar";
 import { Loader2 } from 'lucide-react';
 import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from "@web3modal/ethers5/react";
+  Provider,
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
+import { BrowserProvider, Contract, formatUnits } from "ethers";
 import {
   BarChart,
   Bar,
@@ -94,8 +96,8 @@ const RANKS = [
 const Rankach: React.FC = () => {
   
   const navigate = useNavigate();
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, isConnected } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const [isProviderReady, setIsProviderReady] = useState(false);
 
   //const { address, isConnected } = useWeb3ModalAccount();
@@ -194,11 +196,9 @@ const Rankach: React.FC = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider
-        );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const ethersProvider = new BrowserProvider(walletProvider);
+        const signer = await ethersProvider.getSigner(); // Add await here
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -220,20 +220,22 @@ const Rankach: React.FC = () => {
         const formattedData: UserDetails = {
           referrer: userData[2] || "No referrer",
           currentRank: getRankName(userData[0]?.toString() || "0"),
-          lastRankUpdateTime:
-          userData.lastRankUpdateTime?.toNumber() > 0
-              ? new Date(userData.lastRankUpdateTime.toNumber() * 1000).toLocaleDateString()
-              : "Not updated",
-          rankExpiryTime:
-          userData.rankExpiryTime?.toNumber() > 0
-              ? new Date( userData.rankExpiryTime.toNumber() * 1000).toLocaleDateString()
-              : "Not set",
-          totalInvestment: ethers.utils.formatEther(
-            userData[5]?.toString() || "0"
+          lastRankUpdateTime: userData.lastRankUpdateTime 
+    ? (typeof Number(userData.lastRankUpdateTime) === 'function' 
+        ? new Date(Number(userData.lastRankUpdateTime) * 1000).toLocaleDateString()
+        : new Date(Number(userData.lastRankUpdateTime) * 1000).toLocaleDateString())
+    : "Not updated",
+  rankExpiryTime: userData.rankExpiryTime
+    ? (typeof Number(userData.rankExpiryTime) === 'function'
+        ? new Date(Number(userData.rankExpiryTime) * 1000).toLocaleDateString() 
+        : new Date(Number(userData.rankExpiryTime) * 1000).toLocaleDateString())
+    : "Not set",
+          totalInvestment: formatUnits(
+            userData[5]?.toString() || "0",18
           ),
           isActive: userData[1] || false,
           rewards: Array.isArray(userData[6])
-            ? ethers.utils.formatEther(userData[6][0]?.toString() || "0")
+            ? formatUnits(userData[6][0]?.toString() || "0",18)
             : "0",
         };
 
@@ -274,11 +276,11 @@ const Rankach: React.FC = () => {
         console.log("Checking registration status for:", newAddress);
 
         // Initialize Web3 provider and contract
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -312,7 +314,7 @@ const Rankach: React.FC = () => {
     };
 
     if (walletProvider) {
-      const provider = new ethers.providers.Web3Provider(walletProvider as any);
+      const provider = new BrowserProvider(walletProvider as any);
       const externalProvider = provider.provider as any;
 
       if (externalProvider?.on) {
@@ -354,11 +356,11 @@ const Rankach: React.FC = () => {
 
       try {
         setElgibility("loading..");
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -424,16 +426,16 @@ const Rankach: React.FC = () => {
     }
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         ethersProvider
       );
 
       const currentMonth = await contract.currentMonthIndex();
-      console.log("the current month is",currentMonth.toNumber());
-      setCurrentMonthIndex(currentMonth.toNumber() + 1);
+      console.log("the current month is",currentMonth);
+      setCurrentMonthIndex(Number(currentMonth) + 1);
       setIsMonthIndexLoaded(true);
     } catch (error) {
       console.error("Error fetching current month index:", error);
@@ -515,8 +517,8 @@ const Rankach: React.FC = () => {
     }
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         ethersProvider
@@ -558,10 +560,10 @@ const Rankach: React.FC = () => {
 
       try {
         setIsLoading(true);
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const contract = new ethers.Contract(
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           ethersProvider
@@ -570,7 +572,7 @@ const Rankach: React.FC = () => {
         const addresses: Record<string, UserAddress[]> = {};
 
         const currentMonthIndexFromContract = await contract.currentMonthIndex();
-      const monthIndex = currentMonthIndexFromContract.toNumber();
+      const monthIndex = Number(currentMonthIndexFromContract);
 
         for (const rank of eliteRanks) {
           const rankAddressesList: UserAddress[] = [];
@@ -651,8 +653,8 @@ const Rankach: React.FC = () => {
 
     
 
-    const provider = new ethers.providers.Web3Provider(walletProvider);
-    const contract = new ethers.Contract(
+    const provider = new BrowserProvider(walletProvider);
+    const contract = new Contract(
       contractAddress,
       contractAbi,
       provider
@@ -715,8 +717,8 @@ const Rankach: React.FC = () => {
     console.log("running it");
     setLoadingAddresses(true);
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         ethersProvider
@@ -816,15 +818,15 @@ const Rankach: React.FC = () => {
     }
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         ethersProvider
       );
 
       const rankPercentage = await contract.rabShrPrsntg(rankIndex);
-      const formattedPercentage = (rankPercentage.toNumber() / 100).toFixed(2);
+      const formattedPercentage = (Number(rankPercentage) / 100).toFixed(2);
       setRankshare(`${formattedPercentage}%`);
     } catch (error) {
       console.error("Error fetching rank share percentage:", error);
@@ -846,11 +848,11 @@ const Rankach: React.FC = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider (
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -918,9 +920,9 @@ const Rankach: React.FC = () => {
     }
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -952,9 +954,9 @@ const Rankach: React.FC = () => {
     }
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -991,11 +993,11 @@ const Rankach: React.FC = () => {
           return;
         }
 
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1020,23 +1022,22 @@ const Rankach: React.FC = () => {
           return;
         }
 
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
         );
 
         const ttlRab = await contract.getTtlRabDstrbtd();
-        setTotalRab(parseFloat(ethers.utils.formatEther(ttlRab)).toFixed(2));
+        setTotalRab(parseFloat(formatUnits(ttlRab, 18)).toFixed(2));
+
 
         const mnthlyRab = await contract.getMnthlyRABPoolBalance();
-        setMonthlyRab(
-          parseFloat(ethers.utils.formatEther(mnthlyRab)).toFixed(2)
-        );
+        setMonthlyRab(parseFloat(formatUnits(mnthlyRab, 18)).toFixed(2));
       } catch (error) {
         console.error("Error fetching contract data:", error);
         setTotalRab("Error");
@@ -1054,28 +1055,27 @@ const Rankach: React.FC = () => {
     }
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         ethersProvider
       );
 
       const lastMonthIndex = await contract.currentMonthIndex();
-      const lastMon = lastMonthIndex.toNumber();
+      const lastMon = Number(lastMonthIndex);
 
-      console.log("the lastmonindex",lastMonthIndex.toNumber());
+      console.log("the lastmonindex",Number(lastMonthIndex));
 
       const { totalAmount } = await contract.monthlyRabPools(lastMon);
 
       const monthly = await contract.getMnthlyRABPoolBalance();
 
-      const formattedTotalAmount = parseFloat(
-        ethers.utils.formatEther(totalAmount)
-      ).toFixed(2);
-      const formattedTimestamp = parseFloat(
-        ethers.utils.formatEther(monthly)
-      ).toFixed(2);
+      const formattedTotalAmount = parseFloat(formatUnits(totalAmount, 18)).toFixed(
+        2
+      );
+
+     const formattedTimestamp = parseFloat(formatUnits(monthly, 18)).toFixed(2);
 
       console.log("the format is",formattedTotalAmount);
 
@@ -1100,16 +1100,16 @@ const Rankach: React.FC = () => {
         console.warn("Wallet provider not available");
         return null;
       }
-      const provider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
       );
 
       const startTimestamp = await contract.rabStartTimestamp();
-      return startTimestamp.toNumber();
+      return Number(startTimestamp);
     } catch (error) {
       console.error("Error fetching rabStartTimestamp:", error);
       return null;
@@ -1124,9 +1124,9 @@ const Rankach: React.FC = () => {
       }
 
       try {
-        const provider = new ethers.providers.Web3Provider(walletProvider);
-        const signer = provider.getSigner();
-        const contract = new ethers.Contract(
+        const provider = new BrowserProvider(walletProvider);
+        const signer = await provider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1139,7 +1139,7 @@ const Rankach: React.FC = () => {
         if (currentMonthIndex === 0) {
           start = await contract.rabStartTimestamp();
           console.log("the nefore start is",start)
-          start = start.toNumber();
+          start = Number(start);
 
           console.log("the start is",start);
         } else {
@@ -1150,7 +1150,7 @@ const Rankach: React.FC = () => {
           );
 
           console.log("the mon is",monthlyData);
-          start = monthlyData.distributionTimestamp.toNumber();
+          start = Number(monthlyData.distributionTimestamp);
           console.log("the newmon is start is",start);
         }
 
@@ -1243,8 +1243,8 @@ const Rankach: React.FC = () => {
     const fetchAddress = async () => {
       if (walletProvider) {
         try {
-          const provider = new ethers.providers.Web3Provider(walletProvider);
-          const signer = provider.getSigner();
+          const provider = new BrowserProvider(walletProvider);
+          const signer = await provider.getSigner();
           const address = await signer.getAddress();
 
           const avatar = multiavatar(address);

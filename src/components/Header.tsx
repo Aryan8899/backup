@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import {
-  useWeb3Modal,
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from "@web3modal/ethers5/react";
+  Provider,
+  useAppKit,
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ethers } from "ethers";
+import { ethers, BrowserProvider, Contract, formatUnits } from "ethers";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePriceData } from "../components/PriceContext";
 import { useDarkMode } from "./DarkModeContext";
@@ -28,10 +29,10 @@ interface NavigationItem {
 const Header = () => {
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [itcBalance, setItcBalance] = useState("0.00");
-  const { walletProvider } = useWeb3ModalProvider();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const [menuOpen, setMenuOpen] = useState(false);
-  const { open } = useWeb3Modal();
-  const { address, isConnected } = useWeb3ModalAccount();
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
   const location = useLocation();
   const navigate = useNavigate();
   const [userRank, setUserRank] = useState(0);
@@ -57,10 +58,10 @@ const Header = () => {
   const fetchItcBalance = async () => {
     if (!walletProvider || !isConnected || !address) return;
     try {
-      const provider = new ethers.providers.Web3Provider(walletProvider);
-      const contract = new ethers.Contract(tokenAddress, tokenAbi, provider);
+      const provider = new BrowserProvider(walletProvider);
+      const contract = new Contract(tokenAddress, tokenAbi, provider);
       const balance = await contract.balanceOf(address);
-      setItcBalance(parseFloat(ethers.utils.formatEther(balance)).toFixed(2));
+      setItcBalance(parseFloat(formatUnits(balance, 18)).toFixed(2));
     } catch (error) {
       console.error("Error fetching balance:", error);
       setItcBalance("0.00");
@@ -77,8 +78,8 @@ const Header = () => {
     if (!walletProvider) return;
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
       const contract = new ethers.Contract(
         contractAddress,
         contractAbi,
@@ -165,10 +166,10 @@ const Header = () => {
       if (!walletProvider || !address || !isConnected) return;
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const contract = new ethers.Contract(
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           ethersProvider

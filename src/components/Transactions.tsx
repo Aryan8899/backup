@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ethers } from "ethers";
+import { BrowserProvider, Contract, formatUnits } from "ethers";
 import { contractAbi } from "./Props/contractAbi";
 import { contractAddress } from "./Props/contractAddress";
 import {
-  useWeb3ModalProvider,
-  useWeb3ModalAccount,
-} from "@web3modal/ethers5/react";
+  Provider,
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
 import { useNavigate } from "react-router-dom";
 //import FeaturesSection from "../components/FeaturesSection";
 //import Light from "../components/Light";
@@ -48,14 +49,14 @@ const ranks = [
 const Transactions = () => {
   const navigate = useNavigate();
   const { darkMode } = useDarkMode();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Transaction[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>(
     "Purchase Transactions"
   );
   const [isProviderReady, setIsProviderReady] = useState(false);
-  const { address, isConnected } = useWeb3ModalAccount();
+  const { address, isConnected } = useAppKitAccount();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -108,11 +109,11 @@ const Transactions = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -138,7 +139,7 @@ const Transactions = () => {
     };
 
     if (walletProvider) {
-      const provider = new ethers.providers.Web3Provider(walletProvider as any);
+      const provider = new BrowserProvider(walletProvider as any);
       const externalProvider = provider.provider as any;
 
       if (externalProvider?.on) {
@@ -165,9 +166,9 @@ const Transactions = () => {
       try {
         if (!walletProvider) return;
 
-        const provider = new ethers.providers.Web3Provider(walletProvider);
-        const signer = provider.getSigner();
-        const contract = new ethers.Contract(
+        const provider = new BrowserProvider(walletProvider);
+        const signer = await provider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -184,9 +185,9 @@ const Transactions = () => {
           const formattedTxns = rawTxns.map((txn: any) => ({
             from: txn[1],
             rank: Number(txn[2] ?? -1),
-            amt: txn[3].toNumber(),
+            amt: Number(txn[3]),
             ts: txn[4]
-              ? new Date(txn[4].toNumber() * 1000).toLocaleString()
+              ? new Date(Number(txn[4]) * 1000).toLocaleString()
               : "N/A",
             tp: txn.tp || txn[5] ? txn[5].toString() : "Unknown",
           }));
@@ -199,8 +200,8 @@ const Transactions = () => {
           const withdrawalsData = await contract.getUserWthdrlTxn(userAddress);
           const formattedWithdrawals = withdrawalsData.map((txn: any) => ({
             from: txn.from,
-            amt: parseFloat(ethers.utils.formatEther(txn.ttlamt)),
-            ts: new Date(txn.ts.toNumber() * 1000).toLocaleString(),
+            amt: parseFloat(formatUnits(txn.ttlamt, 18)),
+            ts: new Date(Number(txn.ts) * 1000).toLocaleString(),
             tp: txn.tp,
           }));
           setWithdrawals(formattedWithdrawals);

@@ -4,47 +4,26 @@ import { createRoot } from "react-dom/client";
 import { HashRouter as Router } from "react-router-dom";
 import { PriceProvider } from "./components/PriceContext";
 import { DarkModeProvider } from "./components/DarkModeContext";
-import { createWeb3Modal, defaultConfig } from "@web3modal/ethers5/react";
 import { motion } from "framer-motion";
 import { AlertCircle, RefreshCw, HelpCircle } from "lucide-react";
+import { createAppKit } from "@reown/appkit/react";
+import { EthersAdapter } from "@reown/appkit-adapter-ethers";
+import { bscTestnet } from "@reown/appkit/networks";
+import type { AppKitNetwork } from "@reown/appkit/networks";
+import App from "./App.tsx"; // or wherever your App component is located
 
 // Configuration Constants
-const CONFIG = {
-  PROJECT_ID: "224382cc5c46b1c10cdecbd4059dff6e",
-  NETWORK: {
-    chainId: 97,
-    name: "BSC Testnet",
-    currency: "BNB",
-    explorerUrl: "https://testnet.bscscan.com",
-    rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-  },
-  METADATA: {
-    name: "ITC Community",
-    description:
-      "Join our community and explore the future of technology and innovation. We're dedicated to creating meaningful connections and fostering growth.",
-    url: "https://cryptomx.site/",
-    icons: ["https://cticlub.org/assets/images/brand/itclogow.png"],
-  },
+const PROJECT_ID = "224382cc5c46b1c10cdecbd4059dff6e";
+const METADATA = {
+  name: "ITC Community",
+  description:
+    "Join our community and explore the future of technology and innovation. We're dedicated to creating meaningful connections and fostering growth.",
+  url: "https://cryptomx.site/",
+  icons: ["https://cticlub.org/assets/images/brand/itclogow.png"],
 };
-
-// Web3 Modal Configuration
-const ethersConfig = defaultConfig({
-  metadata: CONFIG.METADATA,
-  enableEIP6963: true,
-  enableInjected: true,
-  enableCoinbase: true,
-  defaultChainId: CONFIG.NETWORK.chainId,
-});
-
-// Initialize Web3 Modal
-createWeb3Modal({
-  ethersConfig,
-  chains: [CONFIG.NETWORK],
-  projectId: CONFIG.PROJECT_ID,
-  enableAnalytics: true,
-});
-
-import App from "./App";
+const NETWORKS: [AppKitNetwork, ...AppKitNetwork[]] = [
+  bscTestnet, // BSC Testnet as an alternative
+];
 
 // Professional Error Boundary Component
 interface ErrorBoundaryProps {
@@ -165,7 +144,18 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
-// Root Rendering with Error Boundary
+// Create AppKit instance with current theme mode
+createAppKit({
+  adapters: [new EthersAdapter()],
+  networks: NETWORKS,
+  metadata: METADATA,
+  projectId: PROJECT_ID,
+  features: {
+    analytics: true,
+  },
+});
+
+// Root Rendering with Error Boundary and AppKit Wrapper
 const root = createRoot(document.getElementById("root")!);
 root.render(
   <React.StrictMode>

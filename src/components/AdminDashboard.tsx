@@ -2,25 +2,31 @@ declare function multiavatar(text: string): string;
 
 import { useEffect, useState, useRef } from "react";
 import { useDarkMode } from "../components/DarkModeContext";
+import { BrowserProvider, Contract, formatUnits } from "ethers";
 //import multiavatar from "@multiavatar/multiavatar";
+import { ZeroAddress,isAddress  } from "ethers";
 //import { usePriceData } from "../components/PriceContext.tsx";
 import rank4 from "../assets/rank4.png";
 import rank5 from "../assets/rank5.png";
 import rank6 from "../assets/rank6.png";
 import rank7 from "../assets/rank7.png";
 import rank8 from "../assets/rank8.png";
-import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
+import {
+  Provider,
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
 import axios from "axios"; // Import axios for making HTTP requests
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { BigNumber } from "ethers";
+//import { BigNumber } from "ethers";
 import { Loader2,CreditCard   } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import contractAbi from "./Props/contractAbi.ts"; // Adjust path as needed
 import contractAddress from "./Props/contractAddress.ts"; // Adjust path as needed
 // At the top of your component, modify the imports and provider handling
-import { useWeb3ModalProvider } from "@web3modal/ethers5/react"; // Add this import if not present
+//import { useWeb3ModalProvider } from "@web3modal/ethers5/react"; // Add this import if not present
 import { Bar } from "react-chartjs-2";
 
 
@@ -357,7 +363,7 @@ const Dashboard = () => {
   }
 
   interface RankData {
-    cnt: ethers.BigNumber;
+    cnt: BigInt;
     // Add other properties from your contract's rUC return type if any
   }
 
@@ -396,8 +402,8 @@ const Dashboard = () => {
   const [error, setError] = useState<ErrorType>(null);
   type ErrorType = string | null;
   // const { open } = useWeb3Modal();
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, isConnected } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const [isProviderReady, setIsProviderReady] = useState(false);
   const [inviteLink, setInviteLink] = useState(
     `https://cryptomx.site/#/register?referral=undefined`
@@ -418,22 +424,22 @@ const Dashboard = () => {
           return;
         }
 
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
         );
 
         const ttlRab = await contract.getTtlRabDstrbtd();
-        setTotalRab(parseFloat(ethers.utils.formatEther(ttlRab)).toFixed(2));
+        setTotalRab(parseFloat(formatUnits(ttlRab,18)).toFixed(2));
 
         const mnthlyRab = await contract.getMnthlyRABPoolBalance();
         setMonthlyRab(
-          parseFloat(ethers.utils.formatEther(mnthlyRab)).toFixed(2)
+          parseFloat(formatUnits(mnthlyRab,18)).toFixed(2)
         );
       } catch (error) {
         console.error("Error fetching contract data:", error);
@@ -473,31 +479,29 @@ const Dashboard = () => {
     try {
       if (!isConnected || !walletProvider || !isProviderReady) return;
 
-      const provider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
       );
       const details = [];
-      let pendingAmountTotal = ethers.BigNumber.from("0");
+      let pendingAmountTotal = BigInt("0");
       for (let i = 0; i <= 8; i++) {
         const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
 
         // Add the pending amount to the total
         if (i <= 7) {
-          pendingAmountTotal = pendingAmountTotal.add(response.pendingAmount);
+          pendingAmountTotal = pendingAmountTotal + response.pendingAmount;
         }
 
         details.push({
           id: i,
           name: ranks[i].name,
           count: response.count.toString(),
-          pendingAmount: ethers.utils.formatEther(response.pendingAmount),
-          totalDistributedAmount: ethers.utils.formatEther(
-            response.ttlDstrbtdAmount
-          ),
+          pendingAmount: formatUnits(response.pendingAmount, 18),
+            totalDistributedAmount: formatUnits(response.ttlDstrbtdAmount, 18),
         });
       }
 
@@ -531,7 +535,7 @@ const Dashboard = () => {
 
       setRankDetails(details);
       setTotalPendingAmount(
-        parseFloat(ethers.utils.formatEther(pendingAmountTotal)).toFixed(2)
+        parseFloat(formatUnits(pendingAmountTotal, 18)).toFixed(2)
       );
     } catch (error) {
       console.error("Error initializing contract:", error);
@@ -642,11 +646,11 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -654,7 +658,7 @@ const Dashboard = () => {
 
         // Fetch `usrCnt` from the contract
         const usrCntValue = await contract.usrCnt();
-        setUsrCnt(usrCntValue.toNumber()); // Convert BigNumber to a regular number
+        setUsrCnt(Number(usrCntValue)); // Convert BigNumber to a regular number
       } catch (error) {
         console.error("Error fetching usrCnt:", error);
         setUsrCnt(null); // Reset `usrCnt` in case of an error
@@ -710,11 +714,11 @@ const Dashboard = () => {
       if (!isConnected || !walletProvider || !isProviderReady) return;
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -739,7 +743,7 @@ const Dashboard = () => {
         for (let rank of allRanks) {
           try {
             const rankStatus = await contract.rUC(rank.index);
-            const count = rankStatus.toNumber(); // Get the user count
+            const count = Number(rankStatus); // Get the user count
             //console.log(`Rank ${rank.name} Count:`, count);
 
             activeRanks.push(rank); // Add the rank even if the count is 0
@@ -789,11 +793,11 @@ const Dashboard = () => {
       // console.log("Fetching total investment...", error);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -802,7 +806,7 @@ const Dashboard = () => {
         // Fetch total investment
         const totalInvestmentData = await contract.getTtlInvstmnt(); // Pass address here
         const formattedInvestment = parseFloat(
-          ethers.utils.formatEther(totalInvestmentData || "0")
+          formatUnits(totalInvestmentData || "0", 18)
         ).toFixed(2); // Format to 2 decimal places
 
         //  console.log("Formatted total investment:", formattedInvestment);
@@ -835,11 +839,11 @@ const Dashboard = () => {
       setError(null);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -848,22 +852,22 @@ const Dashboard = () => {
         // Fetch pool values with proper error handling
         const [ltgValue, rtgValue, ldpValue] = await Promise.all([
           contract
-            .getTtlLtgDstrbtd()
+          .getTtlLtgDstrbtd()
+          .then((val: ethers.BigNumberish) =>
+            parseFloat(formatUnits(val, 18))
+          )
+            .catch(() => 0),
+          contract
+          .getTtlRabDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
           contract
-            .getTtlRabDstrbtd()
-            .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
-            )
-            .catch(() => 0),
-          contract
-            .getTtllvlDstrbtd()
-            .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
-            )
+          .getTtllvlDstrbtd()
+          .then((val: ethers.BigNumberish) =>
+            parseFloat(formatUnits(val, 18))
+          )
             .catch(() => 0),
         ]);
 
@@ -895,7 +899,7 @@ const Dashboard = () => {
                 return;
               }
 
-              const count = ethers.BigNumber.from(rankData.cnt);
+              const count = rankData.cnt;
               rankValues[rank.name] = (
                 parseFloat(count.toString()) * totalPool
               ).toFixed(4);
@@ -949,7 +953,7 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider =  new BrowserProvider(
           walletProvider
         );
         const network = await ethersProvider.getNetwork();
@@ -981,9 +985,9 @@ const Dashboard = () => {
     setError(null);
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider =  new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1014,15 +1018,15 @@ const Dashboard = () => {
       //   ).toFixed(4)
       // );
       setTotalBonus(
-        parseFloat(ethers.utils.formatEther(totalBonusData || "0")).toFixed(4)
+        parseFloat(formatUnits(totalBonusData || "0", 18)).toFixed(4)
       );
       setWithdrawalRAB(
-        parseFloat(ethers.utils.formatEther(withdrawalRABData || "0")).toFixed(
+        parseFloat(formatUnits(withdrawalRABData || "0", 18)).toFixed(
           4
         )
       );
       setTotalRAB(
-        parseFloat(ethers.utils.formatEther(totalRABData || "0")).toFixed(4)
+        parseFloat(formatUnits(totalRABData || "0", 18)).toFixed(4)
       );
 
       // console.log(
@@ -1031,11 +1035,11 @@ const Dashboard = () => {
       // );
       setWithdrawalLevel(
         parseFloat(
-          ethers.utils.formatEther(withdrawalLevelData || "0")
+          formatUnits(withdrawalLevelData || "0", 18)
         ).toFixed(4)
       );
       setTotalLevel(
-        parseFloat(ethers.utils.formatEther(totalLevelData || "0")).toFixed(4)
+        parseFloat(formatUnits(totalLevelData || "0", 18)).toFixed(4)
       );
 
       // Calculate total bonuses
@@ -1087,16 +1091,16 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
     }
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         ethersProvider
       );
 
       const currentMonth = await contract.currentMonthIndex();
-      console.log("the current month is",currentMonth.toNumber());
-      setCurrentMonthIndex(currentMonth.toNumber() + 1);
+      console.log("the current month is",currentMonth);
+      setCurrentMonthIndex(Number(currentMonth) + 1);
       setIsMonthIndexLoaded(true);
     } catch (error) {
       console.error("Error fetching current month index:", error);
@@ -1115,8 +1119,8 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
   
       try {
         setIsLoading(true);
-        const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-        const contract = new ethers.Contract(contractAddress, contractAbi, ethersProvider);
+        const ethersProvider = new BrowserProvider(walletProvider);
+        const contract = new Contract(contractAddress, contractAbi, ethersProvider);
   
         const addresses: Record<string, UserAddress[]> = {};
   
@@ -1135,7 +1139,7 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
               );
   
               // Break the loop if no more addresses
-              if (!userAddress || userAddress === ethers.constants.AddressZero) break;
+              if (!userAddress || userAddress === ZeroAddress ) break;
   
               // Get user details from your backend
               try {
@@ -1357,9 +1361,9 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
 
     try {
       setIsLoading(true);
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1414,9 +1418,9 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
 
     try {
       setIsLoadingLevel(true);
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1432,7 +1436,7 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
       setWithdrawalLevel(
-        parseFloat(ethers.utils.formatEther(updatedLevel || "0")).toFixed(4)
+        parseFloat(formatUnits(updatedLevel || "0")).toFixed(4)
       );
 
       // Show confetti animation
@@ -1466,9 +1470,9 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
 
     try {
       setIsLoadingRab(true);
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1481,7 +1485,7 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
       setWithdrawalRab(
-        parseFloat(ethers.utils.formatEther(updatedLevel || "0")).toFixed(4)
+        parseFloat(formatUnits(updatedLevel || "0")).toFixed(4)
       );
 
       setShowConfetti(true);
@@ -1544,11 +1548,11 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1607,9 +1611,9 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
           ]);
 
         const total =
-          parseFloat(ethers.utils.formatEther(totalBonusData || "0")) +
-          parseFloat(ethers.utils.formatEther(totalRABData || "0")) +
-          parseFloat(ethers.utils.formatEther(totalLevelData || "0"));
+        parseFloat(formatUnits(totalBonusData || "0", 18)) +
+        parseFloat(formatUnits(totalRABData || "0", 18)) +
+        parseFloat(formatUnits(totalLevelData || "0", 18));
 
         // console.log("the total is", total);
         // ─── 1) Build a total of rewards at indices [1], [3], [5] ────────────
@@ -1636,7 +1640,8 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
         const expectedTime = userData[0]?.toString(); // Expected time (e.g., last rank update time)
         const expiryTime = userData.rankExpiryTime; // Expiry time
         // Ensure current time is an integer before creating a BigNumber
-        const currentTime = BigNumber.from(Math.floor(Date.now() / 1000)); // Use Math.floor to remove decimals
+        const currentTime = BigInt(Math.floor(Date.now() / 1000));
+
 
         // console.log("the excpeted time is",expectedTime);
         // console.log("the  time is",expiryTime);
@@ -1644,8 +1649,8 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
 
         // Compute active/inactive status
         const isActive =
-          currentTime.gte(expectedTime) && currentTime.lt(expiryTime);
-        const isExpired = currentTime.gt(expiryTime);
+        currentTime >= expectedTime && currentTime < expiryTime;
+      const isExpired = currentTime > expiryTime;
 
         const formattedData = {
           referrer: userData[2] || "No referrer",
@@ -1654,9 +1659,7 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
             Number(userData.lastRankUpdateTime)
           ),
           rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
-          totalInvestment: ethers.utils.formatEther(
-            userData[5]?.toString() || "0"
-          ),
+          totalInvestment: formatUnits(userData[5]?.toString() || "0", 18),
           isActive: isActive && !isExpired,
           isExpired: isExpired,
 
@@ -1762,11 +1765,11 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1781,15 +1784,18 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
           ]);
 
         // Convert BigNumber to readable format and set the raw values as numbers
-        const ltgPool = parseFloat(
-          ethers.utils.formatEther(totalLTGPoolData)
-        ).toFixed(0);
-        const rtgPool = parseFloat(
-          ethers.utils.formatEther(totalRTGPoolData)
-        ).toFixed(0);
-        const ldpPool = parseFloat(
-          ethers.utils.formatEther(totalLDPPoolData)
-        ).toFixed(0);
+     
+
+
+        const ltgPool = parseFloat(formatUnits(totalLTGPoolData, 18)).toFixed(
+          0
+        );
+        const rtgPool = parseFloat(formatUnits(totalRTGPoolData, 18)).toFixed(
+          0
+        );
+        const ldpPool = parseFloat(formatUnits(totalLDPPoolData, 18)).toFixed(
+          0
+        );
 
         // Ensure we set the values as numbers
         setTotalLTGPool(parseInt(ltgPool));
@@ -1853,11 +1859,11 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
       setError(null);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1868,19 +1874,19 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
           contract
             .getTtlLtgDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
           contract
             .getTtlRabDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
           contract
             .getTtllvlDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
         ]);
@@ -1920,7 +1926,7 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
                 return;
               }
 
-              const count = ethers.BigNumber.from(rankData.cnt);
+              const count = rankData.cnt;
               rankValues[rank.name] = (
                 parseFloat(count.toString()) * totalPool
               ).toFixed(4);
@@ -1965,11 +1971,11 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
       setIsLoading(true);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1980,7 +1986,7 @@ const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
           ranks.map(async (rank) => {
             try {
               const rankStatus = await contract.rUC(rank.index);
-              const count = rankStatus.toNumber();
+              const count = Number(rankStatus);
               updatedRankCounts[rank.name] = count;
               // console.log(`Rank: ${rank.name}, Count: ${count}`);
             } catch (error) {
@@ -2022,16 +2028,16 @@ const handleBlacklist = async () => {
     console.warn("Wallet not connected or provider not ready");
     return;
   }
-  if (!ethers.utils.isAddress(addressToBlacklist)) {
+  if (isAddress(addressToBlacklist)) {
     toast.error("Please enter a valid address");
     return;
   }
 
   try {
     setIsBlacklistProcessing(true);
-    const provider = new ethers.providers.Web3Provider(walletProvider);
-    const signer = provider.getSigner();
-    const contract = new ethers.Contract(contractAddress, contractAbi, signer);
+    const provider = new BrowserProvider(walletProvider);
+    const signer = await provider.getSigner();
+    const contract = new Contract(contractAddress, contractAbi, signer);
 
     const tx = await contract.blacklistAddress(addressToBlacklist);
     await tx.wait();
@@ -2489,9 +2495,9 @@ const handleBlacklist = async () => {
 
         <button
           onClick={handleBlacklist}
-          disabled={isBlacklistProcessing || !addressToBlacklist || !ethers.utils.isAddress(addressToBlacklist)}
+          disabled={isBlacklistProcessing || !addressToBlacklist || !ethers.isAddress(addressToBlacklist)}
           className={`w-full py-4 rounded-xl text-lg font-medium transition-all duration-300
-            ${!isBlacklistProcessing && addressToBlacklist && ethers.utils.isAddress(addressToBlacklist)
+            ${!isBlacklistProcessing && addressToBlacklist && ethers.isAddress(addressToBlacklist)
               ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:opacity-90"
               : "bg-slate-700/50 text-gray-400 cursor-not-allowed"
             }`}

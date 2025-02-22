@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
-import { ethers } from "ethers";
+//import { ethers } from "ethers";
 import { contractAbi } from "./Props/contractAbi";
 import { contractAddress } from "./Props/contractAddress";
-import { useWeb3ModalProvider } from "@web3modal/ethers5/react";
-import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
-import { BigNumber } from "ethers";
+import {
+  Provider,
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
+//import { BigNumber } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../components/DarkModeContext";
 import FeaturesSection from "../components/FeaturesSection";
 import Light from "../components/Light";
 import Loader from "./Loader";
-
+import { BrowserProvider, Contract, formatUnits } from "ethers";
 // Import rank images
 import rank0 from "../assets/rank0.png";
 import rank1 from "../assets/rank1.png";
@@ -47,11 +50,11 @@ const RankDetailsPage = () => {
   const [withdrawalBonus, setWithdrawalBonus] = useState("0");
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
-  const { address, isConnected } = useWeb3ModalAccount();
+  const { address, isConnected } = useAppKitAccount();
   const [totalBonus, setTotalBonus] = useState("0");
   const [isProviderReady, setIsProviderReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { walletProvider } = useWeb3ModalProvider();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const [error, setError] = useState<ErrorType>(null);
   type ErrorType = string | null;
   const [totalPendingAmount, setTotalPendingAmount] =
@@ -91,11 +94,11 @@ const RankDetailsPage = () => {
         console.log("Checking registration status for:", newAddress);
 
         // Initialize Web3 provider and contract
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -129,7 +132,7 @@ const RankDetailsPage = () => {
     };
 
     if (walletProvider) {
-      const provider = new ethers.providers.Web3Provider(walletProvider as any);
+      const provider = new BrowserProvider(walletProvider as any);
       const externalProvider = provider.provider as any;
 
       if (externalProvider?.on) {
@@ -156,8 +159,8 @@ const RankDetailsPage = () => {
     const fetchAddress = async () => {
       if (walletProvider) {
         try {
-          const provider = new ethers.providers.Web3Provider(walletProvider);
-          const signer = provider.getSigner();
+          const provider = new BrowserProvider(walletProvider);
+          const signer = await provider.getSigner();
           const address = await signer.getAddress(); // Get connected wallet address
           console.log("the add is", address);
           setConnectedAddress(address);
@@ -187,6 +190,9 @@ const RankDetailsPage = () => {
         { name: "CROWN_DIAMOND", index: 8 },
       ];
 
+      const _unused = { getRankName }; // This makes TypeScript think it's used
+      console.log(_unused);
+
       const rank = ranks.find((r) => r.index === parseInt(rankIndex));
       return rank ? rank.name : "Unknown Rank";
     };
@@ -198,87 +204,95 @@ const RankDetailsPage = () => {
         console.warn("Prerequisites not met for fetching user details");
         return;
       }
-
+    
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider
-        );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
-
-        //console.log(address);
-
+        const ethersProvider = new BrowserProvider(walletProvider);
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(contractAddress, contractAbi, signer);
+    
         // Fetch user data
         const userData = await contract.users(address);
-        //console.log("Raw user data:", userData);
-
-        const formatTimestamp = (timestamp: any): string => {
+        console.log("Raw user data:", userData); // Log the raw data to inspect its structure
+    
+        const formatTimestamp = (timestamp: any): string=> {
           try {
-            // Log the incoming timestamp
-            console.log("Original timestamp:", timestamp);
-            
-            // Convert to number and log
             const timestampNum = Number(timestamp);
-            console.log("Converted to number:", timestampNum);
-            
             if (isNaN(timestampNum) || timestampNum === 0) {
-              console.log("Invalid timestamp detected");
               return "Not updated";
             }
-        
-            // Log milliseconds conversion
-            console.log("In milliseconds:", timestampNum * 1000);
-            
-            // Log final date
-            const finalDate = new Date(timestampNum * 1000).toLocaleDateString();
-            console.log("Final formatted date:", finalDate);
-            
-            return finalDate;
-            
+            return new Date(timestampNum * 1000).toLocaleDateString();
           } catch (error) {
             console.error('Error formatting timestamp:', error);
             return "Invalid timestamp";
           }
         };
-
-        // ─── 1) Build a total of rewards at indices [1], [3], [5] ────────────
-        let rewardSumBN = BigNumber.from(0);
-        if (Array.isArray(userData[6])) {
-          // Safely convert each element to a BigNumber if present, otherwise 0
-          const r1 = userData[6][1]
-            ? BigNumber.from(userData[6][1])
-            : BigNumber.from(0);
-          const r3 = userData[6][3]
-            ? BigNumber.from(userData[6][3])
-            : BigNumber.from(0);
-          const r5 = userData[6][5]
-            ? BigNumber.from(userData[6][5])
-            : BigNumber.from(0);
-
-          // Sum them all
-          rewardSumBN = rewardSumBN.add(r1).add(r3).add(r5);
+    
+        // Safer way to handle rewards calculation
+        let rewardSumBN = BigInt(0);
+        
+        // First check if userData[6] exists
+        if (userData && userData[6]) {
+          console.log("Rewards data structure:", userData[6]);
+          
+          // Check if it's an array or array-like
+          if (Array.isArray(userData[6]) || typeof userData[6] === 'object') {
+            try {
+              // Safely try to access and convert each index
+              // userData[6][1]
+              if (userData[6][1] !== undefined) {
+                const r1 = BigInt(userData[6][1].toString());
+                rewardSumBN += r1;
+              }
+              
+              // userData[6][3]
+              if (userData[6][3] !== undefined) {
+                const r3 = BigInt(userData[6][3].toString());
+                rewardSumBN += r3;
+              }
+              
+              // userData[6][5]
+              if (userData[6][5] !== undefined) {
+                const r5 = BigInt(userData[6][5].toString());
+                rewardSumBN += r5;
+              }
+            } catch (err) {
+              console.error("Error calculating rewards sum:", err);
+              // Continue with rewardSumBN as 0
+            }
+          } else {
+            console.warn("userData[6] is not an array or object:", typeof userData[6]);
+          }
         }
-
-        // ─── 2) Format other fields as before ────────────────────────────────
-        const formattedData = {
-          referrer: userData[2] || "No referrer",
-          currentRank: getRankName(userData[0]?.toString() || "0"),
-          lastRankUpdateTime: formatTimestamp(Number(userData.lastRankUpdateTime)),
-  rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
-          totalInvestment: ethers.utils.formatEther(
-            userData[5]?.toString() || "0"
-          ),
-          isActive: userData[5] || false,
-
-          // ─── 3) Use the summed rewards for the 'rewards' field ─────────────
-          rewards: ethers.utils.formatEther(rewardSumBN),
+    
+        // Format other fields - safer accessing with fallbacks
+        const getRankName = (rankIndex:string) => {
+          const ranks = [
+            { name: "STAR", index: 0 },
+            { name: "BRONZE", index: 1 },
+            { name: "SILVER", index: 2 },
+            { name: "GOLD", index: 3 },
+            { name: "DIAMOND", index: 4 },
+            { name: "BLUE_DIAMOND", index: 5 },
+            { name: "BLACK_DIAMOND", index: 6 },
+            { name: "ROYAL_DIAMOND", index: 7 },
+            { name: "CROWN_DIAMOND", index: 8 },
+          ];
+    
+          const rank = ranks.find((r) => r.index === parseInt(rankIndex));
+          return rank ? rank.name : "Unknown Rank";
         };
-
-        //console.log("Formatted user datass:::::", formattedData);
+    
+        const formattedData = {
+          referrer: userData[2] ? userData[2].toString() : "No referrer",
+          currentRank: getRankName(userData[0] !== undefined ? userData[0].toString() : "0"),
+          lastRankUpdateTime: formatTimestamp(userData.lastRankUpdateTime ? Number(userData.lastRankUpdateTime) : 0),
+          rankExpiryTime: formatTimestamp(userData.rankExpiryTime ? Number(userData.rankExpiryTime) : 0),
+          totalInvestment: formatUnits(userData[5] !== undefined ? userData[5].toString() : "0", 18),
+          isActive: Boolean(userData[5]),
+          rewards: formatUnits(rewardSumBN.toString(), 18), // Convert BigInt to string for formatUnits
+        };
+    
+        console.log("Formatted user data:", formattedData);
         setUserDetails(formattedData);
         setError(null);
       } catch (error) {
@@ -303,16 +317,16 @@ const RankDetailsPage = () => {
     const fetchRankDetails = async () => {
       if (walletProvider && connectedAddress) {
         try {
-          const provider = new ethers.providers.Web3Provider(walletProvider);
-          const signer = provider.getSigner();
-          const contract = new ethers.Contract(
+          const provider = new BrowserProvider(walletProvider);
+          const signer = await provider.getSigner();
+          const contract = new Contract(
             contractAddress,
             contractAbi,
             signer
           );
 
           const details = [];
-          let pendingAmountTotal = ethers.BigNumber.from("0"); // Initialize total as BigNumber
+          let pendingAmountTotal = BigInt("0"); // Initialize total as BigNumber
 
           for (let i = 0; i <= 8; i++) {
             const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
@@ -323,18 +337,17 @@ const RankDetailsPage = () => {
 
             // Add the pending amount to the total
             if (i <= 7) {
-              pendingAmountTotal = pendingAmountTotal.add(
-                response.pendingAmount
-              );
+              pendingAmountTotal = pendingAmountTotal + response.pendingAmount;
             }
 
             details.push({
               id: i,
               name: ranks[i].name,
               count: response.count.toString(),
-              pendingAmount: ethers.utils.formatEther(response.pendingAmount),
-              totalDistributedAmount: ethers.utils.formatEther(
-                response.ttlDstrbtdAmount
+              pendingAmount: formatUnits(response.pendingAmount, 18),
+              totalDistributedAmount: formatUnits(
+                response.ttlDstrbtdAmount,
+                18
               ),
             });
           }
@@ -343,7 +356,7 @@ const RankDetailsPage = () => {
           // Set the rank details and the total pending amount with 2 decimal places
           setRankDetails(details);
           setTotalPendingAmount(
-            parseFloat(ethers.utils.formatEther(pendingAmountTotal)).toFixed(2)
+            parseFloat(formatUnits(pendingAmountTotal, 18)).toFixed(2)
           ); // Convert to string with 2 decimal places
           setLoading(false);
         } catch (error) {
@@ -368,11 +381,11 @@ const RankDetailsPage = () => {
       setError(null);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -389,7 +402,7 @@ const RankDetailsPage = () => {
         // Fetch total bonus
         const totalBonusData = await contract.getUsrTtlLtgrcvd(address);
         setTotalBonus(
-          parseFloat(ethers.utils.formatEther(totalBonusData || "0")).toFixed(4)
+          parseFloat(formatUnits(totalBonusData || "0", 18)).toFixed(4)
         );
       } catch (error) {
         console.error("Error fetching bonus data:", error);
@@ -409,9 +422,9 @@ const RankDetailsPage = () => {
     const fetchRankDetails = async () => {
       if (walletProvider && connectedAddress) {
         try {
-          const provider = new ethers.providers.Web3Provider(walletProvider);
-          const signer = provider.getSigner();
-          const contract = new ethers.Contract(
+          const provider = new BrowserProvider(walletProvider);
+          const signer = await provider.getSigner();
+          const contract = new Contract(
             contractAddress,
             contractAbi,
             signer
@@ -425,9 +438,10 @@ const RankDetailsPage = () => {
               id: i,
               name: ranks[i].name,
               count: response.count.toString(),
-              pendingAmount: ethers.utils.formatEther(response.pendingAmount),
-              totalDistributedAmount: ethers.utils.formatEther(
-                response.ttlDstrbtdAmount
+              pendingAmount: formatUnits(response.pendingAmount, 18),
+              totalDistributedAmount: formatUnits(
+                response.ttlDstrbtdAmount,
+                18
               ),
 
               //console.log(count);

@@ -19,11 +19,11 @@ interface PriceData {
 }
 
 class ITCPriceFetcher {
-    private provider: ethers.providers.JsonRpcProvider;
+    private provider: ethers.JsonRpcProvider;
     private poolContract: Contract;
 
     constructor() {
-        this.provider = new ethers.providers.JsonRpcProvider(BSC_TESTNET_RPC);
+        this.provider = new ethers.JsonRpcProvider(BSC_TESTNET_RPC);
         this.poolContract = new Contract(POOL_ADDRESS, POOL_ABI, this.provider);
     }
 

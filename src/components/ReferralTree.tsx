@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ethers } from "ethers";
+import { ethers, BrowserProvider } from "ethers";
 import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from "@web3modal/ethers5/react";
+  Provider,
+  
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import FeaturesSection from "../components/FeaturesSection";
@@ -28,8 +30,8 @@ interface ReferralNode {
 const ReferralTree = () => {
   const navigate = useNavigate();
   const { darkMode } = useDarkMode();
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, isConnected } =  useAppKitAccount();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
 
   // Core state
   const [treeData, setTreeData] = useState<ReferralNode | null>(null);
@@ -46,7 +48,7 @@ const ReferralTree = () => {
   const contract = useMemo(() => {
     if (!walletProvider) return null;
     try {
-      const provider = new ethers.providers.Web3Provider(walletProvider);
+      const provider = new BrowserProvider(walletProvider);
       return new ethers.Contract(contractAddress, contractAbi, provider);
     } catch (e) {
       console.error("Contract init error:", e);

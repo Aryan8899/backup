@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { ethers } from "ethers";
+import { ethers, BrowserProvider, Contract } from "ethers";
 import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-  useWeb3Modal,
-} from "@web3modal/ethers5/react";
+  Provider,
+  useAppKit,
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
 import axios from "axios";
 import { usePriceData } from "../components/PriceContext";
 import { useDarkMode } from "../components/DarkModeContext";
@@ -105,9 +106,9 @@ const RegisterRank = () => {
   const { darkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
   const location = useLocation();
-  const { open } = useWeb3Modal();
-  const { walletProvider } = useWeb3ModalProvider();
-  const { address } = useWeb3ModalAccount();
+  const { open } = useAppKit();
+  const { address } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const { priceData } = usePriceData();
   const [isProcessing, setIsProcessing] = useState(false);
   const [rankDetails, setRankDetails] = useState<RankDetail[]>([]);
@@ -183,9 +184,9 @@ const RegisterRank = () => {
   useEffect(() => {
     if (walletProvider) {
       const initializeContract = async () => {
-        const provider = new ethers.providers.Web3Provider(walletProvider);
-        const signer = provider.getSigner();
-        const contractInstance = new ethers.Contract(
+        const provider = new BrowserProvider(walletProvider);
+        const signer = await provider.getSigner();
+        const contractInstance = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -235,9 +236,9 @@ const RegisterRank = () => {
         // Continue with registration if check fails
       }
  
-      const provider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = provider.getSigner();
-      const tokenContract = new ethers.Contract(tokenAdd, tokenAbi, signer);
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
+      const tokenContract = new Contract(tokenAdd, tokenAbi, signer);
  
       const currentAllowance = await tokenContract.allowance(
         address,
@@ -245,7 +246,7 @@ const RegisterRank = () => {
       );
  
       if (currentAllowance.eq(0)) {
-        const maxUint256 = ethers.constants.MaxUint256;
+        const maxUint256 = ethers.MaxUint256;
         const approveTx = await tokenContract.approve(contractAddress, maxUint256);
         await approveTx.wait();
       }

@@ -1,11 +1,14 @@
 import React from "react";
 import { AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
+import {
+ 
+  useAppKitAccount,
+} from "@reown/appkit/react";
 
 const SorryPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isConnected } = useWeb3ModalAccount();
+  const { isConnected } = useAppKitAccount();
   
   return (
     <> 

@@ -3,18 +3,24 @@ import { useDarkMode } from "../components/DarkModeContext";
 //import multiavatar from "@multiavatar/multiavatar";
 import { usePriceData } from "../components/PriceContext.tsx";
 
-import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
+import {
+  Provider,
+  useAppKitProvider,
+  useAppKitAccount,
+} from "@reown/appkit/react";
+
+import { BrowserProvider, Contract, formatUnits } from "ethers";
 import axios from "axios"; // Import axios for making HTTP requests
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { BigNumber } from "ethers";
+//import { BigNumber } from "ethers";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import contractAbi from "./Props/contractAbi.ts"; // Adjust path as needed
 import contractAddress from "./Props/contractAddress.ts"; // Adjust path as needed
 // At the top of your component, modify the imports and provider handling
-import { useWeb3ModalProvider } from "@web3modal/ethers5/react"; // Add this import if not present
+//import { useWeb3ModalProvider } from "@web3modal/ethers5/react"; // Add this import if not present
 import { Bar } from "react-chartjs-2";
 import {
   CheckCheck,
@@ -430,7 +436,7 @@ const Dashboard = () => {
   }
 
   interface RankData {
-    cnt: ethers.BigNumber;
+    cnt: BigInt;
     // Add other properties from your contract's rUC return type if any
   }
 
@@ -469,17 +475,18 @@ const Dashboard = () => {
   const [error, setError] = useState<ErrorType>(null);
   type ErrorType = string | null;
   // const { open } = useWeb3Modal();
-  const { address, isConnected } = useWeb3ModalAccount();
-  const { walletProvider } = useWeb3ModalProvider();
+  const { address, isConnected } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const [isProviderReady, setIsProviderReady] = useState(false);
   const [inviteLink, setInviteLink] = useState(
     `https://cryptomx.site/#/register?referral=undefined`
   );
   const [isCopied, setIsCopied] = useState(false);
 
-  if (!error && !withdrawalBonus && !withdrawalRab) {
+  if (!error && !withdrawalBonus && !withdrawalRab && !setWithdrawalRab) {
     console.log("update!!");
   }
+  //console.log(setWithdrawalRab);
 
   // useEffect(() => {
   //   const fetchAddress = async () => {
@@ -515,27 +522,27 @@ const Dashboard = () => {
       }
 
       // Validate contract address
-      if (!ethers.utils.isAddress(contractAddress)) {
+      if (!ethers.isAddress(contractAddress)) {
         throw new Error("Invalid contract address");
       }
 
-      const provider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = provider.getSigner();
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
 
       // Validate connected address
       const connectedAddress = await signer.getAddress();
-      if (!ethers.utils.isAddress(connectedAddress)) {
+      if (!ethers.isAddress(connectedAddress)) {
         throw new Error("Invalid connected address");
       }
 
-      const contract = new ethers.Contract(
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
       );
 
       const details = [];
-      let pendingAmountTotal = ethers.BigNumber.from("0");
+      let pendingAmountTotal = BigInt("0");
 
       // Fetch rank LTG details
       for (let i = 0; i <= 8; i++) {
@@ -543,17 +550,15 @@ const Dashboard = () => {
           const response = await contract.getRankLTG(connectedAddress, i);
 
           if (i <= 7) {
-            pendingAmountTotal = pendingAmountTotal.add(response.pendingAmount);
+            pendingAmountTotal = pendingAmountTotal + response.pendingAmount;
           }
 
           details.push({
             id: i,
             name: ranks[i]?.name || `Rank ${i}`,
             count: response.count.toString(),
-            pendingAmount: ethers.utils.formatEther(response.pendingAmount),
-            totalDistributedAmount: ethers.utils.formatEther(
-              response.ttlDstrbtdAmount
-            ),
+            pendingAmount: formatUnits(response.pendingAmount, 18),
+            totalDistributedAmount: formatUnits(response.ttlDstrbtdAmount, 18),
           });
         } catch (error) {
           console.error(`Error fetching LTG for rank ${i}:`, error);
@@ -594,7 +599,7 @@ const Dashboard = () => {
 
       setRankDetails([...details, ...validRankDetails]);
       setTotalPendingAmount(
-        parseFloat(ethers.utils.formatEther(pendingAmountTotal)).toFixed(2)
+        parseFloat(formatUnits(pendingAmountTotal, 18)).toFixed(2)
       );
     } catch (error) {
       console.error("Error in fetchRankDetails:", error);
@@ -723,11 +728,11 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -801,11 +806,11 @@ const Dashboard = () => {
 
       try {
         setIsGraphLoading(true);
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider (
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -947,11 +952,11 @@ const Dashboard = () => {
       // console.log("Fetching total investment...", error);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -960,7 +965,7 @@ const Dashboard = () => {
         // Fetch total investment
         const totalInvestmentData = await contract.getTtlInvstmnt(); // Pass address here
         const formattedInvestment = parseFloat(
-          ethers.utils.formatEther(totalInvestmentData || "0")
+          formatUnits(totalInvestmentData || "0", 18)
         ).toFixed(2); // Format to 2 decimal places
 
         //  console.log("Formatted total investment:", formattedInvestment);
@@ -993,11 +998,11 @@ const Dashboard = () => {
       setError(null);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider (
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1008,19 +1013,19 @@ const Dashboard = () => {
           contract
             .getTtlLtgDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
           contract
             .getTtlRabDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
           contract
             .getTtllvlDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
         ]);
@@ -1053,7 +1058,7 @@ const Dashboard = () => {
                 return;
               }
 
-              const count = ethers.BigNumber.from(rankData.cnt);
+              const count = rankData.cnt;
               rankValues[rank.name] = (
                 parseFloat(count.toString()) * totalPool
               ).toFixed(4);
@@ -1106,7 +1111,7 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
         const network = await ethersProvider.getNetwork();
@@ -1138,9 +1143,9 @@ const Dashboard = () => {
     setError(null);
 
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1171,15 +1176,15 @@ const Dashboard = () => {
       //   ).toFixed(4)
       // );
       setTotalBonus(
-        parseFloat(ethers.utils.formatEther(totalBonusData || "0")).toFixed(4)
+        parseFloat(formatUnits(totalBonusData || "0", 18)).toFixed(4)
       );
       setWithdrawalRAB(
-        parseFloat(ethers.utils.formatEther(withdrawalRABData || "0")).toFixed(
+        parseFloat(formatUnits(withdrawalRABData || "0", 18)).toFixed(
           4
         )
       );
       setTotalRAB(
-        parseFloat(ethers.utils.formatEther(totalRABData || "0")).toFixed(4)
+        parseFloat(formatUnits(totalRABData || "0", 18)).toFixed(4)
       );
 
       // console.log(
@@ -1188,11 +1193,11 @@ const Dashboard = () => {
       // );
       setWithdrawalLevel(
         parseFloat(
-          ethers.utils.formatEther(withdrawalLevelData || "0")
+          formatUnits(withdrawalLevelData || "0", 18)
         ).toFixed(4)
       );
       setTotalLevel(
-        parseFloat(ethers.utils.formatEther(totalLevelData || "0")).toFixed(4)
+        parseFloat(formatUnits(totalLevelData || "0", 18)).toFixed(4)
       );
 
       // Calculate total bonuses
@@ -1338,9 +1343,9 @@ const Dashboard = () => {
 
     try {
       setIsLoading(true);
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1414,9 +1419,9 @@ const Dashboard = () => {
 
     try {
       setIsLoadingLevel(true);
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1432,7 +1437,7 @@ const Dashboard = () => {
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
       setWithdrawalLevel(
-        parseFloat(ethers.utils.formatEther(updatedLevel || "0")).toFixed(4)
+        parseFloat(formatUnits(updatedLevel || "0", 18)).toFixed(4)
       );
 
       // Show confetti animation
@@ -1473,9 +1478,9 @@ const Dashboard = () => {
 
     try {
       setIsLoadingRab(true);
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider);
-      const signer = ethersProvider.getSigner();
-      const contract = new ethers.Contract(
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
         contractAddress,
         contractAbi,
         signer
@@ -1487,8 +1492,8 @@ const Dashboard = () => {
       // console.log("Withdraw Level Transaction Hash:", tx.hash);
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
-      setWithdrawalRab(
-        parseFloat(ethers.utils.formatEther(updatedLevel || "0")).toFixed(4)
+      setWithdrawalLevel(
+        parseFloat(formatUnits(updatedLevel || "0", 18)).toFixed(4)
       );
 
       setShowConfetti(true);
@@ -1545,11 +1550,11 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1608,9 +1613,9 @@ const Dashboard = () => {
           ]);
 
         const total =
-          parseFloat(ethers.utils.formatEther(totalBonusData || "0")) +
-          parseFloat(ethers.utils.formatEther(totalRABData || "0")) +
-          parseFloat(ethers.utils.formatEther(totalLevelData || "0"));
+        parseFloat(formatUnits(totalBonusData || "0", 18)) +
+        parseFloat(formatUnits(totalRABData || "0", 18)) +
+        parseFloat(formatUnits(totalLevelData || "0", 18));
 
         // console.log("the total is", total);
         // ─── 1) Build a total of rewards at indices [1], [3], [5] ────────────
@@ -1637,7 +1642,7 @@ const Dashboard = () => {
         const expectedTime = userData[0]?.toString(); // Expected time (e.g., last rank update time)
         const expiryTime = userData.rankExpiryTime; // Expiry time
         // Ensure current time is an integer before creating a BigNumber
-        const currentTime = BigNumber.from(Math.floor(Date.now() / 1000)); // Use Math.floor to remove decimals
+        const currentTime = BigInt(Math.floor(Date.now() / 1000));
 
         // console.log("the excpeted time is",expectedTime);
         // console.log("the  time is",expiryTime);
@@ -1645,8 +1650,8 @@ const Dashboard = () => {
 
         // Compute active/inactive status
         const isActive =
-          currentTime.gte(expectedTime) && currentTime.lt(expiryTime);
-        const isExpired = currentTime.gt(expiryTime);
+          currentTime >= expectedTime && currentTime < expiryTime;
+        const isExpired = currentTime > expiryTime;
 
         const formattedData = {
           referrer: userData[2] || "No referrer",
@@ -1655,9 +1660,7 @@ const Dashboard = () => {
             Number(userData.lastRankUpdateTime)
           ),
           rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime)),
-          totalInvestment: ethers.utils.formatEther(
-            userData[5]?.toString() || "0"
-          ),
+          totalInvestment: formatUnits(userData[5]?.toString() || "0", 18),
           isActive: isActive && !isExpired,
           isExpired: isExpired,
 
@@ -1697,11 +1700,11 @@ const Dashboard = () => {
         //console.log("Checking registration status for:", newAddress);
 
         // Initialize Web3 provider and contract
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1735,7 +1738,7 @@ const Dashboard = () => {
     };
 
     if (walletProvider) {
-      const provider = new ethers.providers.Web3Provider(walletProvider as any);
+      const provider = new BrowserProvider(walletProvider as any);
       const externalProvider = provider.provider as any;
 
       if (externalProvider?.on) {
@@ -1819,11 +1822,11 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1838,15 +1841,15 @@ const Dashboard = () => {
           ]);
 
         // Convert BigNumber to readable format and set the raw values as numbers
-        const ltgPool = parseFloat(
-          ethers.utils.formatEther(totalLTGPoolData)
-        ).toFixed(0);
-        const rtgPool = parseFloat(
-          ethers.utils.formatEther(totalRTGPoolData)
-        ).toFixed(0);
-        const ldpPool = parseFloat(
-          ethers.utils.formatEther(totalLDPPoolData)
-        ).toFixed(0);
+        const ltgPool = parseFloat(formatUnits(totalLTGPoolData, 18)).toFixed(
+          0
+        );
+        const rtgPool = parseFloat(formatUnits(totalRTGPoolData, 18)).toFixed(
+          0
+        );
+        const ldpPool = parseFloat(formatUnits(totalLDPPoolData, 18)).toFixed(
+          0
+        );
 
         // Ensure we set the values as numbers
         setTotalLTGPool(parseInt(ltgPool));
@@ -1910,11 +1913,11 @@ const Dashboard = () => {
       setError(null);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
@@ -1925,19 +1928,19 @@ const Dashboard = () => {
           contract
             .getTtlLtgDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
           contract
             .getTtlRabDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
           contract
             .getTtllvlDstrbtd()
             .then((val: ethers.BigNumberish) =>
-              parseFloat(ethers.utils.formatEther(val))
+              parseFloat(formatUnits(val, 18))
             )
             .catch(() => 0),
         ]);
@@ -1977,7 +1980,7 @@ const Dashboard = () => {
                 return;
               }
 
-              const count = ethers.BigNumber.from(rankData.cnt);
+              const count = rankData.cnt;
               rankValues[rank.name] = (
                 parseFloat(count.toString()) * totalPool
               ).toFixed(4);
@@ -2022,11 +2025,11 @@ const Dashboard = () => {
       setIsLoading(true);
 
       try {
-        const ethersProvider = new ethers.providers.Web3Provider(
+        const ethersProvider = new BrowserProvider(
           walletProvider
         );
-        const signer = ethersProvider.getSigner();
-        const contract = new ethers.Contract(
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(
           contractAddress,
           contractAbi,
           signer
