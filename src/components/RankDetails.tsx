@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import { BrowserProvider, Contract } from "ethers";
 import { contractAbi } from "./Props/contractAbi";
 import { contractAddress } from "./Props/contractAddress";
@@ -139,15 +139,21 @@ const RankDetailsPage = () => {
   }, [walletProvider, address, isConnected, isProviderReady, navigate]);
 
   // Fetch user details and rank details
-  useEffect(() => {
-    const fetchUserAndRankDetails = async () => {
-      if (!walletProvider || !isConnected) {
-        console.log("Provider or connection not ready");
-        return;
-      }
+  const hasFetchedRef = useRef(false);
 
-      setLoading(true);
-      setError(null);
+  useEffect(() => {
+   
+    let isMounted = true;
+
+  
+  const fetchUserAndRankDetails = async () => {
+    if (!isMounted) return;
+    if (!walletProvider || !isConnected) {
+      if (isMounted) setLoading(false);
+      return;
+    }
+    
+    if (isMounted) setLoading(true);
 
       try {
         console.log("Fetching user and rank details...");
@@ -184,6 +190,13 @@ const RankDetailsPage = () => {
             const addedFeePrice = Price + Price * 0.03;
             const rankPriceInITC = addedFeePrice * parseFloat(priceData?.TUSDTperTITC || "0.0");
 
+
+            console.log("Price data available:", !!priceData);
+console.log("TUSDTperTITC value:", priceData?.TUSDTperTITC);
+//const Price = parseFloat(rankDetail.price.toString());
+console.log(`DEBUG: Raw price for ${ranks[i].name}:`, rankDetail.price.toString());
+console.log(`DEBUG: Parsed price:`, Price);
+
             console.log(`Rank ${ranks[i].name} details:`, {
               price: Price,
               addedFeePrice,
@@ -203,6 +216,11 @@ const RankDetailsPage = () => {
               rabShare,
               isEligible: eligibleRanks.includes(rankKey),
             });
+
+            if (isMounted) {
+              setRankDetails(details);
+              hasFetchedRef.current = true; // Set the ref to true after successful fetch
+            }
           } catch (error) {
             console.error(`Error fetching rank ${i} details:`, error);
           }
@@ -211,14 +229,24 @@ const RankDetailsPage = () => {
         console.log("Setting rank details:", details);
         setRankDetails(details);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to load rank data. Please try again later.");
+        if (isMounted) setError("Failed to load rank data. Please try again later.");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
+        console.log("Loading state set to false");
       }
+
+      // console.log("the laoding is before",loading);
+
     };
 
-    fetchUserAndRankDetails();
+    if (!hasFetchedRef.current) {
+      fetchUserAndRankDetails();
+    }
+
+    return () => {
+      isMounted = false; // Proper cleanup
+    };
+
   }, [walletProvider, isConnected, priceData]);
 
   // Log when user rank updates
@@ -246,6 +274,9 @@ const RankDetailsPage = () => {
                 View detailed information about each rank and their benefits
               </p>
             </div>
+
+     
+
 
             {/* Loading State */}
             {loading && (

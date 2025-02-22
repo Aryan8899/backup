@@ -740,7 +740,7 @@ const Dashboard = () => {
 
         // Fetch `usrCnt` from the contract
         const usrCntValue = await contract.usrCnt();
-        setUsrCnt(usrCntValue.toNumber()); // Convert BigNumber to a regular number
+        setUsrCnt(Number(usrCntValue)); // Convert BigNumber to a regular number
       } catch (error) {
         console.error("Error fetching usrCnt:", error);
         setUsrCnt(null); // Reset `usrCnt` in case of an error
@@ -2040,7 +2040,7 @@ const Dashboard = () => {
           ranks.map(async (rank) => {
             try {
               const rankStatus = await contract.rUC(rank.index);
-              const count = rankStatus.toNumber();
+              const count = Number(rankStatus);
               updatedRankCounts[rank.name] = count;
               // console.log(`Rank: ${rank.name}, Count: ${count}`);
             } catch (error) {
