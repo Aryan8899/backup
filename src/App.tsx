@@ -1,7 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useDarkMode } from "./components/DarkModeContext";
-//import { DarkModeProvider } from "./components/DarkModeContext";
 
 // Lazy load components
 const Dashboard = lazy(() => import("./components/Dashboard"));
@@ -26,6 +25,13 @@ const App: React.FC = () => {
   const location = useLocation();
   const { darkMode } = useDarkMode();
 
+  // Function to check if we should hide the header
+  const shouldHideHeader = () => {
+    // Hide header if we're at root path or if URL contains /register with referral parameter
+    return location.pathname === "/" || 
+           (location.pathname === "/register" && location.search.includes("referral="));
+  };
+
   useEffect(() => {
     const skipLoadingRoutes = ["/referral-tree", "/LtgBon"];
 
@@ -49,7 +55,7 @@ const App: React.FC = () => {
       {loading && <Loader />}
 
       {/* Header (Conditionally Rendered) */}
-      {location.pathname !== "/" && (
+      {!shouldHideHeader() && (
         <Suspense fallback={<div>Loading...</div>}>
           <Header />
         </Suspense>

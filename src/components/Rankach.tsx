@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 //import { ethers } from "ethers";
 import "simplebar/dist/simplebar.min.css";
 import multiavatar from "@multiavatar/multiavatar";
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 import {
   Provider,
   useAppKitProvider,
@@ -94,7 +94,6 @@ const RANKS = [
   { name: "CROWN_DIAMOND", index: 8, image: rank8 },
 ];
 const Rankach: React.FC = () => {
-  
   const navigate = useNavigate();
   const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider<Provider>("eip155");
@@ -120,7 +119,7 @@ const Rankach: React.FC = () => {
   const [remainingTime, setRemainingTime] = useState<string>("Loading...");
   const [Elgibility, setElgibility] = useState<string | boolean>("Loading...");
   const [error, setError] = useState<string | null>(null);
- // const [loading, setLoading] = useState<boolean>(false);
+  // const [loading, setLoading] = useState<boolean>(false);
   const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
   const [userRank, setUserRank] = useState<string | null>(null);
   const [rankrem, setRemDetails] = useState({
@@ -182,13 +181,21 @@ const Rankach: React.FC = () => {
 
   // useEffects
   useEffect(() => {
-    console.log(getDisplayMonth(2))
+    console.log(getDisplayMonth(2));
     setIsProviderReady(!!walletProvider);
   }, [walletProvider]);
 
   useEffect(() => {
-
-    console.log(currentmonth,monthlyindex,error,rankrem,loadingAddresses,avatarSVG,copiedState,setCopiedState)
+    console.log(
+      currentmonth,
+      monthlyindex,
+      error,
+      rankrem,
+      loadingAddresses,
+      avatarSVG,
+      copiedState,
+      setCopiedState
+    );
     const checkAdminAndFetchUserData = async () => {
       if (!isConnected || !walletProvider || !address) {
         console.warn("Wallet not connected or provider not available.");
@@ -198,11 +205,7 @@ const Rankach: React.FC = () => {
       try {
         const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner(); // Add await here
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const normalizedAddress = address.toLowerCase();
         const isAdmin = ADMIN_ADDRESSES.includes(normalizedAddress);
@@ -212,39 +215,42 @@ const Rankach: React.FC = () => {
           return;
         }
 
-        
         const userData = await contract.users(address);
-        
-        console.log("the curr is",getRankName(userData[0]?.toString() || "0"),)
+
+        console.log("the curr is", getRankName(userData[0]?.toString() || "0"));
 
         const formattedData: UserDetails = {
           referrer: userData[2] || "No referrer",
           currentRank: getRankName(userData[0]?.toString() || "0"),
-          lastRankUpdateTime: userData.lastRankUpdateTime 
-    ? (typeof Number(userData.lastRankUpdateTime) === 'function' 
-        ? new Date(Number(userData.lastRankUpdateTime) * 1000).toLocaleDateString()
-        : new Date(Number(userData.lastRankUpdateTime) * 1000).toLocaleDateString())
-    : "Not updated",
-  rankExpiryTime: userData.rankExpiryTime
-    ? (typeof Number(userData.rankExpiryTime) === 'function'
-        ? new Date(Number(userData.rankExpiryTime) * 1000).toLocaleDateString() 
-        : new Date(Number(userData.rankExpiryTime) * 1000).toLocaleDateString())
-    : "Not set",
-          totalInvestment: formatUnits(
-            userData[5]?.toString() || "0",18
-          ),
+          lastRankUpdateTime: userData.lastRankUpdateTime
+            ? typeof Number(userData.lastRankUpdateTime) === "function"
+              ? new Date(
+                  Number(userData.lastRankUpdateTime) * 1000
+                ).toLocaleDateString()
+              : new Date(
+                  Number(userData.lastRankUpdateTime) * 1000
+                ).toLocaleDateString()
+            : "Not updated",
+          rankExpiryTime: userData.rankExpiryTime
+            ? typeof Number(userData.rankExpiryTime) === "function"
+              ? new Date(
+                  Number(userData.rankExpiryTime) * 1000
+                ).toLocaleDateString()
+              : new Date(
+                  Number(userData.rankExpiryTime) * 1000
+                ).toLocaleDateString()
+            : "Not set",
+          totalInvestment: formatUnits(userData[5]?.toString() || "0", 18),
           isActive: userData[1] || false,
           rewards: Array.isArray(userData[6])
-            ? formatUnits(userData[6][0]?.toString() || "0",18)
+            ? formatUnits(userData[6][0]?.toString() || "0", 18)
             : "0",
         };
 
-        console.log("the index is",getRankIndex(formattedData.currentRank))
+        console.log("the index is", getRankIndex(formattedData.currentRank));
 
         setUserDetails(formattedData);
         setError(null);
-
-      
 
         const rankIndex = getRankIndex(formattedData.currentRank);
         if (rankIndex !== -1) {
@@ -276,15 +282,9 @@ const Rankach: React.FC = () => {
         console.log("Checking registration status for:", newAddress);
 
         // Initialize Web3 provider and contract
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         // Fetch user details from the contract
         const userData = await contract.users(newAddress);
@@ -356,15 +356,9 @@ const Rankach: React.FC = () => {
 
       try {
         setElgibility("loading..");
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const userData = await contract.users(address);
         const currentRank = parseInt(userData[0].toString());
@@ -394,8 +388,6 @@ const Rankach: React.FC = () => {
 
     fetchRankDetails();
   }, [isConnected, walletProvider, address]);
-
-
 
   const fetchUserDetails = async (
     address: string
@@ -434,13 +426,21 @@ const Rankach: React.FC = () => {
       );
 
       const currentMonth = await contract.currentMonthIndex();
-      console.log("the current month is",currentMonth);
-      setCurrentMonthIndex(Number(currentMonth) + 1);
+      const monthIndex = Number(currentMonth);
+      console.log("Fetched current month index:", monthIndex);
+
+      setCurrentMonthIndex(monthIndex + 1);
       setIsMonthIndexLoaded(true);
     } catch (error) {
       console.error("Error fetching current month index:", error);
     }
   };
+
+  useEffect(() => {
+    if (isConnected && walletProvider) {
+      fetchCurrentMonthIndex();
+    }
+  }, [isConnected, walletProvider]);
 
   useEffect(() => {
     if (!monthlyRab || !rankshare || !userRank || rankData.length === 0) {
@@ -453,11 +453,10 @@ const Rankach: React.FC = () => {
     }
 
     try {
-
       console.log("running");
       const monthlyRabValue = parseFloat(monthlyRab);
 
-      console.log("the mon rab is",monthlyRabValue);
+      console.log("the mon rab is", monthlyRabValue);
 
       const rankPercentages: Record<number, number> = {
         4: 0.05,
@@ -560,9 +559,7 @@ const Rankach: React.FC = () => {
 
       try {
         setIsLoading(true);
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const contract = new Contract(
           contractAddress,
           contractAbi,
@@ -571,28 +568,27 @@ const Rankach: React.FC = () => {
 
         const addresses: Record<string, UserAddress[]> = {};
 
-        const currentMonthIndexFromContract = await contract.currentMonthIndex();
-      const monthIndex = Number(currentMonthIndexFromContract);
+        const currentMonthIndexFromContract =
+          await contract.currentMonthIndex();
+        const monthIndex = Number(currentMonthIndexFromContract);
 
         for (const rank of eliteRanks) {
           const rankAddressesList: UserAddress[] = [];
           let addressIndex = 0;
-          console.log("the current mon22 is",currentMonthIndex);
+          console.log("the current mon22 is", currentMonthIndex);
 
           while (true) {
             try {
-
-             
-              console.log("the current mon is",monthIndex);
+              console.log("the current mon is", monthIndex);
               console.log("the rank.id is", rank.id);
-              console.log("the address index is",addressIndex);
+              console.log("the address index is", addressIndex);
               const userAddress = await contract.monthlyEligibleAddresses(
-                monthIndex ,
+                monthIndex,
                 rank.id,
                 addressIndex
               );
 
-              console.log("the mon is",userAddress);
+              console.log("the mon is", userAddress);
 
               if (!userAddress) break;
 
@@ -606,9 +602,8 @@ const Rankach: React.FC = () => {
 
               rankAddressesList.push(userDetails);
 
-              console.log("heheheh")
+              console.log("heheheh");
               addressIndex++;
-              
             } catch (addressError) {
               console.error(
                 `Error fetching address for ${rank.name}:`,
@@ -629,7 +624,8 @@ const Rankach: React.FC = () => {
         setIsLoading(false);
       }
     };
-    if (isMonthIndexLoaded && walletProvider) { // Only run after month index is loaded
+    if (isMonthIndexLoaded && walletProvider) {
+      // Only run after month index is loaded
       fetchAllRankAddresses();
     }
   }, [walletProvider, currentMonthIndex]);
@@ -641,8 +637,7 @@ const Rankach: React.FC = () => {
     }
   }, [isConnected, walletProvider, address]);
 
-
-    const fetchDataForRanks = async (monthIndex: number) => {
+  const fetchDataForRanks = async (monthIndex: number) => {
     if (!walletProvider) {
       console.error("Wallet provider is not available");
       return;
@@ -651,21 +646,10 @@ const Rankach: React.FC = () => {
     console.log("Fetching rank distribution data...");
     setLoadingGraph(true);
 
-    
-
     const provider = new BrowserProvider(walletProvider);
-    const contract = new Contract(
-      contractAddress,
-      contractAbi,
-      provider
-    );
-
-    
+    const contract = new Contract(contractAddress, contractAbi, provider);
 
     const data: Record<number, number> = {}; // Initialize properly
-
-
-    
 
     try {
       for (let rank of RANKS) {
@@ -674,15 +658,23 @@ const Rankach: React.FC = () => {
 
         while (true) {
           try {
-            console.log("the monthindex12",monthlyindex);
+            console.log("the monthindex12", monthIndex);
             const userAddress = await contract.monthlyEligibleAddresses(
               monthIndex,
               rank.index,
               addressIndex
             );
 
-            console.log("the mon is", userAddress);
-            if (!userAddress) break;
+            if (
+              !userAddress ||
+              userAddress === "0x0000000000000000000000000000000000000000"
+            ) {
+              console.log(
+                `No more addresses for ${rank.name} at index ${addressIndex}`
+              );
+              break;
+            }
+            console.log(`Found address for ${rank.name}:`, userAddress);
 
             count++;
             addressIndex++;
@@ -801,14 +793,44 @@ const Rankach: React.FC = () => {
   }, [currentMonthIndex, userRank]);
 
   useEffect(() => {
-    if (currentMonthIndex >= 0 && walletProvider) {
-      console.log("Using adjusted month index_new:", currentMonthIndex);
-      const adjustedMonthIndex = Math.max(0, currentMonthIndex - 1);
-      console.log("Using adjusted month index:", adjustedMonthIndex);
-      fetchDataForRanks(adjustedMonthIndex);
+    const fetchCurrentData = async () => {
+      if (!walletProvider) {
+        console.log("No wallet provider available");
+        return;
+      }
+
+      try {
+        const ethersProvider = new BrowserProvider(walletProvider);
+        const contract = new Contract(
+          contractAddress,
+          contractAbi,
+          ethersProvider
+        );
+
+        // Get the current month index from contract
+        const currentMonthIndexFromContract =
+          await contract.currentMonthIndex();
+        const monthIndex = Number(currentMonthIndexFromContract);
+
+        console.log("Current month index from contract:", monthIndex);
+
+        // Only proceed if we have a valid month index
+        if (monthIndex >= 0) {
+          const adjustedMonthIndex = Math.max(0, monthIndex);
+          console.log("Using adjusted month index:", adjustedMonthIndex);
+          fetchDataForRanks(adjustedMonthIndex);
+        } else {
+          console.log("Month index too low, skipping fetch");
+        }
+      } catch (error) {
+        console.error("Error fetching current month index:", error);
+      }
+    };
+
+    if (walletProvider) {
+      fetchCurrentData();
     }
-  }, [currentMonthIndex, walletProvider]);
-  
+  }, [walletProvider]);
 
   const rabShrPrsntg = async (rankIndex: number) => {
     if (!walletProvider) {
@@ -848,15 +870,9 @@ const Rankach: React.FC = () => {
       }
 
       try {
-        const ethersProvider = new BrowserProvider (
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const ranksToFetch = [
           "DIAMOND",
@@ -922,11 +938,7 @@ const Rankach: React.FC = () => {
     try {
       const ethersProvider = new BrowserProvider(walletProvider);
       const signer = await ethersProvider.getSigner();
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+      const contract = new Contract(contractAddress, contractAbi, signer);
 
       if (ADMIN_ADDRESSES.includes(address?.toLowerCase() || "")) {
         console.log("Admin detected - Skipping maxPayouts API call");
@@ -956,11 +968,7 @@ const Rankach: React.FC = () => {
     try {
       const ethersProvider = new BrowserProvider(walletProvider);
       const signer = await ethersProvider.getSigner();
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+      const contract = new Contract(contractAddress, contractAbi, signer);
 
       const rankIndex = getRankIndex(userDetails.currentRank);
       const payouts = await contract.getRemainingPayouts(address, rankIndex);
@@ -993,15 +1001,9 @@ const Rankach: React.FC = () => {
           return;
         }
 
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const currentmonth = await contract.currentMonthIndex();
         setcurrentmonth(currentmonth.toString());
@@ -1022,19 +1024,12 @@ const Rankach: React.FC = () => {
           return;
         }
 
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const ttlRab = await contract.getTtlRabDstrbtd();
         setTotalRab(parseFloat(formatUnits(ttlRab, 18)).toFixed(2));
-
 
         const mnthlyRab = await contract.getMnthlyRABPoolBalance();
         setMonthlyRab(parseFloat(formatUnits(mnthlyRab, 18)).toFixed(2));
@@ -1065,19 +1060,21 @@ const Rankach: React.FC = () => {
       const lastMonthIndex = await contract.currentMonthIndex();
       const lastMon = Number(lastMonthIndex);
 
-      console.log("the lastmonindex",Number(lastMonthIndex));
+      console.log("the lastmonindex", Number(lastMonthIndex));
 
       const { totalAmount } = await contract.monthlyRabPools(lastMon);
 
       const monthly = await contract.getMnthlyRABPoolBalance();
 
-      const formattedTotalAmount = parseFloat(formatUnits(totalAmount, 18)).toFixed(
+      const formattedTotalAmount = parseFloat(
+        formatUnits(totalAmount, 18)
+      ).toFixed(2);
+
+      const formattedTimestamp = parseFloat(formatUnits(monthly, 18)).toFixed(
         2
       );
 
-     const formattedTimestamp = parseFloat(formatUnits(monthly, 18)).toFixed(2);
-
-      console.log("the format is",formattedTotalAmount);
+      console.log("the format is", formattedTotalAmount);
 
       setMonthlyRabindex(formattedTotalAmount);
       setMonthlyRab(formattedTimestamp);
@@ -1102,11 +1099,7 @@ const Rankach: React.FC = () => {
       }
       const provider = new BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+      const contract = new Contract(contractAddress, contractAbi, signer);
 
       const startTimestamp = await contract.rabStartTimestamp();
       return Number(startTimestamp);
@@ -1126,36 +1119,30 @@ const Rankach: React.FC = () => {
       try {
         const provider = new BrowserProvider(walletProvider);
         const signer = await provider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         let start, end;
 
-        console.log("the curr1 is",currentMonthIndex);
+        console.log("the curr1 is", currentMonthIndex);
 
         if (currentMonthIndex === 0) {
           start = await contract.rabStartTimestamp();
-          console.log("the nefore start is",start)
+          console.log("the nefore start is", start);
           start = Number(start);
 
-          console.log("the start is",start);
+          console.log("the start is", start);
         } else {
-
-          console.log("the curr22 is",currentMonthIndex);
+          console.log("the curr22 is", currentMonthIndex);
           const monthlyData = await contract.monthlyRabPools(
             currentMonthIndex - 2
           );
 
-          console.log("the mon is",monthlyData);
+          console.log("the mon is", monthlyData);
           start = Number(monthlyData.distributionTimestamp);
-          console.log("the newmon is start is",start);
+          console.log("the newmon is start is", start);
         }
 
-
-        console.log("the start is",start);
+        console.log("the start is", start);
         end = start + 60 * 60;
 
         console.log("Calculated new_Start Time:", start);
@@ -1172,8 +1159,6 @@ const Rankach: React.FC = () => {
     fetchTimestamps();
   }, [currentMonthIndex, walletProvider]);
 
-
-
   useEffect(() => {
     const fetchTimestamps = async () => {
       const start = await fetchRabStartTimestamp();
@@ -1181,7 +1166,7 @@ const Rankach: React.FC = () => {
         const totalDurationSeconds = 60 * 60;
         const end = start + totalDurationSeconds;
 
-        console.log("the end is",end);
+        console.log("the end is", end);
 
         setStartTime(start);
         setEndTime(end);
@@ -1205,9 +1190,9 @@ const Rankach: React.FC = () => {
       const currentTime = Math.floor(Date.now() / 1000); // Current timestamp in seconds
       const remaining = Math.max(endTime - currentTime, 0);
 
-       console.log("the end time is",endTime);
-       console.log("the current time is",currentTime);
-      console.log("the rem is",remaining);
+      console.log("the end time is", endTime);
+      console.log("the current time is", currentTime);
+      console.log("the rem is", remaining);
 
       if (remaining <= 1 && !isExpired) {
         setIsExpired(true);
@@ -1278,10 +1263,8 @@ const Rankach: React.FC = () => {
   //       console.error("Failed to copy: ", err);
   //     });
 
-      
   // };
 
- 
   const getDisplayTime = (currentMonthIndex: number) => {
     // Calculate years and remaining months
     const years = Math.floor(currentMonthIndex / 12);
@@ -1306,7 +1289,6 @@ const Rankach: React.FC = () => {
   };
   // Component render
   return (
-    
     <div className="min-h-screen w-full py-12 px-4 sm:px-3 lg:px-8">
       <motion.div
         initial={{ opacity: 0 }}
@@ -1316,19 +1298,19 @@ const Rankach: React.FC = () => {
       >
         {/* Page Header */}
         <header className="text-center mb-12">
-      <motion.h1
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="text-3xl md:text-5xl lg:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-500 mb-4"
-      >
-        Rank Achievement Bonus
-      </motion.h1>
-      <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-        Comprehensive overview of your rank achievements, rewards, and
-        progress
-      </p>
-    </header>
+          <motion.h1
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl md:text-5xl lg:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-500 mb-4"
+          >
+            Rank Achievement Bonus
+          </motion.h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            Comprehensive overview of your rank achievements, rewards, and
+            progress
+          </p>
+        </header>
 
         {/* Stat Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12 sm:text-xl">
@@ -1583,11 +1565,11 @@ const RankPayoutsTable: React.FC<RankPayoutsTableProps> = ({
     if (!value || value === "Loading...") return "Loading...";
     if (value === "Error") return "Error";
     if (value === "Not Available") return "Not Available";
-    
+
     // Check if the value is extremely large (threshold can be adjusted)
     const numValue = parseInt(value);
     if (numValue > 100) return "MAX";
-    
+
     return value;
   };
 
@@ -1712,7 +1694,9 @@ const RankPayoutsTable: React.FC<RankPayoutsTableProps> = ({
                         {isAdmin
                           ? "MAX"
                           : isAvailable
-                          ? formatPayoutValue(remainingPayouts[rank.name] || "Loading...")
+                          ? formatPayoutValue(
+                              remainingPayouts[rank.name] || "Loading..."
+                            )
                           : "Not Available"}
                       </span>
                     </td>
@@ -1729,7 +1713,9 @@ const RankPayoutsTable: React.FC<RankPayoutsTableProps> = ({
                         {isAdmin
                           ? "MAX"
                           : isAvailable
-                          ? formatPayoutValue(maxPayouts[rank.name] || "Loading...")
+                          ? formatPayoutValue(
+                              maxPayouts[rank.name] || "Loading..."
+                            )
                           : "Not Available"}
                       </span>
                     </td>
@@ -1764,7 +1750,7 @@ interface RankDistributionChartProps {
 
 const RankDistributionChart: React.FC<RankDistributionChartProps> = ({
   rankData,
-  loadingGraph
+  loadingGraph,
 }) => {
   if (!rankData || rankData.length === 0) {
     return (
@@ -1810,17 +1796,19 @@ const RankDistributionChart: React.FC<RankDistributionChartProps> = ({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2 }}
+        <div
           className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl p-4 shadow-lg"
+          style={{
+            pointerEvents: "none",
+            touchAction: "none",
+            userSelect: "none",
+          }}
         >
           <p className="font-medium text-gray-900 dark:text-white">{label}</p>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Count: {payload[0].value}
           </p>
-        </motion.div>
+        </div>
       );
     }
     return null;
@@ -1848,94 +1836,92 @@ const RankDistributionChart: React.FC<RankDistributionChartProps> = ({
         </motion.div>
 
         {/* Chart Section */}
-        
-        <div className="h-72 sm:h-80 md:h-96 w-full overflow-x-auto">
-  {loadingGraph ? (
-    <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-      <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />
-    </div>
-  ) : (
-    <div className="w-[300px] min-w-full h-full ">
 
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart
-        data={formattedData}
-        margin={{ 
-          top: 20, 
-          right: 10, 
-          left: 10, 
-          bottom: 50 
-        }}
-      >
-        <CartesianGrid
-          strokeDasharray="3 3"
-          vertical={false}
-          className="stroke-gray-200 dark:stroke-gray-700"
-        />
-        <XAxis
-          dataKey="rank"
-          tickLine={false}
-          axisLine={false}
-          angle={-45}
-          textAnchor="end"
-          height={60}
-          interval={0}
-          tick={{
-            fontSize: 10,
-            fill: "currentColor",
-            className: "text-gray-600 dark:text-gray-400",
-          }}
-        />
-        <YAxis
-          tickLine={false}
-          tickMargin={5}
-          axisLine={false}
-          tick={{
-            fontSize: 10,
-            fill: "currentColor",
-            className: "text-gray-600 dark:text-gray-400",
-          }}
-          tickFormatter={formatYAxis}
-          domain={[
-            0,
-            (dataMax: number) => Math.max(1, Math.ceil(dataMax)),
-          ]}
-          allowDecimals={false}
-        />
-        <Tooltip
-          content={<CustomTooltip />}
-          cursor={{ fill: "currentColor", opacity: 0.1 }}
-        />
-        <Bar
-          dataKey="count"
-          radius={[4, 4, 0, 0]}
-          animationBegin={0}
-          animationDuration={1500}
-          animationEasing="ease-out"
-        >
-          {formattedData.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={entry.color}
-              opacity={0.8}
-              className="hover:opacity-100 transition-opacity duration-300"
-            >
-              <motion.animate
-                attributeName="height"
-                from="0"
-                to={entry.count}
-                dur="1s"
-                fill="freeze"
-              />
-            </Cell>
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-    </div>
-   
-  )}
-</div>
+        <div className="h-72 sm:h-80 md:h-96 w-full overflow-x-auto">
+          {loadingGraph ? (
+            <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />
+            </div>
+          ) : (
+            <div className="w-[300px] min-w-full h-full ">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={formattedData}
+                  margin={{
+                    top: 20,
+                    right: 10,
+                    left: 10,
+                    bottom: 50,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    className="stroke-gray-200 dark:stroke-gray-700"
+                  />
+                  <XAxis
+                    dataKey="rank"
+                    tickLine={false}
+                    axisLine={false}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    interval={0}
+                    tick={{
+                      fontSize: 10,
+                      fill: "currentColor",
+                      className: "text-gray-600 dark:text-gray-400",
+                    }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    tickMargin={5}
+                    axisLine={false}
+                    tick={{
+                      fontSize: 10,
+                      fill: "currentColor",
+                      className: "text-gray-600 dark:text-gray-400",
+                    }}
+                    tickFormatter={formatYAxis}
+                    domain={[
+                      0,
+                      (dataMax: number) => Math.max(1, Math.ceil(dataMax)),
+                    ]}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    cursor={{ fill: "currentColor", opacity: 0.1 }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    radius={[4, 4, 0, 0]}
+                    animationBegin={0}
+                    animationDuration={1500}
+                    animationEasing="ease-out"
+                  >
+                    {formattedData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        opacity={0.8}
+                        className="hover:opacity-100 transition-opacity duration-300"
+                      >
+                        <motion.animate
+                          attributeName="height"
+                          from="0"
+                          to={entry.count}
+                          dur="1s"
+                          fill="freeze"
+                        />
+                      </Cell>
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
 
         {/* Footer Section */}
         <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
@@ -2167,7 +2153,6 @@ export const EligibleAddressesSection: React.FC<EligibleAddressesProps> = ({
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
 
   const handleCopy = async (address: string, key: string) => {
-
     console.log(currentMonthIndex);
     try {
       await navigator.clipboard.writeText(address);
