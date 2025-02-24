@@ -245,7 +245,7 @@ const RegisterRank = () => {
         contractAddress
       );
  
-      if (currentAllowance.eq(0)) {
+      if (BigInt(currentAllowance) === BigInt(0)) {
         const maxUint256 = ethers.MaxUint256;
         const approveTx = await tokenContract.approve(contractAddress, maxUint256);
         await approveTx.wait();
