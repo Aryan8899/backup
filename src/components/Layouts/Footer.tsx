@@ -1,7 +1,7 @@
 import React from "react";
 import { FaFacebookF, FaXTwitter, FaInstagram } from "react-icons/fa6";
 import { Mail, Phone, MapPin, LucideIcon } from "lucide-react";
-import robotImage from "../assets/robot.png";
+import { robotImage } from "../../assets/index";
 import { motion } from "framer-motion";
 
 interface NavigationItem {

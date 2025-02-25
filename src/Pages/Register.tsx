@@ -7,28 +7,30 @@ import {
   useAppKitAccount,
 } from "@reown/appkit/react";
 import axios from "axios";
-import { usePriceData } from "../components/PriceContext";
-import { useDarkMode } from "../components/DarkModeContext";
+import { usePriceData } from "../context/PriceContext";
+import { useDarkMode } from "../context/DarkModeContext";
 import { motion } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, useLocation } from "react-router-dom";
-import { contractAbi } from "./Props/contractAbi";
-import { contractAddress } from "./Props/contractAddress";
-import tokenAbi from "./token/tokenAbi";
-import tokenAdd from "./token/tokenAdd";
+import { contractAbi } from "../contracts/Props/contractAbi";
+import { contractAddress } from "../contracts/Props/contractAddress";
+import tokenAbi from "../contracts/token/tokenAbi";
+import tokenAdd from "../contracts/token/tokenAdd";
 
 // Import rank images
-import rank0 from "../assets/rank0.png";
-import rank1 from "../assets/rank1.png";
-import rank2 from "../assets/rank2.png";
-import rank3 from "../assets/rank3.png";
-import rank4 from "../assets/rank4.png";
-import rank5 from "../assets/rank5.png";
-import rank6 from "../assets/rank6.png";
-import rank7 from "../assets/rank7.png";
-import rank8 from "../assets/rank8.png";
+import {
+  rank0,
+  rank1,
+  rank2,
+  rank3,
+  rank4,
+  rank5,
+  rank6,
+  rank7,
+  rank8,
+} from "../assets/index";
 
 interface Rank {
   id: number;
@@ -130,7 +132,7 @@ const RegisterRank = () => {
       navigate("/admin/dashboard");
       return; // Exit early for admin addresses
     }
-  
+
     const checkIfUserIsRegistered = async () => {
       if (contract && address) {
         try {
@@ -143,7 +145,7 @@ const RegisterRank = () => {
         }
       }
     };
-  
+
     checkIfUserIsRegistered();
   }, [contract, address, navigate]);
 
@@ -199,7 +201,9 @@ const RegisterRank = () => {
 
   const handleRegistration = async () => {
     if (!contract || !referralAddress || !walletProvider) {
-      toast.error("Please connect wallet, select a rank, and enter referral address.");
+      toast.error(
+        "Please connect wallet, select a rank, and enter referral address."
+      );
       return;
     }
 
@@ -207,16 +211,16 @@ const RegisterRank = () => {
       navigate("/admin/dashboard");
       return;
     }
- 
+
     try {
       setIsProcessing(true);
- 
+
       // First check if user exists in database
       try {
         const checkUserResponse = await axios.get(
           `https://server.cryptomx.site/api/users/check/${address}`
         );
-       
+
         // If user exists in database but not in contract, delete from database
         if (checkUserResponse.data.exists) {
           const isRegisteredOnChain = await contract.users(address);
@@ -235,26 +239,32 @@ const RegisterRank = () => {
         console.error("Error checking user status:", error);
         // Continue with registration if check fails
       }
- 
+
       const provider = new BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
       const tokenContract = new Contract(tokenAdd, tokenAbi, signer);
- 
+
       const currentAllowance = await tokenContract.allowance(
         address,
         contractAddress
       );
- 
+
       if (BigInt(currentAllowance) === BigInt(0)) {
         const maxUint256 = ethers.MaxUint256;
-        const approveTx = await tokenContract.approve(contractAddress, maxUint256);
+        const approveTx = await tokenContract.approve(
+          contractAddress,
+          maxUint256
+        );
         await approveTx.wait();
       }
- 
+
       // Process contract registration
-      const tx = await contract.registerAndPurchaseRank(referralAddress, selectedRank);
+      const tx = await contract.registerAndPurchaseRank(
+        referralAddress,
+        selectedRank
+      );
       await tx.wait();
- 
+
       // Only after successful contract registration, register in database
       try {
         const response = await axios.post(
@@ -263,14 +273,16 @@ const RegisterRank = () => {
             address: address,
           }
         );
- 
+
         console.log("User registered:", response.data);
         toast.success("Registration completed successfully!");
         navigate("/dashboard");
       } catch (error) {
         console.error("Error during database registration:", error);
         // Even if database registration fails, contract registration succeeded
-        toast.warning("Contract registration successful but database update failed. Please contact support.");
+        toast.warning(
+          "Contract registration successful but database update failed. Please contact support."
+        );
         navigate("/dashboard");
       }
     } catch (error) {
@@ -378,20 +390,21 @@ const RegisterRank = () => {
                     </span>
                   </div>
                   <span
-  className={`
+                    className={`
     font-mono text-sm tracking-wider break-words 
-    ${darkMode 
-      ? "text-white" 
-      : "text-gray-800 font-semibold bg-gray-200 px-2 py-1 rounded-md"}
+    ${
+      darkMode
+        ? "text-white"
+        : "text-gray-800 font-semibold bg-gray-200 px-2 py-1 rounded-md"
+    }
   `}
->
-  {address
-    ? window.innerWidth < 640 
-      ? `${address.slice(0, 3)}...${address.slice(-3)}` // Shorten for small screens
-      : address
-    : "N/A"}
-</span>
-
+                  >
+                    {address
+                      ? window.innerWidth < 640
+                        ? `${address.slice(0, 3)}...${address.slice(-3)}` // Shorten for small screens
+                        : address
+                      : "N/A"}
+                  </span>
                 </div>
               </div>
 

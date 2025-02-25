@@ -1,28 +1,30 @@
-import { useState, useEffect,useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BrowserProvider, Contract } from "ethers";
-import { contractAbi } from "./Props/contractAbi";
-import { contractAddress } from "./Props/contractAddress";
-import { usePriceData } from "../components/PriceContext";
+import { contractAbi } from "../contracts/Props/contractAbi";
+import { contractAddress } from "../contracts/Props/contractAddress";
+import { usePriceData } from "../context/PriceContext";
 import {
   Provider,
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
 import { useNavigate } from "react-router-dom";
-import FeaturesSection from "../components/FeaturesSection";
-import Light from "../components/Light";
-import { useDarkMode } from "../components/DarkModeContext";
+import FeaturesSection from "./FeaturesSection";
+import Light from "./Light";
+import { useDarkMode } from "../context/DarkModeContext";
 
 // Import rank images
-import rank0 from "../assets/rank0.png";
-import rank1 from "../assets/rank1.png";
-import rank2 from "../assets/rank2.png";
-import rank3 from "../assets/rank3.png";
-import rank4 from "../assets/rank4.png";
-import rank5 from "../assets/rank5.png";
-import rank6 from "../assets/rank6.png";
-import rank7 from "../assets/rank7.png";
-import rank8 from "../assets/rank8.png";
+import {
+  rank0,
+  rank1,
+  rank2,
+  rank3,
+  rank4,
+  rank5,
+  rank6,
+  rank7,
+  rank8,
+} from "../assets/index";
 
 const ranks = [
   { id: 0, name: "STAR", image: rank0 },
@@ -49,13 +51,13 @@ const RankDetailsPage = () => {
   const { darkMode } = useDarkMode();
   const navigate = useNavigate();
   const { address, isConnected } = useAppKitAccount();
-  
+
   const [isProviderReady, setIsProviderReady] = useState(false);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [rankDetails, setRankDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { priceData } = usePriceData();
 
   // Debug logging for dark mode
@@ -142,18 +144,16 @@ const RankDetailsPage = () => {
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
-   
     let isMounted = true;
 
-  
-  const fetchUserAndRankDetails = async () => {
-    if (!isMounted) return;
-    if (!walletProvider || !isConnected) {
-      if (isMounted) setLoading(false);
-      return;
-    }
-    
-    if (isMounted) setLoading(true);
+    const fetchUserAndRankDetails = async () => {
+      if (!isMounted) return;
+      if (!walletProvider || !isConnected) {
+        if (isMounted) setLoading(false);
+        return;
+      }
+
+      if (isMounted) setLoading(true);
 
       try {
         console.log("Fetching user and rank details...");
@@ -164,7 +164,7 @@ const RankDetailsPage = () => {
         // Fetch user rank
         const userAddress = await signer.getAddress();
         console.log("Fetching data for address:", userAddress);
-        
+
         const userData = await contract.users(userAddress);
         console.log("Raw user data:", userData);
 
@@ -188,23 +188,29 @@ const RankDetailsPage = () => {
             const rankDetail = await contract.rankDetails(i);
             const Price = parseFloat(rankDetail.price.toString());
             const addedFeePrice = Price + Price * 0.03;
-            const rankPriceInITC = addedFeePrice * parseFloat(priceData?.TUSDTperTITC || "0.0");
-
+            const rankPriceInITC =
+              addedFeePrice * parseFloat(priceData?.TUSDTperTITC || "0.0");
 
             console.log("Price data available:", !!priceData);
-console.log("TUSDTperTITC value:", priceData?.TUSDTperTITC);
-//const Price = parseFloat(rankDetail.price.toString());
-console.log(`DEBUG: Raw price for ${ranks[i].name}:`, rankDetail.price.toString());
-console.log(`DEBUG: Parsed price:`, Price);
+            console.log("TUSDTperTITC value:", priceData?.TUSDTperTITC);
+            //const Price = parseFloat(rankDetail.price.toString());
+            console.log(
+              `DEBUG: Raw price for ${ranks[i].name}:`,
+              rankDetail.price.toString()
+            );
+            console.log(`DEBUG: Parsed price:`, Price);
 
             console.log(`Rank ${ranks[i].name} details:`, {
               price: Price,
               addedFeePrice,
-              rankPriceInITC
+              rankPriceInITC,
             });
 
             // Normalize rank key to match the mapping keys
-            const rankKey = ranks[i].name.replace(/[^A-Z_]/g, "") as keyof typeof rabPercentageMapping;
+            const rankKey = ranks[i].name.replace(
+              /[^A-Z_]/g,
+              ""
+            ) as keyof typeof rabPercentageMapping;
             const rabShare = rabPercentageMapping[rankKey] || "-";
 
             details.push({
@@ -225,18 +231,18 @@ console.log(`DEBUG: Parsed price:`, Price);
             console.error(`Error fetching rank ${i} details:`, error);
           }
         }
-        
+
         console.log("Setting rank details:", details);
         setRankDetails(details);
       } catch (error) {
-        if (isMounted) setError("Failed to load rank data. Please try again later.");
+        if (isMounted)
+          setError("Failed to load rank data. Please try again later.");
       } finally {
         if (isMounted) setLoading(false);
         console.log("Loading state set to false");
       }
 
       // console.log("the laoding is before",loading);
-
     };
 
     if (!hasFetchedRef.current) {
@@ -246,7 +252,6 @@ console.log(`DEBUG: Parsed price:`, Price);
     return () => {
       isMounted = false; // Proper cleanup
     };
-
   }, [walletProvider, isConnected, priceData]);
 
   // Log when user rank updates
@@ -259,7 +264,7 @@ console.log(`DEBUG: Parsed price:`, Price);
       <div className="fixed inset-0 -z-10">
         {darkMode ? <FeaturesSection /> : <Light />}
       </div>
-      
+
       {!isConnected ? (
         navigate("/")
       ) : (
@@ -274,9 +279,6 @@ console.log(`DEBUG: Parsed price:`, Price);
                 View detailed information about each rank and their benefits
               </p>
             </div>
-
-     
-
 
             {/* Loading State */}
             {loading && (
@@ -323,8 +325,16 @@ console.log(`DEBUG: Parsed price:`, Price);
                           className={`
                             border-b border-gray-200 dark:border-gray-700
                             transition-colors duration-200
-                            ${userRank === rank.id ? "bg-emerald-50 dark:bg-emerald-900/20" : ""}
-                            ${userRank !== null && rank.id < userRank ? "bg-indigo-50 dark:bg-indigo-900/20" : ""}
+                            ${
+                              userRank === rank.id
+                                ? "bg-emerald-50 dark:bg-emerald-900/20"
+                                : ""
+                            }
+                            ${
+                              userRank !== null && rank.id < userRank
+                                ? "bg-indigo-50 dark:bg-indigo-900/20"
+                                : ""
+                            }
                             hover:bg-gray-50 dark:hover:bg-gray-700/50
                           `}
                         >

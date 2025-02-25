@@ -1,68 +1,65 @@
-import { useEffect, useState, useRef } from "react";
-import { useDarkMode } from "../components/DarkModeContext";
-//import multiavatar from "@multiavatar/multiavatar";
-import { usePriceData } from "../components/PriceContext.tsx";
+declare function multiavatar(text: string): string;
 
+import { useEffect, useState, useRef } from "react";
+import { useDarkMode } from "../context/DarkModeContext.tsx";
+import { BrowserProvider, Contract, formatUnits } from "ethers";
+//import multiavatar from "@multiavatar/multiavatar";
+import { ZeroAddress, isAddress } from "ethers";
+//import { usePriceData } from "../components/PriceContext.tsx";
+import rank4 from "../assets/rank4.png";
+import rank5 from "../assets/rank5.png";
+import rank6 from "../assets/rank6.png";
+import rank7 from "../assets/rank7.png";
+import rank8 from "../assets/rank8.png";
 import {
   Provider,
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
-
-import { BrowserProvider, Contract, formatUnits } from "ethers";
 import axios from "axios"; // Import axios for making HTTP requests
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 //import { BigNumber } from "ethers";
-import { Loader2 } from "lucide-react";
+import { Loader2, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
-import contractAbi from "./Props/contractAbi.ts"; // Adjust path as needed
-import contractAddress from "./Props/contractAddress.ts"; // Adjust path as needed
+import contractAbi from "../contracts/Props/contractAbi.ts"; // Adjust path as needed
+import contractAddress from "../contracts/Props/contractAddress.ts"; // Adjust path as needed
 // At the top of your component, modify the imports and provider handling
 //import { useWeb3ModalProvider } from "@web3modal/ethers5/react"; // Add this import if not present
 import { Bar } from "react-chartjs-2";
+
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  CheckCheck,
   Copy,
+  Wallet,
   User,
   Award,
   Trophy,
-  Info,
   TrendingUp,
   Gift,
-  Calendar,
+  ChevronUp,
   DollarSign,
-  Clock,
-  Link,
-  Activity,
   ChevronDown,
-  Share2,
-  Sparkles,
-  ArrowUpCircle,
+  Check,
 } from "lucide-react";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use"; // Helps adjust confetti to screen size
 
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { cn } from "../../components/lib/utils";
+//import * as Tooltip from "@radix-ui/react-tooltip";
+import { cn } from "../../components/lib/utils.ts";
 import { Camera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../components/components/ui/dialog";
-import { Button } from "../../components/components/ui/button";
-import { Input } from "../../components/components/ui/input";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../components/components/ui/card";
+} from "../../components/components/ui/dialog.tsx";
+import { Button } from "../../components/components/ui/button.tsx";
+import { Input } from "../../components/components/ui/input.tsx";
+import { Card } from "../../components/components/ui/card.tsx";
 
-import { motion } from "framer-motion";
+//import { motion } from "framer-motion";
 
 import {
   Chart as ChartJS,
@@ -72,8 +69,6 @@ import {
   Title,
   Legend,
 } from "chart.js";
-
-// Adjust the path as needed
 
 // Register chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Legend);
@@ -120,14 +115,15 @@ interface UserData {
 // }
 
 const Dashboard = () => {
+  const [totalRab, setTotalRab] = useState<string>("Loading...");
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [rankMessage, setRankMessage] = useState("");
   const [showMarquee, setShowMarquee] = useState(false);
   const [isRankExpired, setIsRankExpired] = useState<"loading" | boolean>(
     "loading"
   );
-  const [isGraphLoading, setIsGraphLoading] = useState(true);
-  const { priceData } = usePriceData();
+
+  // const { priceData } = usePriceData();
   const [avatarSVG, setAvatarSVG] = useState<string>("");
   const { darkMode } = useDarkMode();
   const [backgroundKey, setBackgroundKey] = useState(
@@ -145,7 +141,7 @@ const Dashboard = () => {
     useState<string>("Loading...");
   const [totalInvestment, setTotalInvestment] = useState("0");
   const navigate = useNavigate();
-  //const [connectedAddress, setConnectedAddress] = useState<string>("");
+  const [connectedAddress, setConnectedAddress] = useState<string>("");
   const [rankGraphData, setRankGraphData] = useState<GraphData>({
     labels: [],
     datasets: [],
@@ -157,39 +153,31 @@ const Dashboard = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  console.log(setAvatarSVG);
-
-  useEffect(() => {
-    //console.log("Dark Mode Changed, Re-rendering Background");
-    setBackgroundKey(darkMode ? "dark" : "light");
-
-    console.log(avatarUrl);
-    if (userData?.avatar) {
-      setAvatarUrl(userData.avatar);
-    }
-
-    console.log(avatarUrl);
-    if (userData?.avatar) {
-      setAvatarUrl(userData.avatar);
-    }
-
-    const timeout = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(timeout);
-  }, [darkMode, userData?.avatar]);
-
   if (
     !avatarSVG &&
-    !backgroundKey &&
+    !setAvatarSVG &&
     !totalInvestment &&
-    !qrCodeUrl &&
-    !count
+    !totalPendingAmount &&
+    !setConnectedAddress
   ) {
-    //console.log("update!!");
+    console.log("update!!");
   }
 
-  // useEffect(() => {
+  useEffect(() => {
+    console.log("Dark Mode Changed, Re-rendering Background");
+    setBackgroundKey(darkMode ? "dark" : "light");
+  }, [darkMode]);
 
-  // }, []);
+  if (!isRankExpired && !backgroundKey && !rankDetails && !qrCodeUrl) {
+    console.log("update!!");
+  }
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const [monthlyRab, setMonthlyRab] = useState<string>("Loading...");
 
   useEffect(() => {
     //console.log(avatarSVG,backgroundKey,totalInvestment,qrCodeUrl)
@@ -269,167 +257,95 @@ const Dashboard = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // Add this useEffect to handle initial avatar loading
-  // useEffect(() => {
-
-  // }, [userData?.avatar]);
+  useEffect(() => {
+    console.log(avatarUrl);
+    if (userData?.avatar) {
+      setAvatarUrl(userData.avatar);
+    }
+  }, [userData?.avatar]);
 
   // Modify the handleImageUpload function
-  // Add these utility functions at the top of your file
-  // Add these utility functions at the top of your file
-
-  // Safer memory cleanup function
-  const clearMemory = () => {
-    if (window.URL) {
-      window.URL.revokeObjectURL("");
-    }
-  };
-
-  // Optimized image compression
-  const compressImage = async (file: File): Promise<File> => {
-    let objectUrl: string | null = null;
-
-    try {
-      return await new Promise((resolve, reject) => {
-        const img = new Image();
-
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const MAX_SIZE = 500;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height = Math.round((height * MAX_SIZE) / width);
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width = Math.round((width * MAX_SIZE) / height);
-              height = MAX_SIZE;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                resolve(
-                  new File([blob], file.name, {
-                    type: "image/jpeg",
-                    lastModified: Date.now(),
-                  })
-                );
-              } else {
-                reject(new Error("Compression failed"));
-              }
-              // Clean up canvas
-              canvas.width = 0;
-              canvas.height = 0;
-            },
-            "image/jpeg",
-            0.5
-          );
-        };
-
-        img.onerror = () => {
-          reject(new Error("Failed to load image"));
-        };
-
-        objectUrl = URL.createObjectURL(file);
-        img.src = objectUrl;
-      });
-    } finally {
-      // Clean up object URL
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
-    }
-  };
-
-  // Modified image upload handler
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (!file || !address) {
-      toast.error("Please select a file and ensure wallet is connected.");
+    if (!file) return;
+
+    // Preview Image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    if (!address) {
+      toast.error("Wallet address not found. Cannot upload the image.");
       return;
     }
 
-    // Clear memory but don't touch DOM
-    clearMemory();
-
-    // Reset states
-    setPreviewImage(null);
-    setAvatarUrl(null);
-    setUserData((prev) => (prev ? { ...prev, avatar: undefined } : null));
-
     try {
       setIsUploading(true);
-
-      // Basic validation
-      if (!file.type.startsWith("image/")) {
-        throw new Error("Please upload an image file");
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error("File size should be less than 5MB");
-      }
-
-      // Compress and upload
-      const compressedFile = await compressImage(file);
       const formData = new FormData();
-      formData.append("avatar", compressedFile);
+      formData.append("avatar", file);
       formData.append("address", address);
+
+      //console.log('Uploading avatar for address:', address);
 
       const response = await axios.put(
         "https://server.cryptomx.site/api/users/update-avatar",
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
-          onUploadProgress: (progressEvent) => {
-            const percent = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total ?? 100)
-            );
-            console.log(`Upload: ${percent}%`);
+          headers: {
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      if (response.data?.data?.avatar) {
-        const newUrl = `${response.data.data.avatar}?v=${Date.now()}`;
-        // Update states in a single batch
-        setUserData((prev) => (prev ? { ...prev, avatar: newUrl } : null));
-        setAvatarUrl(newUrl);
-        toast.success("Upload successful!");
+      // Check if the response has the expected structure
+      if (response.data && response.data.data) {
+        const newAvatarUrl = response.data.data.avatar;
+        if (newAvatarUrl) {
+          // Update both states
+          setUserData((prev) => ({
+            ...prev!,
+            avatar: newAvatarUrl,
+          }));
+          setAvatarUrl(newAvatarUrl);
+          setPreviewImage(null);
+
+          // Fetch updated user data
+          const userResponse = await axios.get(
+            `https://server.cryptomx.site/api/users/${address}`
+          );
+
+          if (userResponse.data && userResponse.data.data) {
+            setUserData(userResponse.data.data);
+          }
+
+          toast.success("Avatar updated successfully!");
+        } else {
+          throw new Error("Avatar URL not found in response");
+        }
+      } else {
+        throw new Error("Invalid response structure");
       }
     } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Upload failed. Please try again."
-      );
+      console.error("Upload error details:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Response status:", error.response?.status);
+      }
+      // Only show error toast if the upload actually failed
+      if (
+        error instanceof Error &&
+        !error.message.includes("Avatar URL not found")
+      ) {
+        toast.error("Failed to upload image.");
+      }
     } finally {
       setIsUploading(false);
-      if (event.target) {
-        event.target.value = "";
-      }
-      clearMemory();
     }
   };
-
-  // Add cleanup effect for component unmount
-  useEffect(() => {
-    return () => {
-      clearMemory();
-    };
-  }, []);
 
   interface RankTotals {
     [key: string]: string; // This allows string indexing
@@ -481,12 +397,51 @@ const Dashboard = () => {
   const [inviteLink, setInviteLink] = useState(
     `https://cryptomx.site/#/register?referral=undefined`
   );
-  const [isCopied, setIsCopied] = useState(false);
+  //const [isCopied, setIsCopied] = useState(false);
 
-  if (!error && !withdrawalBonus && !withdrawalRab && !setWithdrawalRab) {
+  if (
+    !withdrawalRab &&
+    !withdrawalLevel &&
+    !totalLevel &&
+    !totalRAB &&
+    !isLoading &&
+    totalBonus &&
+    withdrawalRAB &&
+    inviteLink
+  ) {
     console.log("update!!");
   }
-  //console.log(setWithdrawalRab);
+
+  useEffect(() => {
+    const fetchContractData = async () => {
+      try {
+        if (!walletProvider) {
+          console.error("Provider is not available");
+          return;
+        }
+
+        const ethersProvider = new BrowserProvider(walletProvider);
+        const signer = await ethersProvider.getSigner();
+        const contract = new Contract(contractAddress, contractAbi, signer);
+
+        const ttlRab = await contract.getTtlRabDstrbtd();
+        setTotalRab(parseFloat(formatUnits(ttlRab, 18)).toFixed(2));
+
+        const mnthlyRab = await contract.getMnthlyRABPoolBalance();
+        setMonthlyRab(parseFloat(formatUnits(mnthlyRab, 18)).toFixed(2));
+      } catch (error) {
+        console.error("Error fetching contract data:", error);
+        setTotalRab("Error");
+        setMonthlyRab("Error");
+      }
+    };
+
+    fetchContractData();
+  }, [walletProvider]);
+
+  if (!error && !withdrawalBonus) {
+    console.log("update!!");
+  }
 
   // useEffect(() => {
   //   const fetchAddress = async () => {
@@ -510,122 +465,70 @@ const Dashboard = () => {
 
   const fetchRankDetails = async () => {
     try {
-      // Early return if requirements aren't met
-      if (
-        !isConnected ||
-        !walletProvider ||
-        !isProviderReady ||
-        !contractAddress
-      ) {
-        console.log("Prerequisites not met for contract initialization");
-        return;
-      }
-
-      // Validate contract address
-      if (!ethers.isAddress(contractAddress)) {
-        throw new Error("Invalid contract address");
-      }
+      if (!isConnected || !walletProvider || !isProviderReady) return;
 
       const provider = new BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
-
-      // Validate connected address
-      const connectedAddress = await signer.getAddress();
-      if (!ethers.isAddress(connectedAddress)) {
-        throw new Error("Invalid connected address");
-      }
-
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
-
+      const contract = new Contract(contractAddress, contractAbi, signer);
       const details = [];
       let pendingAmountTotal = BigInt("0");
-
-      // Fetch rank LTG details
       for (let i = 0; i <= 8; i++) {
-        try {
-          const response = await contract.getRankLTG(connectedAddress, i);
+        const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
 
-          if (i <= 7) {
-            pendingAmountTotal = pendingAmountTotal + response.pendingAmount;
-          }
-
-          details.push({
-            id: i,
-            name: ranks[i]?.name || `Rank ${i}`,
-            count: response.count.toString(),
-            pendingAmount: formatUnits(response.pendingAmount, 18),
-            totalDistributedAmount: formatUnits(response.ttlDstrbtdAmount, 18),
-          });
-        } catch (error) {
-          console.error(`Error fetching LTG for rank ${i}:`, error);
+        // Add the pending amount to the total
+        if (i <= 7) {
+          pendingAmountTotal = pendingAmountTotal + response.pendingAmount;
         }
+
+        details.push({
+          id: i,
+          name: ranks[i].name,
+          count: response.count.toString(),
+          pendingAmount: formatUnits(response.pendingAmount, 18),
+          totalDistributedAmount: formatUnits(response.ttlDstrbtdAmount, 18),
+        });
       }
 
-      // Fetch rank details and calculate upgrade prices
       let currentRankCumulativePrice = 0;
-      const rankDetailsPromises = ranks.map(async (rank, i) => {
+
+      for (let i = 0; i < ranks.length; i++) {
         try {
           const rankDetail = await contract.rankDetails(i);
           const cumulativePrice = parseFloat(
             rankDetail.cumulativePrice.toString()
           );
 
-          if (rank.name === userDetails?.currentRank) {
+          // Store the current rank cumulative price
+          if (ranks[i].name === userDetails?.currentRank) {
             currentRankCumulativePrice = cumulativePrice;
           }
 
+          // Calculate the rank upgrade price in USD
           const rankUpgradePriceUSD =
             cumulativePrice - currentRankCumulativePrice;
 
-          return {
+          details.push({
             id: i,
-            name: rank.name,
-            rankUpgradePriceUSD: rankUpgradePriceUSD.toFixed(2),
-          };
+            name: ranks[i].name,
+            rankUpgradePriceUSD: rankUpgradePriceUSD.toFixed(2), // Price in USD
+          });
         } catch (error) {
           console.error(`Error fetching rank ${i} details:`, error);
-          return null;
         }
-      });
+      }
 
-      const rankDetailsResults = await Promise.all(rankDetailsPromises);
-      const validRankDetails = rankDetailsResults.filter(
-        (detail) => detail !== null
-      );
-
-      setRankDetails([...details, ...validRankDetails]);
+      setRankDetails(details);
       setTotalPendingAmount(
         parseFloat(formatUnits(pendingAmountTotal, 18)).toFixed(2)
       );
     } catch (error) {
-      console.error("Error in fetchRankDetails:", error);
-      // You might want to set some error state here
-      // setError(error.message);
+      console.error("Error initializing contract:", error);
     }
   };
 
-  // Use cleanup in useEffect to prevent memory leaks
   useEffect(() => {
-    let mounted = true;
-
-    const fetchData = async () => {
-      if (mounted) {
-        await fetchRankDetails();
-      }
-    };
-
-    if (isConnected && walletProvider && isProviderReady) {
-      fetchData();
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [isConnected, walletProvider, isProviderReady, contractAddress]);
+    fetchRankDetails();
+  }, [isConnected, walletProvider, isProviderReady]);
 
   // Notification for rank expiration
 
@@ -650,15 +553,8 @@ const Dashboard = () => {
         setRankMessage(""); // No message for other cases
       }
 
-      //console.log("hi11");
-
       // Calculate time remaining
-      const expiryTime = new Date(
-        `${userDetails.rankExpiryTime} 23:59:59`
-      ).getTime();
-
-      console.log("the rank exp is", expiryTime);
-
+      const expiryTime = new Date(userDetails.rankExpiryTime).getTime();
       const currentTime = Date.now();
       const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
 
@@ -671,17 +567,17 @@ const Dashboard = () => {
     }
   }, [userDetails?.rankExpiryTime, userDetails?.currentRank]);
 
-  const copyToClipboard = () => {
-    navigator.clipboard
-      .writeText(inviteLink)
-      .then(() => {
-        setIsCopied(true); // Change button to tick sign
-        setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
-      })
-      .catch((err) => {
-        console.error("Failed to copy: ", err);
-      });
-  };
+  // const copyToClipboard = () => {
+  //   navigator.clipboard
+  //     .writeText(inviteLink)
+  //     .then(() => {
+  //       setIsCopied(true); // Change button to tick sign
+  //       setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+  //     })
+  //     .catch((err) => {
+  //       console.error("Failed to copy: ", err);
+  //     });
+  // };
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -691,6 +587,10 @@ const Dashboard = () => {
 
   // Filtered ranks greater than the user's current rank
   const filteredRanks = ranks.filter((rank) => rank.index > currentRankIndex);
+
+  if (filteredRanks) {
+    console.log("hi");
+  }
 
   useEffect(() => {
     if (isConnected) {
@@ -728,15 +628,9 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         // Fetch `usrCnt` from the contract
         const usrCntValue = await contract.usrCnt();
@@ -769,53 +663,38 @@ const Dashboard = () => {
     }
   }, [usrCnt]);
 
-  const darkenColor = (hex: string, amount: number) => {
-    let usePound = false;
-    if (hex[0] === "#") {
-      hex = hex.slice(1);
-      usePound = true;
-    }
+  // const darkenColor = (hex: string, amount: number) => {
+  //   let usePound = false;
+  //   if (hex[0] === "#") {
+  //     hex = hex.slice(1);
+  //     usePound = true;
+  //   }
 
-    let num = parseInt(hex, 16);
-    let r = (num >> 16) + amount;
-    let g = ((num >> 8) & 0x00ff) + amount;
-    let b = (num & 0x0000ff) + amount;
+  //   let num = parseInt(hex, 16);
+  //   let r = (num >> 16) + amount;
+  //   let g = ((num >> 8) & 0x00ff) + amount;
+  //   let b = (num & 0x0000ff) + amount;
 
-    r = Math.min(255, Math.max(0, r));
-    g = Math.min(255, Math.max(0, g));
-    b = Math.min(255, Math.max(0, b));
+  //   r = Math.min(255, Math.max(0, r));
+  //   g = Math.min(255, Math.max(0, g));
+  //   b = Math.min(255, Math.max(0, b));
 
-    return (
-      (usePound ? "#" : "") +
-      ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
-    );
-  };
+  //   return (
+  //     (usePound ? "#" : "") +
+  //     ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
+  //   );
+  // };
 
   useEffect(() => {
     const generateRankGraphData = async () => {
-      if (!isConnected || !walletProvider || !isProviderReady || !address) {
-        console.log("Prerequisites not met:", {
-          isConnected,
-          walletProvider,
-          isProviderReady,
-        });
-        setIsGraphLoading(false); // Set to false if conditions aren't met
-        return;
-      }
-    
+      if (!isConnected || !walletProvider || !isProviderReady) return;
 
       try {
-        setIsGraphLoading(true);
-        const ethersProvider = new BrowserProvider (
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
+        // Define all ranks with their indices
         const allRanks = [
           { name: "STAR", index: 0, color: "#B8B8B8" },
           { name: "BRONZE", index: 1, color: "#CD7F32" },
@@ -828,115 +707,47 @@ const Dashboard = () => {
           { name: "CROWN DIAMOND", index: 8, color: "#6366F1" },
         ];
 
-        const processedAddresses = new Set(); // Track processed addresses
-        const levelCounts = new Array(13).fill(0); // Track counts per level (0-12)
-        const rankCounts = new Array(9).fill(0); // Track counts per rank
+        const activeRanks = [];
+        const userCounts = [];
 
-        // Function to get user's rank and count it
-        
-        const processUserRank = async (address: string) => {
+        for (let rank of allRanks) {
           try {
-            const userDetails = await contract.users(address);
-            const rank = parseInt(userDetails.currentRank.toString());
-            if (rank >= 0 && rank < 9) {
-              rankCounts[rank]++;
-              return rank;
-            }
-            return 0; // Default to STAR rank if invalid
+            const rankStatus = await contract.rUC(rank.index);
+            const count = Number(rankStatus); // Get the user count
+            //console.log(`Rank ${rank.name} Count:`, count);
+
+            activeRanks.push(rank); // Add the rank even if the count is 0
+            userCounts.push(count); // Add the count (can be 0)
           } catch (error) {
-            console.error(`Error getting rank for ${address}:`, error);
-            return 0;
+            console.error(`Error fetching data for rank ${rank.name}:`, error);
+            // If there's an error fetching the rank, default to 0
+            activeRanks.push(rank);
+            userCounts.push(0);
           }
-        };
+        }
 
-        // Modified function to get all referrals level by level
-        const getAllReferrals = async (startAddress: string) => {
-          let currentLevel = 1;
-          let currentLevelAddresses = [startAddress];
-
-          while (currentLevel <= 12 && currentLevelAddresses.length > 0) {
-            //console.log(`Processing level ${currentLevel}`);
-            const nextLevelAddresses = [];
-
-            for (const address of currentLevelAddresses) {
-              if (!processedAddresses.has(address)) {
-                processedAddresses.add(address);
-
-                try {
-                  // Get referrals for current address
-                  const referrals = await contract.getUserReferrals(address);
-
-                  // Process each referral
-                  for (const referral of referrals) {
-                    if (!processedAddresses.has(referral)) {
-                      await processUserRank(referral);
-                      levelCounts[currentLevel]++;
-                      nextLevelAddresses.push(referral);
-                    }
-                  }
-                } catch (error) {
-                  console.error(
-                    `Error processing address ${address} at level ${currentLevel}:`,
-                    error
-                  );
-                }
-              }
-            }
-
-            currentLevelAddresses = nextLevelAddresses;
-            currentLevel++;
-          }
-        };
-        
-
-        // Initialize with starting address
-        await processUserRank(address); // Count the root address
-        await getAllReferrals(address);
-
-        // Log detailed statistics
-
-        // Create graph data
+        // Generate graph data with all ranks
         const graphData = {
-          labels: allRanks.map((rank) => rank.name),
+          labels: activeRanks.map((rank) => rank.name),
           datasets: [
             {
               label: "Number of Users",
-              data: rankCounts,
-              backgroundColor: allRanks.map((rank) => rank.color + "80"),
-              borderColor: allRanks.map((rank) =>
-                rank.color === "#000000"
-                  ? "#111111"
-                  : darkenColor(rank.color, -30)
-              ),
-              borderWidth: 2,
-              borderRadius: {
-                topLeft: 8,
-                topRight: 8,
-                bottomLeft: 0,
-                bottomRight: 0,
-              },
+              data: userCounts, // Use the fetched user counts
+              backgroundColor: activeRanks.map((rank) => rank.color + "80"),
+              borderColor: activeRanks.map((rank) => rank.color),
+              borderWidth: 1,
             },
           ],
         };
 
         setRankGraphData(graphData);
-        setIsGraphLoading(false);
-       
       } catch (error) {
         console.error("Error generating rank graph data:", error);
-        setIsGraphLoading(false);
       }
     };
 
     generateRankGraphData();
-      // Add cleanup timer
-  const timer = setTimeout(() => {
-    generateRankGraphData();
-  }, 100);
-  return () => clearTimeout(timer);
-
-    
-  }, [isConnected, walletProvider, isProviderReady, address]);
+  }, [isConnected, walletProvider, isProviderReady]);
 
   useEffect(() => {
     const fetchTotalInvestment = async () => {
@@ -952,15 +763,9 @@ const Dashboard = () => {
       // console.log("Fetching total investment...", error);
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         // Fetch total investment
         const totalInvestmentData = await contract.getTtlInvstmnt(); // Pass address here
@@ -998,15 +803,9 @@ const Dashboard = () => {
       setError(null);
 
       try {
-        const ethersProvider = new BrowserProvider (
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         // Fetch pool values with proper error handling
         const [ltgValue, rtgValue, ldpValue] = await Promise.all([
@@ -1100,9 +899,10 @@ const Dashboard = () => {
   //   }
   // };
 
+  console.log(setSelectedRank);
+
   // Add a separate effect to handle provider initialization
   // Add provider initialization effect
-
   useEffect(() => {
     const initializeProvider = async () => {
       if (!isConnected || !walletProvider) {
@@ -1111,9 +911,7 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const network = await ethersProvider.getNetwork();
         console.log("Connected to network:", network.name);
         setIsProviderReady(true);
@@ -1145,11 +943,7 @@ const Dashboard = () => {
     try {
       const ethersProvider = new BrowserProvider(walletProvider);
       const signer = await ethersProvider.getSigner();
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+      const contract = new Contract(contractAddress, contractAbi, signer);
 
       // Fetch data concurrently for better performance
       const [
@@ -1179,22 +973,16 @@ const Dashboard = () => {
         parseFloat(formatUnits(totalBonusData || "0", 18)).toFixed(4)
       );
       setWithdrawalRAB(
-        parseFloat(formatUnits(withdrawalRABData || "0", 18)).toFixed(
-          4
-        )
+        parseFloat(formatUnits(withdrawalRABData || "0", 18)).toFixed(4)
       );
-      setTotalRAB(
-        parseFloat(formatUnits(totalRABData || "0", 18)).toFixed(4)
-      );
+      setTotalRAB(parseFloat(formatUnits(totalRABData || "0", 18)).toFixed(4));
 
       // console.log(
       //   "the value issssss:",
       //   ethers.utils.formatEther(withdrawalLevelData || "0")
       // );
       setWithdrawalLevel(
-        parseFloat(
-          formatUnits(withdrawalLevelData || "0", 18)
-        ).toFixed(4)
+        parseFloat(formatUnits(withdrawalLevelData || "0", 18)).toFixed(4)
       );
       setTotalLevel(
         parseFloat(formatUnits(totalLevelData || "0", 18)).toFixed(4)
@@ -1222,6 +1010,181 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
+
+  interface UserAddress {
+    address: string;
+    nickname?: string;
+    avatar?: string;
+  }
+
+  const [rankAddresses, setRankAddresses] = useState<
+    Record<string, UserAddress[]>
+  >({});
+
+  interface UserAddress {
+    address: string;
+    nickname?: string;
+    avatar?: string;
+  }
+  const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(0);
+  const [isMonthIndexLoaded, setIsMonthIndexLoaded] = useState(false);
+
+  const fetchCurrentMonthIndex = async () => {
+    if (!walletProvider) {
+      console.error("Wallet provider not available");
+      return;
+    }
+
+    try {
+      const ethersProvider = new BrowserProvider(walletProvider);
+      const contract = new Contract(
+        contractAddress,
+        contractAbi,
+        ethersProvider
+      );
+
+      const currentMonth = await contract.currentMonthIndex();
+      console.log("the current month is", currentMonth);
+      setCurrentMonthIndex(Number(currentMonth) + 1);
+      setIsMonthIndexLoaded(true);
+    } catch (error) {
+      console.error("Error fetching current month index:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAllRankAddresses = async () => {
+      if (!walletProvider) {
+        setError("Wallet provider not available");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const ethersProvider = new BrowserProvider(walletProvider);
+        const contract = new Contract(
+          contractAddress,
+          contractAbi,
+          ethersProvider
+        );
+
+        const addresses: Record<string, UserAddress[]> = {};
+
+        // Fetch addresses for each elite rank
+        for (const rank of eliteRanks) {
+          const rankAddressesList: UserAddress[] = [];
+          let addressIndex = 0;
+
+          while (true) {
+            try {
+              // Get eligible address for current month and rank
+              const userAddress = await contract.monthlyEligibleAddresses(
+                currentMonthIndex,
+                rank.id,
+                addressIndex
+              );
+
+              // Break the loop if no more addresses
+              if (!userAddress || userAddress === ZeroAddress) break;
+
+              // Get user details from your backend
+              try {
+                const userResponse = await axios.get(
+                  `https://server.cryptomx.site/api/users/${userAddress}`
+                );
+                const userData = userResponse.data.data;
+
+                rankAddressesList.push({
+                  address: userAddress,
+                  nickname: userData?.nickname,
+                  avatar: userData?.avatar || multiavatar(userAddress),
+                });
+              } catch (error) {
+                // If backend fails, still add address with default values
+                rankAddressesList.push({
+                  address: userAddress,
+                  avatar: multiavatar(userAddress),
+                });
+              }
+
+              addressIndex++;
+            } catch (error) {
+              console.error(`Error fetching address for ${rank.name}:`, error);
+              break;
+            }
+          }
+
+          addresses[rank.name] = rankAddressesList;
+        }
+
+        setRankAddresses(addresses);
+      } catch (error) {
+        console.error("Error fetching eligible addresses:", error);
+        setError("Failed to fetch eligible addresses");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Only fetch addresses after month index is loaded
+    if (isMonthIndexLoaded && walletProvider) {
+      fetchAllRankAddresses();
+    }
+  }, [walletProvider, currentMonthIndex, isMonthIndexLoaded]);
+
+  useEffect(() => {
+    if (walletProvider) {
+      fetchCurrentMonthIndex();
+    }
+  }, [walletProvider]);
+
+  const eliteRanks = [
+    {
+      id: 4,
+      name: "DIAMOND",
+      image: rank4,
+      color: "from-cyan-500 to-blue-600",
+      minRank: 4,
+    },
+    {
+      id: 5,
+      name: "BLUE_DIAMOND",
+      image: rank5,
+      color: "from-blue-600 to-indigo-600",
+      minRank: 5,
+    },
+    {
+      id: 6,
+      name: "BLACK_DIAMOND",
+      image: rank6,
+      color: "from-gray-700 to-black",
+      minRank: 6,
+    },
+    {
+      id: 7,
+      name: "ROYAL_DIAMOND",
+      image: rank7,
+      color: "from-purple-600 to-violet-600",
+      minRank: 7,
+    },
+    {
+      id: 8,
+      name: "CROWN_DIAMOND",
+      image: rank8,
+      color: "from-yellow-500 to-red-500",
+      minRank: 8,
+    },
+  ];
+
+  interface RankSectionProps {
+    rank: (typeof eliteRanks)[0];
+    addresses: UserAddress[];
+    expanded: boolean;
+    onToggle: () => void;
+    onCopy: (address: string, key: string) => void;
+    copiedStates: Record<string, boolean>;
+  }
 
   useEffect(() => {
     fetchBonusData();
@@ -1345,11 +1308,7 @@ const Dashboard = () => {
       setIsLoading(true);
       const ethersProvider = new BrowserProvider(walletProvider);
       const signer = await ethersProvider.getSigner();
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+      const contract = new Contract(contractAddress, contractAbi, signer);
 
       const rankIndex = ranks.findIndex((rank) => rank.name === selectedRank);
 
@@ -1390,18 +1349,6 @@ const Dashboard = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
 
-  // const safeUserDetails = {
-  //   get: (key: keyof UserDetails, defaultValue: any = "Loading...") => {
-  //     return userDetails?.[key] ?? defaultValue;
-  //   },
-  //   // Add specific getters for commonly used properties
-  //   isActive: () => userDetails?.isActive ?? false,
-  //   currentRank: () => userDetails?.currentRank ?? "Unknown",
-  //   rankExpiryTime: () => userDetails?.rankExpiryTime ?? "N/A",
-  //   rewards: () => parseFloat(userDetails?.rewards ?? "0").toFixed(2),
-  //   // Add more getters as needed
-  // };
-
   const handleWithdrawLevel = async () => {
     if (!isConnected || !walletProvider || !isProviderReady || !address) {
       console.warn(
@@ -1410,22 +1357,11 @@ const Dashboard = () => {
       return;
     }
 
-    if (isRankExpired === true) {
-      toast.error(
-        "Cannot withdraw - your rank has expired. Please upgrade your rank first."
-      );
-      return;
-    }
-
     try {
       setIsLoadingLevel(true);
       const ethersProvider = new BrowserProvider(walletProvider);
       const signer = await ethersProvider.getSigner();
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+      const contract = new Contract(contractAddress, contractAbi, signer);
 
       // console.log("before");
       const tx = await contract.withdrawLevelIncome(); // Level Distribution Pool withdrawal function
@@ -1437,7 +1373,7 @@ const Dashboard = () => {
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
       setWithdrawalLevel(
-        parseFloat(formatUnits(updatedLevel || "0", 18)).toFixed(4)
+        parseFloat(formatUnits(updatedLevel || "0")).toFixed(4)
       );
 
       // Show confetti animation
@@ -1469,22 +1405,11 @@ const Dashboard = () => {
       return;
     }
 
-    if (isRankExpired === true) {
-      toast.error(
-        "Cannot withdraw - your rank has expired. Please upgrade your rank first."
-      );
-      return;
-    }
-
     try {
       setIsLoadingRab(true);
       const ethersProvider = new BrowserProvider(walletProvider);
       const signer = await ethersProvider.getSigner();
-      const contract = new Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
+      const contract = new Contract(contractAddress, contractAbi, signer);
 
       const tx = await contract.claimMonthlyRab(); // Level Distribution Pool withdrawal function
       await tx.wait();
@@ -1492,9 +1417,7 @@ const Dashboard = () => {
       // console.log("Withdraw Level Transaction Hash:", tx.hash);
 
       const updatedLevel = await contract.getUsrTtllvlrcvd(address);
-      setWithdrawalLevel(
-        parseFloat(formatUnits(updatedLevel || "0", 18)).toFixed(4)
-      );
+      setWithdrawalRab(parseFloat(formatUnits(updatedLevel || "0")).toFixed(4));
 
       setShowConfetti(true);
       fetchBonusData();
@@ -1514,6 +1437,12 @@ const Dashboard = () => {
       setIsLoadingRab(false);
     }
   };
+
+  if (isLoadingLevel && isLoadingRab) {
+    handleWithdrawLevel();
+    handleWithdrawRab();
+    upgradeRank();
+  }
 
   // Toggle menu with proper event handling
 
@@ -1550,15 +1479,9 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         // Fetch user data
         const userData = await contract.users(address);
@@ -1613,9 +1536,9 @@ const Dashboard = () => {
           ]);
 
         const total =
-        parseFloat(formatUnits(totalBonusData || "0", 18)) +
-        parseFloat(formatUnits(totalRABData || "0", 18)) +
-        parseFloat(formatUnits(totalLevelData || "0", 18));
+          parseFloat(formatUnits(totalBonusData || "0", 18)) +
+          parseFloat(formatUnits(totalRABData || "0", 18)) +
+          parseFloat(formatUnits(totalLevelData || "0", 18));
 
         // console.log("the total is", total);
         // ─── 1) Build a total of rewards at indices [1], [3], [5] ────────────
@@ -1689,77 +1612,21 @@ const Dashboard = () => {
     fetchUserDetails();
   }, [isConnected, walletProvider, isProviderReady, address]);
 
+  const ADMIN_ADDRESSES = [
+    "0x3E582a9FFD780A4DFC8AAb220A644596772B919E".toLowerCase(),
+    "0x0Ac0920459Ae9c1ABB3D866C1f772e7f0697B069".toLowerCase(),
+  ];
+
   useEffect(() => {
-    const checkRegistrationStatus = async (newAddress: string) => {
-      if (!isConnected || !walletProvider || !isProviderReady || !newAddress) {
-        console.warn("Wallet is not connected or provider is not ready.");
-        return;
-      }
-
-      try {
-        //console.log("Checking registration status for:", newAddress);
-
-        // Initialize Web3 provider and contract
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
-        const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
-
-        // Fetch user details from the contract
-        const userData = await contract.users(newAddress);
-        //console.log("Fetched User Data:", userData);
-
-        // Ensure userData exists and check isActive status
-        if (!userData || !userData.isActive) {
-          console.log("User is NOT active. Redirecting to home...");
-          navigate("/"); // Redirect unregistered/inactive users
-        } else {
-          console.log("User is active. Staying on the dashboard.");
-        }
-      } catch (error) {
-        console.error("Error checking registration status:", error);
-        navigate("/"); // Redirect if there's an error
-      }
-    };
-
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length > 0) {
-        //console.log("MetaMask account changed to:", accounts[0]);
-        checkRegistrationStatus(accounts[0]); // Check if the new account is registered
-      } else {
-        // console.log("No account connected, redirecting...");
-        navigate("/"); // Redirect if no account is connected
-      }
-    };
-
-    if (walletProvider) {
-      const provider = new BrowserProvider(walletProvider as any);
-      const externalProvider = provider.provider as any;
-
-      if (externalProvider?.on) {
-        externalProvider.on("accountsChanged", handleAccountsChanged);
-      }
-
-      // Check registration on initial load
-      if (address) {
-        checkRegistrationStatus(address);
-      }
-
-      return () => {
-        if (externalProvider?.removeListener) {
-          externalProvider.removeListener(
-            "accountsChanged",
-            handleAccountsChanged
-          );
-        }
-      };
+    if (!address) {
+      navigate("/");
+      return;
     }
-  }, [walletProvider, address, isConnected, isProviderReady, navigate]);
+
+    if (!ADMIN_ADDRESSES.includes(address.toLowerCase())) {
+      navigate("/");
+    }
+  }, [address, navigate]);
 
   useEffect(() => {
     if (userDetails?.rankExpiryTime && userDetails?.currentRank) {
@@ -1794,15 +1661,15 @@ const Dashboard = () => {
       const oneHourBeforeExpiry = expiryTime - 60 * 60 * 1000;
       //
 
-       console.log("the current time is",currentTime);
-       console.log("the expriy is",expiryTime);
+      // console.log("the current time is",currentTime);
+      // console.log("the expriy is",expiryTime);
 
       if (currentTime > expiryTime) {
         setIsRankExpired(true);
-         console.log("expired");
+        // console.log("expired");
       } else {
         setIsRankExpired(false);
-         console.log("not expired");
+        // console.log("not expired");
       }
 
       // Show marquee only within 1 hour of expiry
@@ -1822,15 +1689,9 @@ const Dashboard = () => {
       }
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         // Fetch pool data using Promise.all
         const [totalLTGPoolData, totalRTGPoolData, totalLDPPoolData] =
@@ -1841,6 +1702,7 @@ const Dashboard = () => {
           ]);
 
         // Convert BigNumber to readable format and set the raw values as numbers
+
         const ltgPool = parseFloat(formatUnits(totalLTGPoolData, 18)).toFixed(
           0
         );
@@ -1913,15 +1775,9 @@ const Dashboard = () => {
       setError(null);
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         // Fetch pool values with proper error handling
         const [ltgValue, rtgValue, ldpValue] = await Promise.all([
@@ -2025,15 +1881,9 @@ const Dashboard = () => {
       setIsLoading(true);
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const updatedRankCounts: Record<string, number> = {};
         await Promise.all(
@@ -2070,6 +1920,40 @@ const Dashboard = () => {
     contractAbi,
   ]);
 
+  // Add these state variables at the beginning of your Dashboard component
+  const [addressToBlacklist, setAddressToBlacklist] = useState("");
+  const [isBlacklistProcessing, setIsBlacklistProcessing] = useState(false);
+
+  // Add this function to handle blacklisting
+  const handleBlacklist = async () => {
+    if (!walletProvider) {
+      console.warn("Wallet not connected or provider not ready");
+      return;
+    }
+    if (isAddress(addressToBlacklist)) {
+      toast.error("Please enter a valid address");
+      return;
+    }
+
+    try {
+      setIsBlacklistProcessing(true);
+      const provider = new BrowserProvider(walletProvider);
+      const signer = await provider.getSigner();
+      const contract = new Contract(contractAddress, contractAbi, signer);
+
+      const tx = await contract.blacklistAddress(addressToBlacklist);
+      await tx.wait();
+
+      toast.success("Address has been blacklisted successfully!");
+      setAddressToBlacklist("");
+    } catch (error) {
+      console.error("Error blacklisting address:", error);
+      toast.error("Failed to blacklist address");
+    } finally {
+      setIsBlacklistProcessing(false);
+    }
+  };
+
   const formatNumber = (num: number): string => {
     if (num >= 1_000_000_000) {
       return (num / 1_000_000_000).toFixed(1) + "B"; // Format in billions
@@ -2080,9 +1964,7 @@ const Dashboard = () => {
     } else {
       return num.toString(); // Leave as is for smaller numbers
     }
-  };  
-
-  
+  };
 
   useEffect(() => {
     // console.log(handleRankSelection);
@@ -2112,34 +1994,26 @@ const Dashboard = () => {
     };
   }, [menuOpen]);
 
-  const [selectedRankPriceUSD, setSelectedRankPriceUSD] = useState<number>(0); // Store USD price
-  const [selectedRankPriceITC, setSelectedRankPriceITC] = useState<number>(0); // Store ITC price
+  // const [selectedRankPriceUSD, setSelectedRankPriceUSD] = useState<number>(0); // Store USD price
+  // const [selectedRankPriceITC, setSelectedRankPriceITC] = useState<number>(0); // Store ITC price
 
-  const handleRankSelection = (
-    rank: string,
-    priceUSD: number,
-    priceITC: number
-  ) => {
-    setSelectedRank(rank);
-    setSelectedRankPriceUSD(priceUSD);
-    setSelectedRankPriceITC(priceITC);
-    setDropdownOpen(false);
-  };
+  // if(!selectedRankPriceUSD && !selectedRankPriceITC){
+  //   console.log("err");
+  // }
+  // const handleRankSelection = (
+  //   rank: string,
+  //   priceUSD: number,
+  //   priceITC: number
+  // ) => {
+  //   setSelectedRank(rank);
+  //   setSelectedRankPriceUSD(priceUSD);
+  //   setSelectedRankPriceITC(priceITC);
+  //   setDropdownOpen(false);
+  // };
 
   const closeToastManually = () => {
     toast.dismiss();
   };
-
-  // Add this somewhere below the function definition
-const _unused = { handleRankSelection }; // This makes TypeScript think it's used
-console.log(_unused);
-
-  if (!selectedRankPriceITC) {
-    console.log("hi");
-    // handleRankSelection("Gold", 99.99, 1000);
-    // console.log(setSelectedRankPriceUSD);
-    // console.log(setSelectedRankPriceITC);
-  }
 
   interface StatCardProps {
     icon: any;
@@ -2148,24 +2022,146 @@ console.log(_unused);
     gradient: string;
   }
 
-  const StatCard = ({ icon: Icon, value, label, gradient }: StatCardProps) => (
+  const [expandedRank, setExpandedRank] = useState<string | null>(null);
+  const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+  const handleCopy = async (address: string, key: string) => {
+    // console.log(currentMonthIndex);
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopiedStates((prev) => ({ ...prev, [key]: true }));
+      setTimeout(() => {
+        setCopiedStates((prev) => ({ ...prev, [key]: false }));
+      }, 2000);
+    } catch (error) {
+      console.error("Copy failed", error);
+    }
+  };
+
+  const RankSection: React.FC<RankSectionProps> = ({
+    rank,
+    addresses,
+    expanded,
+    onToggle,
+    onCopy,
+    copiedStates,
+  }) => (
+    <div className="mb-4 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-lg">
+      <button
+        onClick={onToggle}
+        className={`w-full p-4 flex items-center justify-between bg-gradient-to-r ${rank.color} text-white`}
+      >
+        <div className="flex items-center space-x-4">
+          <img
+            src={rank.image}
+            alt={rank.name}
+            className="w-10 h-10 object-contain rounded-full ring-2 ring-white/30"
+          />
+          <div className="flex items-center space-x-3">
+            <span className="font-semibold text-lg">
+              {rank.name.replace("_", " ")}
+            </span>
+            <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+              {addresses.length} Users
+            </span>
+          </div>
+        </div>
+        {expanded ? (
+          <ChevronUp className="w-6 h-6" />
+        ) : (
+          <ChevronDown className="w-6 h-6" />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white dark:bg-gray-800"
+          >
+            <div className="max-h-64 overflow-y-auto">
+              {addresses.length === 0 ? (
+                <div className="p-6 text-center text-gray-500 dark:text-gray-400 flex flex-col items-center space-y-3">
+                  <Award className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+                  <p>No eligible users found for this rank</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {addresses.map((addr, idx) => (
+                    <li
+                      key={idx}
+                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-gray-700 bg-gray-100 dark:bg-gray-600" />
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white lg:text-xl">
+                              {`${addr.address.slice(
+                                0,
+                                6
+                              )}...${addr.address.slice(-4)}`}
+                            </p>
+                            {addr.nickname && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {addr.nickname}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() =>
+                            onCopy(addr.address, `${rank.name}-${idx}`)
+                          }
+                          className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                            copiedStates[`${rank.name}-${idx}`]
+                              ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                          }`}
+                        >
+                          {copiedStates[`${rank.name}-${idx}`] ? (
+                            <>
+                              <Check className="w-5 h-5" />
+                              <span>Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-5 h-5" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  const StatCard: React.FC<StatCardProps> = ({
+    icon: Icon,
+    value,
+    label,
+    gradient,
+  }) => (
     <motion.div
       whileHover={{ scale: 1.05, rotate: 0.5 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={`relative overflow-hidden rounded-2xl p-6 transition-all duration-500 ${gradient} shadow-lg`}
     >
-      {/* Background overlay for glass effect */}
       <div className="absolute inset-0 bg-black/10 backdrop-blur-md transition-opacity duration-500" />
-
-      {/* Foreground Content */}
       <div className="relative flex items-start justify-between">
         <div className="space-y-4">
-          {/* Icon Container with subtle glow */}
           <div className="rounded-xl bg-white/20 p-3 w-fit transition-transform duration-500 hover:scale-105">
             <Icon className="w-6 h-6 text-white" />
           </div>
-
-          {/* Value and Label */}
           <div>
             <div className="text-3xl font-bold text-white tracking-tight">
               {value}
@@ -2176,8 +2172,6 @@ console.log(_unused);
             </div>
           </div>
         </div>
-
-        {/* Circular Background Glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/10 to-white/5 rounded-full -mr-16 -mt-16 backdrop-blur-lg transition-all duration-500 group-hover:scale-110" />
       </div>
     </motion.div>
@@ -2217,9 +2211,9 @@ console.log(_unused);
             )}
 
             {/* Main Stats Section */}
-            <div className="grid grid-flow-row-dense md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {/* Global Users Counter (Not inside StatCard) */}
-              {/* <motion.div
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl p-6 backdrop-blur-xl border border-white/10 shadow-xl"
@@ -2233,7 +2227,7 @@ console.log(_unused);
                     <span className="text-purple-500">+</span>
                   </p>
                 </div>
-              </motion.div> */}
+              </motion.div>
 
               {/* Bonus Stat Cards */}
               <StatCard
@@ -2242,14 +2236,12 @@ console.log(_unused);
                 label="LTGB"
                 gradient="bg-gradient-to-br from-blue-600 to-indigo-600"
               />
-
               <StatCard
                 icon={Award}
                 value={isConnected ? formatNumber(countRTGPool) : "0"}
                 label="RAB"
                 gradient="bg-gradient-to-br from-purple-600 to-pink-600"
               />
-
               <StatCard
                 icon={DollarSign}
                 value={isConnected ? formatNumber(countLDPPool) : "0"}
@@ -2289,7 +2281,7 @@ console.log(_unused);
                             <img
                               src={previewImage || userData?.avatar}
                               alt="Profile"
-                              className="w-28 h-28 object-cover rounded-full border-2 border-white/80"
+                              className="w-24 h-24 object-cover rounded-full border-2 border-white/80"
                               onError={(e) => {
                                 console.error("Image failed to load:", e);
                                 e.currentTarget.src = ""; // Clear the source on error
@@ -2385,162 +2377,95 @@ console.log(_unused);
                     </Dialog>
                   </div>
                   {/* Level Bonus Card */}
-                  <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-teal-600/20 group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 backdrop-blur-xl" />
-                    <div className="relative p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <Trophy className="w-6 h-6 text-emerald-500" />
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                          Level Bonus
-                        </h3>
+                  <Card className="relative overflow-hidden bg-slate-900/80 backdrop-blur-sm rounded-3xl border border-slate-800/50 p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="p-3 rounded-xl bg-purple-500/10">
+                        <Trophy className="w-8 h-8 text-purple-400" />
                       </div>
-
-                      {!isConnected ? (
-                        <div className="text-center text-gray-600 dark:text-white/70">
-                          Connect wallet to view
-                        </div>
-                      ) : isLoadingLevel ? (
-                        <div className="text-center text-gray-600 dark:text-white/70">
-                          Loading...
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div>
-                            <span className="text-sm text-gray-600 dark:text-white/70">
-                              Withdrawal Level:
-                            </span>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                              {withdrawalLevel}
-                            </div>
-                            <button
-                              onClick={handleWithdrawLevel}
-                              className="mt-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg
-                        hover:from-emerald-600 hover:to-teal-600 transform transition-all duration-300 
-                        hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-                            >
-                              Withdraw
-                            </button>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-600 dark:text-white/70">
-                              Total Level:
-                            </span>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                              {totalLevel}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <h3 className="lg:text-xl font-bold text-purple-400">
+                        Blacklist Address
+                      </h3>
                     </div>
-                  </div>
+
+                    <div className="space-y-6 lg:space-y-8 lg:mt-4 lg:mb-4 ">
+                      <input
+                        type="text"
+                        value={addressToBlacklist}
+                        onChange={(e) => setAddressToBlacklist(e.target.value)}
+                        placeholder="Enter address to blacklist"
+                        className="w-full px-6 py-4 rounded-xl text-lg bg-slate-800/50 border border-slate-700/50 
+            text-gray-200 placeholder:text-gray-500
+            focus:outline-none focus:ring-2 focus:ring-purple-500/20 
+            hover:bg-slate-800/70 transition-all duration-300"
+                      />
+
+                      <button
+                        onClick={handleBlacklist}
+                        disabled={
+                          isBlacklistProcessing ||
+                          !addressToBlacklist ||
+                          !ethers.isAddress(addressToBlacklist)
+                        }
+                        className={`w-full py-4 rounded-xl text-lg font-medium transition-all duration-300
+            ${
+              !isBlacklistProcessing &&
+              addressToBlacklist &&
+              ethers.isAddress(addressToBlacklist)
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:opacity-90"
+                : "bg-slate-700/50 text-gray-400 cursor-not-allowed"
+            }`}
+                      >
+                        {isBlacklistProcessing ? (
+                          <div className="flex items-center justify-center gap-3">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+                            <span className="text-lg">Processing...</span>
+                          </div>
+                        ) : (
+                          "Blacklist Address"
+                        )}
+                      </button>
+                    </div>
+                  </Card>
 
                   {/* RAB Card */}
-                  <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg">
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 to-orange-600/20 group-hover:scale-105 transition-transform duration-500" />
+                  <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg h-full">
+                    <div className="absolute inset-0  bg-gradient-to-br from-blue-600/20 to-cyan-600/20  group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 backdrop-blur-xl" />
-                    <div className="relative p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <Award className="w-6 h-6 text-amber-500" />
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                          Rank Achievement
-                        </h3>
+                    <div className="relative p-8 flex flex-col items-center justify-center h-full">
+                      <div className="mb-6">
+                        <div className="relative">
+                          <div className="absolute -inset-1  rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt" />
+                          <Wallet className="w-16 h-16 text-blue-600 relative transform group-hover:scale-110 transition-transform duration-300" />
+                        </div>
                       </div>
-
-                      {!isConnected ? (
-                        <div className="text-center text-gray-600 dark:text-white/70">
-                          Connect wallet to view
-                        </div>
-                      ) : isLoadingRab ? (
-                        <div className="text-center text-gray-600 dark:text-white/70">
-                          Loading...
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div>
-                            <span className="text-sm text-gray-600 dark:text-white/70">
-                              Withdrawal RAB:
-                            </span>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                              {withdrawalRAB}
-                            </div>
-                            <button
-                              onClick={handleWithdrawRab}
-                              className="mt-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg
-                        hover:from-amber-600 hover:to-orange-600 transform transition-all duration-300 
-                        hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-                            >
-                              Withdraw
-                            </button>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-600 dark:text-white/70">
-                              Total RAB:
-                            </span>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                              {totalRAB}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                        Total RAB
+                      </h3>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                        {totalRab}
+                      </div>
                     </div>
                   </div>
 
                   {/* Lifetime Growth Bonus Card */}
-                  <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 group-hover:scale-105 transition-transform duration-500" />
+                  <div className="relative group overflow-hidden rounded-3xl border border-white/20 shadow-lg h-full">
+                    <div className="absolute inset-0  bg-gradient-to-br from-blue-600/20 to-cyan-600/20  group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 backdrop-blur-xl" />
-                    <div className="relative p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <TrendingUp className="w-6 h-6 text-blue-500" />
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                          Growth Bonus
-                        </h3>
+                    <div className="relative p-8 flex flex-col items-center justify-center h-full">
+                      <div className="mb-6">
+                        <div className="relative">
+                          <div className="absolute -inset-1  group-hover:scale-105 transition-transform duration-500" />
+                          <CreditCard className="w-16 h-16 text-blue-600 relative transform group-hover:scale-110 transition-transform duration-300" />
+                        </div>
                       </div>
-
-                      {!isConnected ? (
-                        <div className="text-center text-gray-600 dark:text-white/70">
-                          Connect wallet to view
-                        </div>
-                      ) : isLoading ? (
-                        <div className="text-center text-gray-600 dark:text-white/70">
-                          Loading...
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600 dark:text-white/70">
-                                On Hold Bonus:
-                              </span>
-                              <Tooltip.Provider>
-                                <Tooltip.Root>
-                                  <Tooltip.Trigger asChild>
-                                    <Info className="w-4 h-4 text-blue-500 cursor-help" />
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Portal>
-                                    <Tooltip.Content className="bg-white/10 backdrop-blur-md p-2 z-50 rounded-lg border border-white/20 text-white text-sm">
-                                      Transfers after two referrals
-                                      <Tooltip.Arrow className="fill-white/20" />
-                                    </Tooltip.Content>
-                                  </Tooltip.Portal>
-                                </Tooltip.Root>
-                              </Tooltip.Provider>
-                            </div>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                              {totalPendingAmount}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-600 dark:text-white/70">
-                              Total Bonus:
-                            </span>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                              {totalBonus}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                        Monthly RAB Pool
+                      </h3>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                        {monthlyRab === "Loading..."
+                          ? "Loading..."
+                          : monthlyRab}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2559,10 +2484,10 @@ console.log(_unused);
                       </div>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                      Total Rewards
+                      Global Bonus
                     </h3>
                     <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                      {Number(userDetails?.rewards).toFixed(2) || "0.00"}
+                      {isConnected ? totalInvestment : "0"}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-white/70">
                       Total Earnings
@@ -2572,153 +2497,39 @@ console.log(_unused);
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* User Details Card - Adjusted size */}
-              <Card className="md:col-span-4 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-800/80 to-cyan-600/20 group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute inset-0 backdrop-blur-xl" />
-
-                <div className="relative z-10">
-                  <CardHeader className="pb-8">
-                    <div className="flex flex-col items-center justify-center w-full">
-                      <div
-                        className="relative group mb-6 transform hover:scale-105 transition-all duration-300
-      md:mb-4 md:transform md:hover:scale-95"
-                      >
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-700 animate-pulse" />
-                        <div
-                          className="relative p-5 bg-slate-900/90 rounded-full ring-2 ring-white/20 hover:ring-white/40 transition-all duration-300
-        md:p-4"
-                        >
-                          <User
-                            className="h-10 w-10 text-cyan-400 xs:h-6 xs:w-6 
-          md:h-8 md:w-8"
-                          />
-                        </div>
-                      </div>
-                      <CardTitle
-                        className="text-3xl font-bold text-center xs:text-xl 
-      md:text-2xl"
-                      >
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 animate-gradient">
-                          User Details
-                        </span>
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent
-                    className="w-full max-w-[500px] mx-auto p-4 2xs:p-2 
- md:max-w-[450px] md:p-3"
-                  >
-                    <div
-                      className="grid grid-cols-2 gap-4 2xs:grid-cols-1 2xs:gap-2 
-   md:grid-cols-2 md:gap-3"
-                    >
-                      {[
-                        {
-                          icon: Link,
-                          label: "Referrer",
-                          value: userDetails?.referrer
-                            ? `${userDetails.referrer.slice(
-                                0,
-                                6
-                              )}...${userDetails.referrer.slice(-4)}`
-                            : "Loading...",
-                        },
-                        {
-                          icon: Award,
-                          label: "Current Rank",
-                          value: userDetails?.currentRank || "Loading...",
-                        },
-                        {
-                          icon: Clock,
-                          label: "Last Update",
-                          value:
-                            userDetails?.lastRankUpdateTime || "Loading...",
-                        },
-                        {
-                          icon: Calendar,
-                          label: "Rank Expiry",
-                          value:
-                          userDetails === null ? (
-                            "Loading..."
-                          ) : !userDetails.isActive ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-500/10 to-red-600/10 animate-pulse border border-red-500/20 2xs:text-[10px]">
-                              <span className="text-red-500 animate-bounce text-xs 2xs:text-[10px]">
-                                ⚠️
-                              </span>
-                              <span className="font-bold tracking-wide bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent text-xs 2xs:text-[10px]">
-                                RANK EXPIRED
-                              </span>
-                            </span>
-                          ) : (
-                            userDetails?.rankExpiryTime || "Loading..."
-                          ),
-                        },
-                        {
-                          icon: DollarSign,
-                          label: "Total Purchase",
-                          value: userDetails?.totalInvestment
-                            ? Number(userDetails.totalInvestment).toFixed(2)
-                            : "Loading...",
-                        },
-                        {
-                          icon: Activity,
-                          label: "Status",
-                          value:
-                            userDetails === null
-                              ? "Loading..."
-                              : userDetails.isActive
-                              ? "Active"
-                              : "Inactive",
-                        },
-                      ].map((item, index) => (
-                        <div
-                          key={index}
-                          className="relative group p-3 rounded-xl border border-white/10 
-         bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl
-         hover:from-slate-800/80 hover:to-slate-900/80
-         transition-all duration-300
-         hover:border-white/20
-         2xs:p-2 
-         md:p-2.5"
-                        >
-                          <h4
-                            className="flex items-center gap-2 text-sm font-medium text-slate-200 2xs:text-xs 
-         md:text-xs"
-                          >
-                            <div
-                              className="p-1.5 rounded-lg bg-slate-800/90 ring-1 ring-white/10 
-           group-hover:ring-white/20 transition-all duration-300 
-           2xs:p-1 
-           md:p-1"
-                            >
-                              <item.icon
-                                className="h-4 w-4 text-cyan-400 2xs:h-3 2xs:w-3 
-             md:h-3.5 md:w-3.5"
-                              />
-                            </div>
-                            {item.label}
-                          </h4>
-                          <p
-                            className="mt-2 font-mono text-sm text-white/90 font-medium break-words 2xs:text-xs 
-         md:text-xs"
-                          >
-                            {item.value}
-                          </p>
-                          <div
-                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-blue-500/0 
-         opacity-0 group-hover:opacity-100 transition-all duration-500"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+                  <h2 className="text-2xl font-bold mb-2 flex items-center space-x-3">
+                    <User className="w-8 h-8" />
+                    <span>Elite Ranks - Monthly Eligible Addresses</span>
+                  </h2>
+                  <p className="opacity-80 text-sm">
+                    Explore and manage eligible addresses across elite rank
+                    tiers
+                  </p>
                 </div>
-              </Card>
+
+                {eliteRanks.map((rank) => (
+                  <RankSection
+                    key={rank.name}
+                    rank={rank}
+                    addresses={rankAddresses[rank.name] || []}
+                    expanded={expandedRank === rank.name}
+                    onToggle={() =>
+                      setExpandedRank(
+                        expandedRank === rank.name ? null : rank.name
+                      )
+                    }
+                    onCopy={handleCopy}
+                    copiedStates={copiedStates}
+                  />
+                ))}
+              </div>
 
               {/* Teams Ranks Progression Card - Enhanced dark mode and effects */}
-              <div className="md:col-span-8 rounded-3xl relative overflow-hidden group h-full">
+              <div className="md:col-span-2 rounded-3xl relative overflow-hidden group h-full">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-400 dark:from-slate-800/30 dark:to-slate-900/30" />
 
                 <div
@@ -2730,404 +2541,143 @@ console.log(_unused);
                       className="font-bold text-lg sm:text-xl md:text-2xl bg-gradient-to-r from-blue-500 to-blue-600 
     bg-clip-text text-transparent transition-colors duration-300 text-center px-2 py-1 leading-normal"
                     >
-                      Team Ranks Progression
+                      Teams Ranks Progression
                     </h2>
                   </div>
 
                   <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">
-                  <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[400px]">
-  {isGraphLoading ? (
-    <div className="w-full h-full flex flex-col items-center justify-center">
-      {/* Main loader animation */}
-      <div className="relative w-20 h-20">
-        {/* Outer rotating ring */}
-        <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" 
-             style={{ animationDuration: '1.5s' }}></div>
-        
-        {/* Middle rotating ring (opposite direction) */}
-        <div className="absolute inset-0 rounded-full border-4 border-t-transparent border-r-transparent border-b-blue-400 border-l-transparent animate-spin" 
-             style={{ animationDuration: '2s', animationDirection: 'reverse', margin: '5px' }}></div>
-        
-        {/* Inner pulsing circle */}
-        <div className="absolute inset-0 m-4 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 animate-pulse flex items-center justify-center">
-          <div className="text-white">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-      
-      {/* Text content */}
-      <div className="mt-8 text-center">
-        <p className="text-blue-500 dark:text-blue-400 font-semibold bg-gradient-to-r from-blue-500 to-indigo-400 bg-clip-text text-transparent">
-          Loading team rankings
-        </p>
-        <div className="flex items-center justify-center mt-2 space-x-1">
-          <span className="text-sm text-blue-400/70 dark:text-blue-300/70">Please wait</span>
-          {/* Animated dots */}
-          <span className="flex space-x-1">
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" 
-                  style={{ animationDelay: '0s', animationDuration: '1s' }}></span>
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" 
-                  style={{ animationDelay: '0.2s', animationDuration: '1s' }}></span>
-            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" 
-                  style={{ animationDelay: '0.4s', animationDuration: '1s' }}></span>
-          </span>
-        </div>
-      </div>
-    </div>
-  ) :  (
-    <Bar
-      data={rankGraphData}
-      options={{
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              font: {
-                size: window.innerWidth < 640 ? 10 : 12,
-                weight: "bold",
-                family: "'Inter', sans-serif",
-              },
-              color: "#FFFFFF",
-              padding: window.innerWidth < 640 ? 6 : 10,
-            },
-            title: {
-              display: true,
-              text: "Number of Users",
-              font: {
-                size: window.innerWidth < 640 ? 12 : 14,
-                weight: "bold",
-                family: "'Inter', sans-serif",
-              },
-              color: "#FFFFFF",
-              padding: window.innerWidth < 640 ? 8 : 12,
-            },
-            grid: {
-              color: "rgba(255, 255, 255, 0.1)",
-              lineWidth: 1,
-            },
-          },
-          x: {
-            grid: { display: false },
-            ticks: {
-              autoSkip: true,
-              maxRotation: 45,
-              minRotation: 0,
-              font: {
-                size: window.innerWidth < 640 ? 8 : 10,
-                weight: "bold",
-                family: "'Inter', sans-serif",
-              },
-              color: "#FFFFFF",
-              padding: window.innerWidth < 640 ? 4 : 8,
-            },
-          },
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "rgba(15, 23, 42, 0.95)",
-            titleColor: "#FFFFFF",
-            bodyColor: "#CBD5E1",
-            borderColor: "#475569",
-            borderWidth: 1,
-            padding: window.innerWidth < 640 ? 8 : 12,
-            cornerRadius: window.innerWidth < 640 ? 8 : 12,
-            titleSpacing: window.innerWidth < 640 ? 6 : 8,
-            bodySpacing: window.innerWidth < 640 ? 6 : 8,
-            displayColors: true,
-            callbacks: {
-              label: function (context) {
-                return `✨ Users: ${context.parsed.y}`;
-              },
-            },
-          },
-        },
-        elements: {
-          bar: {
-            backgroundColor: (context) => {
-              const ctx = context.chart.ctx;
-              const gradient = ctx.createLinearGradient(
-                0,
-                0,
-                0,
-                window.innerWidth < 640 ? 200 : 300
-              );
-              gradient.addColorStop(
-                0,
-                "rgba(56, 189, 248, 0.9)"
-              ); // Cyan
-              gradient.addColorStop(
-                1,
-                "rgba(59, 130, 246, 0.9)"
-              ); // Blue
-              return gradient;
-            },
-            borderRadius: window.innerWidth < 640 ? 6 : 8,
-            borderWidth: 0,
-            hoverBackgroundColor: (context) => {
-              const ctx = context.chart.ctx;
-              const gradient = ctx.createLinearGradient(
-                0,
-                0,
-                0,
-                window.innerWidth < 640 ? 200 : 300
-              );
-              gradient.addColorStop(
-                0,
-                "rgba(56, 189, 248, 1)"
-              ); // Brighter Cyan
-              gradient.addColorStop(
-                1,
-                "rgba(59, 130, 246, 1)"
-              ); // Brighter Blue
-              return gradient;
-            },
-            hoverBorderWidth: 2,
-            hoverBorderColor: "#FFFFFF",
-          },
-        },
-        hover: {
-          mode: "index",
-          intersect: false,
-        },
-      }}
-    />
-  )}
-</div>
+                    <div className="min-w-[300px] sm:min-w-[355px] h-[300px] sm:h-[500px]">
+                      <Bar
+                        data={rankGraphData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              ticks: {
+                                stepSize: 1,
+                                font: {
+                                  size: window.innerWidth < 640 ? 10 : 12,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 6 : 10,
+                              },
+                              title: {
+                                display: true,
+                                text: "Number of Users",
+                                font: {
+                                  size: window.innerWidth < 640 ? 12 : 14,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 8 : 12,
+                              },
+                              grid: {
+                                color: "rgba(255, 255, 255, 0.1)",
+                                lineWidth: 1,
+                              },
+                            },
+                            x: {
+                              grid: { display: false },
+                              ticks: {
+                                autoSkip: true,
+                                maxRotation: 30,
+                                minRotation: 0,
+                                font: {
+                                  size: window.innerWidth < 640 ? 8 : 10,
+                                  weight: "bold",
+                                  family: "'Inter', sans-serif",
+                                },
+                                color: "#FFFFFF",
+                                padding: window.innerWidth < 640 ? 4 : 8,
+                              },
+                            },
+                          },
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                              backgroundColor: "rgba(15, 23, 42, 0.95)",
+                              titleColor: "#FFFFFF",
+                              bodyColor: "#CBD5E1",
+                              borderColor: "#475569",
+                              borderWidth: 1,
+                              padding: window.innerWidth < 640 ? 8 : 12,
+                              cornerRadius: window.innerWidth < 640 ? 8 : 12,
+                              titleSpacing: window.innerWidth < 640 ? 6 : 8,
+                              bodySpacing: window.innerWidth < 640 ? 6 : 8,
+                              displayColors: true,
+                              callbacks: {
+                                label: function (context) {
+                                  return `✨ Users: ${context.parsed.y}`;
+                                },
+                              },
+                            },
+                          },
+                          elements: {
+                            bar: {
+                              backgroundColor: (context) => {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(
+                                  0,
+                                  0,
+                                  0,
+                                  window.innerWidth < 640 ? 200 : 300
+                                );
+                                gradient.addColorStop(
+                                  0,
+                                  "rgba(56, 189, 248, 0.9)"
+                                ); // Cyan
+                                gradient.addColorStop(
+                                  1,
+                                  "rgba(59, 130, 246, 0.9)"
+                                ); // Blue
+                                return gradient;
+                              },
+                              borderRadius: window.innerWidth < 640 ? 6 : 8,
+                              borderWidth: 0,
+                              hoverBackgroundColor: (context) => {
+                                const ctx = context.chart.ctx;
+                                const gradient = ctx.createLinearGradient(
+                                  0,
+                                  0,
+                                  0,
+                                  window.innerWidth < 640 ? 200 : 300
+                                );
+                                gradient.addColorStop(
+                                  0,
+                                  "rgba(56, 189, 248, 1)"
+                                ); // Brighter Cyan
+                                gradient.addColorStop(
+                                  1,
+                                  "rgba(59, 130, 246, 1)"
+                                ); // Brighter Blue
+                                return gradient;
+                              },
+                              hoverBorderWidth: 2,
+                              hoverBorderColor: "#FFFFFF",
+                            },
+                          },
+                          hover: {
+                            mode: "index",
+                            intersect: false,
+                          },
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="w-full space-y-4 sm:space-y-6">
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3">
                 {/* Enhanced Referral Link Section */}
-                <Card
-                  className="relative overflow-hidden group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
-      bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
-      hover:shadow-2xl hover:border-blue-500/20 transition-all duration-500"
-                >
-                  {/* Animated background effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                      <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </div>
-                      <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                        Referral Link
-                      </h3>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                      <div className="relative group/qr w-24 sm:w-32">
-                        <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl blur-lg opacity-0 group-hover/qr:opacity-20 transition-opacity duration-500" />
-                        <img
-                          src={userData?.referralQR}
-                          alt="QR Code"
-                          className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg sm:rounded-xl border-2 border-white/10 shadow-lg transition-transform duration-300 group-hover/qr:scale-105"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-2 sm:gap-3 w-full">
-                        <div className="relative">
-                          <input
-                            className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white/50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-gray-200/20 
-  focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/20 transition-all duration-300
-  text-xs sm:text-sm font-medium backdrop-blur-sm truncate"
-                            value={`${inviteLink.slice(0, -2)}...`} // Cuts last 2 chars and adds ellipsis
-                            onClick={() => {
-                              // When clicked, selects the full text
-                              navigator.clipboard.writeText(inviteLink);
-                            }}
-                            readOnly
-                            title={inviteLink}
-                          />
-                          <button
-                            onClick={copyToClipboard}
-                            className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-md sm:rounded-lg
-                bg-gradient-to-r from-blue-500 to-cyan-500 text-white
-                hover:from-blue-600 hover:to-cyan-600 transition-all duration-300
-                focus:ring-2 focus:ring-blue-500/20"
-                          >
-                            {isCopied ? (
-                              <CheckCheck className="w-3 h-3 sm:w-4 sm:h-4" />
-                            ) : (
-                              <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
-                            )}
-                          </button>
-                        </div>
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                          Share your referral link to grow your community and
-                          earn rewards
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
 
                 {/* Enhanced Rank Update Section */}
-                <Card
-                  className="relative overflow-visible group p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 border-gray-200/20 
-      bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-800 dark:to-slate-900
-      hover:shadow-2xl hover:border-purple-500/20 transition-all duration-500"
-                >
-                  {/* Animated background effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4 sm:mb-6">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                          <Trophy className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </div>
-                        <h3 className="text-base sm:text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                          Rank Upgrade
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-purple-500/10">
-                        <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
-                        <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
-                          {userDetails?.currentRank || "Loading..."}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 sm:space-y-4">
-                      {/* Enhanced Dropdown */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setDropdownOpen((prev) => !prev)}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200/20 
-              bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm
-              hover:bg-white/70 dark:hover:bg-slate-800/70
-              focus:ring-2 focus:ring-purple-500/20 
-              transition-all duration-300
-              flex items-center justify-between"
-                        >
-                          <span className="text-xs sm:text-sm font-medium">
-                            {selectedRank || "Select your rank"}
-                          </span>
-                          <ChevronDown
-                            className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-300 ${
-                              dropdownOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-
-                        {dropdownOpen && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-30"
-                              onClick={() => setDropdownOpen(false)}
-                            />
-                            <div
-                              className="absolute z-40 w-full mt-2 py-2 rounded-lg sm:rounded-xl border border-gray-200/20 
-                  bg-white/90 dark:bg-slate-800/90 backdrop-blur-md shadow-xl
-                  max-h-48 sm:max-h-64 overflow-y-auto"
-                            >
-                              {filteredRanks.map((rank, index) => {
-                                const currentRankDetail = rankDetails.find(
-                                  (detail) =>
-                                    detail.name === userDetails?.currentRank &&
-                                    detail.rankUpgradePriceUSD !== undefined
-                                );
-
-                                const targetRankDetail = rankDetails.find(
-                                  (detail) =>
-                                    detail.name === rank.name &&
-                                    detail.rankUpgradePriceUSD !== undefined
-                                );
-
-                                const priceDifferenceUSD =
-                                  currentRankDetail && targetRankDetail
-                                    ? parseFloat(
-                                        targetRankDetail.rankUpgradePriceUSD
-                                      ) -
-                                      parseFloat(
-                                        currentRankDetail.rankUpgradePriceUSD
-                                      )
-                                    : 0;
-
-                                const priceDifferenceITC =
-                                  priceDifferenceUSD && priceData?.TUSDTperTITC
-                                    ? (
-                                        priceDifferenceUSD *
-                                        Number(priceData?.TUSDTperTITC)
-                                      ).toFixed(4)
-                                    : "Loading...";
-
-                                return (
-                                  <div
-                                    key={index}
-                                    onClick={() => {
-                                      setSelectedRank(rank.name);
-                                      setDropdownOpen(false);
-                                    }}
-                                    className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 
-                        cursor-pointer transition-colors duration-200"
-                                  >
-                                    <div className="flex items-center justify-between mb-1 sm:mb-2">
-                                      <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">
-                                        {rank.name}
-                                      </span>
-                                      <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
-                                    </div>
-                                    <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                      <div className="flex justify-between">
-                                        <span>Upgrade Cost:</span>
-                                        <span className="font-medium">
-                                          ${priceDifferenceUSD.toFixed(2)} USD
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span>ITC Price:</span>
-                                        <span className="font-medium">
-                                          {priceDifferenceITC} ITC
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Enhanced Upgrade Button */}
-                      <button
-                        onClick={upgradeRank}
-                        disabled={
-                          !selectedRank ||
-                          !userDetails ||
-                          (parseFloat(userDetails.rewards || "0") <
-                            selectedRankPriceUSD &&
-                            parseFloat(userDetails.rewards || "0") <
-                              selectedRankPriceITC)
-                        }
-                        className={`w-full px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium
-            transition-all duration-300 transform hover:scale-[1.02]
-            ${
-              selectedRank &&
-              (parseFloat(userDetails?.rewards || "0") >=
-                selectedRankPriceUSD ||
-                parseFloat(userDetails?.rewards || "0") >= selectedRankPriceITC)
-                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:from-purple-700 hover:to-pink-700"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-            }`}
-                      >
-                        Upgrade Rank
-                      </button>
-                    </div>
-                  </div>
-                </Card>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { BrowserProvider, Contract, formatUnits } from "ethers";
-import { contractAbi } from "./Props/contractAbi";
-import { contractAddress } from "./Props/contractAddress";
+import { contractAbi } from "../contracts/Props/contractAbi";
+import { contractAddress } from "../contracts/Props/contractAddress";
 import {
   Provider,
   useAppKitProvider,
@@ -10,19 +10,11 @@ import {
 import { useNavigate } from "react-router-dom";
 //import FeaturesSection from "../components/FeaturesSection";
 //import Light from "../components/Light";
-import { useDarkMode } from "../components/DarkModeContext";
+import { useDarkMode } from "../context/DarkModeContext";
 import "../index.css";
 
 // Import rank images
-import rank0 from "../assets/rank0.png";
-import rank1 from "../assets/rank1.png";
-import rank2 from "../assets/rank2.png";
-import rank3 from "../assets/rank3.png";
-import rank4 from "../assets/rank4.png";
-import rank5 from "../assets/rank5.png";
-import rank6 from "../assets/rank6.png";
-import rank7 from "../assets/rank7.png";
-import rank8 from "../assets/rank8.png";
+import {rank0, rank1, rank2, rank3, rank4, rank5, rank6, rank7, rank8} from "../assets/index"
 
 interface Transaction {
   user: string;
@@ -109,15 +101,9 @@ const Transactions = () => {
       }
 
       try {
-        const ethersProvider = new BrowserProvider(
-          walletProvider
-        );
+        const ethersProvider = new BrowserProvider(walletProvider);
         const signer = await ethersProvider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const userData = await contract.users(newAddress);
 
@@ -168,11 +154,7 @@ const Transactions = () => {
 
         const provider = new BrowserProvider(walletProvider);
         const signer = await provider.getSigner();
-        const contract = new Contract(
-          contractAddress,
-          contractAbi,
-          signer
-        );
+        const contract = new Contract(contractAddress, contractAbi, signer);
 
         const userAddress = await signer.getAddress();
 
