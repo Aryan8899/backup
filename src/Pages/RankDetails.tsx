@@ -101,7 +101,23 @@ const RankRow = React.memo(
     index: number;
     userRank: number | null;
   }) => (
-    <tr className="border-b border-gray-200 dark:border-gray-700">
+    <tr
+      key={rank.id}
+      className={`
+                            border-b border-gray-200 dark:border-gray-700
+                            transition-colors duration-200
+                            ${
+                              userRank === rank.id
+                                ? "bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/70"
+                                : ""
+                            }
+                            ${
+                              userRank !== null && rank.id < userRank
+                                ? "bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/70"
+                                : ""
+                            }
+                          `}
+    >
       <td className="px-4 lg:px-6 py-4">
         <div className="flex items-center space-x-2 lg:space-x-3">
           <div className="flex-shrink-0">
@@ -443,6 +459,28 @@ const RankDetailsPage = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+            <div className="p-4 lg:p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-500"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Current Rank
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-500"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Achieved Ranks
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-300"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Future Ranks
+                  </span>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
