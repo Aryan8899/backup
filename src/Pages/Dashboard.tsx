@@ -778,18 +778,75 @@ const Dashboard = () => {
     };
   }, [isConnected, contract, address, userDetails?.currentRank]);
 
-  // Generate graph data with proper optimization
-  useEffect(() => {
-    const generateRankGraphData = async () => {
-      if (!isConnected || !contract || !address) {
-        setIsGraphLoading(false);
-        return;
-      }
+  const [rankGraphDataCache, setRankGraphDataCache] = useState<{
+    data: GraphData | null;
+    timestamp: number;
+  }>({
+    data: null,
+    timestamp: 0
+  });
 
+
+  // Generate graph data with proper optimization
+  const cache = useMemo(() => {
+    const cacheObj = {
+      get: (key: string): any => {
+        try {
+          let item = localStorage.getItem(`rtree_${key}`) || localStorage.getItem(`$rtree_${key}`);
+          if (!item) return null;
+          const parsedItem = JSON.parse(item);
+          if (parsedItem.expiry && Date.now() > parsedItem.expiry) {
+            localStorage.removeItem(`rtree_${key}`);
+            localStorage.removeItem(`$rtree_${key}`);
+            return null;
+          }
+          return parsedItem.data;
+        } catch (e) {
+          console.error(`Cache read error for ${key}:`, e);
+          return null;
+        }
+      },
+      set: (key: string, data: any, ttl: number): void => {
+        try {
+          if (data === null || data === undefined) return;
+          const expiry = Date.now() + ttl;
+          localStorage.setItem(`rtree_${key}`, JSON.stringify({ data, expiry }));
+        } catch (e) {
+          console.error(`Cache write error for ${key}:`, e);
+        }
+      },
+    };
+    return cacheObj;
+  }, []);
+
+  useEffect(() => {
+    // Ultra-fast early exits
+    if (!isConnected || !contract || !address) {
+      setIsGraphLoading(false);
+      return;
+    }
+  
+    const CACHE_DURATION = 60 * 60 * 1000; // Reduced to 3 minutes
+    const cacheKey = `rankGraphData_${address}`;
+  const cachedData = cache.get(cacheKey);
+
+  if (cachedData) {
+    setRankGraphData(cachedData);
+    setIsGraphLoading(false);
+    return;
+  }
+
+
+  
+   
+  
+    const generateRankGraphData = async () => {
+      const startTime = performance.now();
+      
       try {
         setIsGraphLoading(true);
-
-        const allRanks = [
+  
+        const RANK_INFO = [
           { name: "STAR", index: 0, color: "#B8B8B8" },
           { name: "BRONZE", index: 1, color: "#CD7F32" },
           { name: "SILVER", index: 2, color: "#C0C0C0" },
@@ -800,106 +857,148 @@ const Dashboard = () => {
           { name: "ROYAL DIAMOND", index: 7, color: "#F59E0B" },
           { name: "CROWN DIAMOND", index: 8, color: "#6366F1" },
         ];
-
-        const processedAddresses = new Set<string>(); // Track processed addresses
-        const rankCounts = new Array(9).fill(0); // Track counts per rank
-
-        // Function to get user's rank and count it
-        const processUserRank = async (address: string) => {
-          try {
-            const userDetails = await contract.users(address);
-            const rank = parseInt(userDetails.currentRank.toString());
-            if (rank >= 0 && rank < 9) {
-              rankCounts[rank]++;
-              return rank;
-            }
-            return 0; // Default to STAR rank if invalid
-          } catch (error) {
-            console.error(`Error getting rank for ${address}:`, error);
-            return 0;
-          }
-        };
-
-        // Get all referrals level by level
-        const getAllReferrals = async (startAddress: string) => {
-          let currentLevel = 1;
-          let currentLevelAddresses = [startAddress];
-
-          while (currentLevel <= 12 && currentLevelAddresses.length > 0) {
-            const nextLevelAddresses: string[] = [];
-
-            for (const address of currentLevelAddresses) {
-              if (!processedAddresses.has(address)) {
+  
+        // Use more memory-efficient data structure
+        const rankCountMap = new Map<number, number>();
+        const processedAddresses = new Set<string>();
+  
+        // Hyper-optimized parallel processing
+        const processReferralsParallel = async (
+          addresses: string[], 
+          depth = 0,
+          maxDepth = 8 // Reduced depth for faster processing
+        ) => {
+          if (depth >= maxDepth || addresses.length === 0) return;
+  
+          // Aggressive batch processing with increased concurrency
+          const BATCH_SIZE = 10; // Increased batch size
+          for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
+            const batch = addresses.slice(i, i + BATCH_SIZE);
+            
+            await Promise.all(
+              batch.map(async (address) => {
+                // Immediate skip for processed addresses
+                if (processedAddresses.has(address)) return [];
+  
                 processedAddresses.add(address);
-
+  
                 try {
-                  // Get referrals for current address
-                  const referrals = await contract.getUserReferrals(address);
-
-                  // Process each referral
-                  for (const referral of referrals) {
-                    if (!processedAddresses.has(referral)) {
-                      await processUserRank(referral);
-                      nextLevelAddresses.push(referral);
-                    }
+                  // Concurrent data fetching
+                  const [userData, referrals] = await Promise.all([
+                    contract.users(address),
+                    contract.getUserReferrals(address)
+                  ]);
+  
+                  // Rank counting
+                  const rank = parseInt(userData[0]?.toString() || "0");
+                  if (rank >= 0 && rank < 9) {
+                    rankCountMap.set(
+                      rank, 
+                      (rankCountMap.get(rank) || 0) + 1
+                    );
                   }
-                } catch (error) {
-                  console.error(
-                    `Error processing address ${address} at level ${currentLevel}:`,
-                    error
+  
+                  // Filter and return unprocessed referrals
+                  return referrals.filter(
+                    (ref: string) => !processedAddresses.has(ref)
                   );
+                } catch (error) {
+                  console.warn(`Processing error for ${address}:`, error);
+                  return [];
                 }
+              })
+            ).then(async (results) => {
+              // Flatten and filter results
+              const nextLevelReferrals = results
+                .flat()
+                .filter((ref): ref is string => 
+                  typeof ref === 'string' && !processedAddresses.has(ref)
+                );
+  
+              // Recursive processing with reduced overhead
+              if (nextLevelReferrals.length > 0) {
+                await processReferralsParallel(
+                  nextLevelReferrals, 
+                  depth + 1, 
+                  maxDepth
+                );
               }
-            }
-
-            currentLevelAddresses = nextLevelAddresses;
-            currentLevel++;
+            });
           }
         };
-
-        // Initialize with starting address
-        await processUserRank(address); // Count the root address
-        await getAllReferrals(address);
-
-        // Create graph data
-        const graphData: GraphData = {
-          labels: allRanks.map((rank) => rank.name),
-          datasets: [
-            {
-              label: "Number of Users",
-              data: rankCounts,
-              backgroundColor: allRanks.map((rank) => rank.color + "80"),
-              borderColor: allRanks.map((rank) =>
-                rank.color === "#000000"
-                  ? "#111111"
-                  : darkenColor(rank.color, -30)
-              ),
-              borderWidth: 2,
-              borderRadius: {
-                topLeft: 8,
-                topRight: 8,
-                bottomLeft: 0,
-                bottomRight: 0,
-              },
+  
+        // Start processing with minimal initial delay
+        await processReferralsParallel([address]);
+  
+        // Efficient rank count conversion
+        const rankCounts = RANK_INFO.map((_, index) => 
+          rankCountMap.get(index) || 0
+        );
+  
+        // Lightweight graph data construction
+        const graphData = {
+          labels: RANK_INFO.map((rank) => rank.name),
+          datasets: [{
+            label: "Number of Users",
+            data: rankCounts,
+            backgroundColor: RANK_INFO.map((rank) => `${rank.color}80`),
+            borderColor: RANK_INFO.map((rank) => 
+              rank.color === "#000000" 
+                ? "#111111" 
+                : darkenColor(rank.color, -30)
+            ),
+            borderWidth: 2,
+            borderRadius: {
+              topLeft: 8,
+              topRight: 8,
+              bottomLeft: 0,
+              bottomRight: 0,
             },
-          ],
+          }],
         };
-
+        cache.set(cacheKey, graphData, CACHE_DURATION);
+  
+        // Immediate state updates
         setRankGraphData(graphData);
+        // setRankGraphDataCache({
+        //   data: graphData,
+        //   timestamp: currentTime,
+        // });
+  
+        // Optional performance logging
+        const endTime = performance.now();
+        console.log(`Rank graph generated in ${endTime - startTime}ms`);
+  
       } catch (error) {
-        console.error("Error generating rank graph data:", error);
+        console.error("Rank graph generation failed:", error);
+        setRankGraphData({
+          labels: [],
+          datasets: [],
+        });
       } finally {
         setIsGraphLoading(false);
       }
     };
-
-    // Generate graph data initially with a small delay to prioritize more critical data
-    const timer = setTimeout(() => {
-      generateRankGraphData();
-    }, 500);
-
+  
+    // Minimized initialization delay
+    const timer = setTimeout(generateRankGraphData, 2);
+  
     return () => clearTimeout(timer);
-  }, [isConnected, contract, address]);
+  }, [
+    isConnected, 
+    contract, 
+    address, 
+    setRankGraphData, 
+    setRankGraphDataCache,
+  ]);
+  
+  // Address change reset effect
+  useEffect(() => {
+    // Immediate cache and graph reset
+    setRankGraphDataCache({ data: null, timestamp: 0 });
+    setRankGraphData({ labels: [], datasets: [] });
+  }, [address]); // Add this effect before the existing graph generation effect
+  // Animate the user count
 
   // Animate the user count
   useEffect(() => {
