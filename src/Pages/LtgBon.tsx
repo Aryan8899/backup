@@ -478,9 +478,7 @@ const RankDetailsPage = () => {
 
           {/* Main Content */}
           <div className="max-w-7xl mx-auto">
-            {loading ? (
-              <Loader />
-            ) : (
+          
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-2xl dark:hover:shadow-[0_0_15px_rgba(0,255,255,0.3)]">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -610,7 +608,7 @@ const RankDetailsPage = () => {
                   </div>
                 </div>
               </div>
-            )}
+          
           </div>
         </div>
       )}

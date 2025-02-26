@@ -884,11 +884,11 @@ const ReferralTree = () => {
               </div>
 
               {/* Loading indicator */}
-              {isLoading && (
+              {/* {isLoading && (
                 <div className="absolute top-1 right-1">
                   <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
-              )}
+              )} */}
 
               {/* Expand indicator */}
               {node.referrals.length > 0 && (
@@ -1034,7 +1034,7 @@ const ReferralTree = () => {
                     className="relative z-50 flex flex-col items-center justify-center space-y-6"
                   >
                     {/* Logo */}
-                    <div className="relative">
+                    {/* <div className="relative">
                       <motion.div
                         animate={{
                           y: [0, -10, 0],
@@ -1056,27 +1056,9 @@ const ReferralTree = () => {
                           }}
                         />
                       </motion.div>
-                    </div>
+                    </div> */}
 
                     {/* Loading indicator */}
-                    <div className="flex items-center space-x-3">
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.2, 1],
-                          rotate: [0, 360],
-                          borderRadius: ["50%", "20%", "50%"],
-                        }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                        className="w-12 h-12 border-4 border-blue-500 border-t-purple-500 rounded-full"
-                      />
-                      <span className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                        Loading...
-                      </span>
-                    </div>
 
                     {/* Progress bar */}
                     <motion.div

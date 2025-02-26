@@ -101,11 +101,11 @@ const App: React.FC = () => {
       {Background}
 
       {/* Loading Indicator */}
-      {loading && (
+      {/* {loading && (
         <Suspense fallback={<LoadingFallback />}>
           <Loader />
         </Suspense>
-      )}
+      )} */}
 
       {/* Header (Conditionally Rendered) */}
       {!shouldHideHeader && (
