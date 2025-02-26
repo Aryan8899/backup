@@ -1123,14 +1123,21 @@ const Dashboard = () => {
       setShowConfetti(true);
 
       // Update data without full reload
-      const updatedLevel = await contract.getUsrTtllvlrcvd(address);
+      const [withdrawableLevelIncome, totalLevelReceived] = await Promise.all([
+        contract.getWthlvlIncm(address),
+        contract.getUsrTtllvlrcvd(address),
+      ]);
+  
       setFinancialData((prev) => ({
         ...prev,
         withdrawalLevel: parseFloat(
-          formatUnits(updatedLevel || "0", 18)
+          formatUnits(withdrawableLevelIncome || "0", 18)
+        ).toFixed(4),
+        totalLevel: parseFloat(
+          formatUnits(totalLevelReceived || "0", 18)
         ).toFixed(4),
       }));
-
+  
       toast.success("🎉 Level Distribution Pool withdrawn successfully!");
 
       setTimeout(() => {
@@ -1166,10 +1173,19 @@ const Dashboard = () => {
       setShowConfetti(true);
 
       // Update data without full reload
-      const updatedRAB = await contract.getUsrTtlrabrcvd(address);
+      const [withdrawableRAB, totalRABReceived] = await Promise.all([
+        contract.getWthrabIncome(address),
+        contract.getUsrTtlrabrcvd(address),
+      ]);
+  
       setFinancialData((prev) => ({
         ...prev,
-        totalRAB: parseFloat(formatUnits(updatedRAB || "0", 18)).toFixed(4),
+        withdrawalRAB: parseFloat(
+          formatUnits(withdrawableRAB || "0", 18)
+        ).toFixed(4),
+        totalRAB: parseFloat(
+          formatUnits(totalRABReceived || "0", 18)
+        ).toFixed(4),
       }));
 
       toast.success("🎉 RAB withdrawn successfully!");
@@ -1231,6 +1247,11 @@ const Dashboard = () => {
                     }
                   : null
               );
+               // Reset the dropdown selection
+            setSelectedRank(null);
+            
+            // Close the dropdown if it's open
+            setDropdownOpen(false);
             })
             .catch(console.error);
         }
