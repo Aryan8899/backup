@@ -6,11 +6,7 @@ import { BrowserProvider, Contract, formatUnits } from "ethers";
 //import multiavatar from "@multiavatar/multiavatar";
 import { ZeroAddress, isAddress } from "ethers";
 //import { usePriceData } from "../components/PriceContext.tsx";
-import rank4 from "../assets/rank4.png";
-import rank5 from "../assets/rank5.png";
-import rank6 from "../assets/rank6.png";
-import rank7 from "../assets/rank7.png";
-import rank8 from "../assets/rank8.png";
+import {rank4, rank5, rank6, rank7, rank8} from "../assets/index"
 import {
   Provider,
   useAppKitProvider,
