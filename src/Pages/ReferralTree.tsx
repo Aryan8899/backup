@@ -1047,7 +1047,7 @@ useEffect(() => {
         <div className="min-h-screen p-6">
           <SimpleBar className="w-full overflow-x-auto">
             <div className="min-w-max">
-            {isLoading || initialTransitionLoading ? (
+            {(isLoading || initialTransitionLoading || !treeData) ? (
                 <div className="flex justify-center items-center h-96">
                   <div className="absolute inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30" />
                   <motion.div
