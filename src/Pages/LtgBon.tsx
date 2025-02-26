@@ -1,5 +1,11 @@
-import { useState, useEffect } from "react";
-//import { ethers } from "ethers";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import { BrowserProvider, Contract, formatUnits } from "ethers";
 import { contractAbi } from "../contracts/Props/contractAbi";
 import { contractAddress } from "../contracts/Props/contractAddress";
 import {
@@ -7,13 +13,10 @@ import {
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
-//import { BigNumber } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../context/DarkModeContext";
-import FeaturesSection from "./FeaturesSection";
-import Light from "./Light";
-import Loader from "./Loader";
-import { BrowserProvider, Contract, formatUnits } from "ethers";
+import { motion } from "framer-motion";
+
 // Import rank images
 import {
   rank0,
@@ -27,6 +30,29 @@ import {
   rank8,
 } from "../assets/index";
 
+// Interfaces
+interface RankItem {
+  id: number;
+  name: string;
+  image: string;
+}
+
+interface UserDetails {
+  referrer: string;
+  currentRank: string;
+  totalInvestment: string;
+  isActive: boolean;
+}
+
+interface RankDetail {
+  id: number;
+  name: string;
+  count: string;
+  pendingAmount: string;
+  totalDistributedAmount: string;
+}
+
+// Constants
 const ranks = [
   { id: 0, name: "STAR", image: rank0 },
   { id: 1, name: "BRONZE", image: rank1 },
@@ -39,430 +65,195 @@ const ranks = [
   { id: 8, name: "CROWN_DIAMOND", image: rank8 },
 ];
 
-// Keep all the existing interfaces and type definitions...
-
-const RankDetailsPage = () => {
-  const { darkMode } = useDarkMode(); // ✅ Dark mode state is correctly retrieved
-
-  useEffect(() => {
-    console.log("Dark Mode State:", darkMode); // ✅ Debugging log to check state updates
-  }, [darkMode]);
-
+const LifetimeGrowthBonusPage = () => {
+  const { darkMode } = useDarkMode();
   const navigate = useNavigate();
-  const [withdrawalBonus, setWithdrawalBonus] = useState("0");
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-
-  const { address, isConnected } = useAppKitAccount();
-  const [totalBonus, setTotalBonus] = useState("0");
-  const [isProviderReady, setIsProviderReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const { walletProvider } = useAppKitProvider<Provider>("eip155");
-  const [error, setError] = useState<ErrorType>(null);
-  type ErrorType = string | null;
-  const [totalPendingAmount, setTotalPendingAmount] =
-    useState<string>("Loading...");
-  const [rankDetails, setRankDetails] = useState<
-    {
-      id: number;
-      name: string;
-      count: string;
-      pendingAmount: string;
-      totalDistributedAmount: string;
-    }[]
-  >([]);
-  const [connectedAddress, setConnectedAddress] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  // Fetch connected wallet address
+  const { address, isConnected } = useAppKitAccount();
 
-  interface UserDetails {
-    referrer: string;
-    currentRank: string;
-    lastRankUpdateTime: string;
-    rankExpiryTime: string;
-    totalInvestment: string;
-    isActive: boolean;
-    rewards: string;
-  }
+  // Data states without loading state
+  const [rankDetails, setRankDetails] = useState<RankDetail[]>([]);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [totalPendingAmount, setTotalPendingAmount] = useState("0");
+  const [totalBonus, setTotalBonus] = useState("0");
 
+  // Load cached data immediately on mount
   useEffect(() => {
-    console.log(withdrawalBonus, isLoading, error);
-    const checkRegistrationStatus = async (newAddress: string) => {
-      if (!isConnected || !walletProvider || !isProviderReady || !newAddress) {
-        console.warn("Wallet is not connected or provider is not ready.");
-        return;
-      }
-
-      try {
-        console.log("Checking registration status for:", newAddress);
-
-        // Initialize Web3 provider and contract
-        const ethersProvider = new BrowserProvider(walletProvider);
-        const signer = await ethersProvider.getSigner();
-        const contract = new Contract(contractAddress, contractAbi, signer);
-
-        // Fetch user details from the contract
-        const userData = await contract.users(newAddress);
-        console.log("Fetched User Data:", userData);
-
-        // Ensure userData exists and check isActive status
-        if (!userData || !userData.isActive) {
-          console.log("User is NOT active. Redirecting to home...");
-          navigate("/"); // Redirect unregistered/inactive users
-        } else {
-          console.log("User is active. Staying on the dashboard.");
+    // Try to load cached rank details
+    try {
+      const cachedRankDetails = localStorage.getItem("rankDetailsCache");
+      if (cachedRankDetails) {
+        const parsed = JSON.parse(cachedRankDetails);
+        if (
+          parsed.data &&
+          Array.isArray(parsed.data) &&
+          parsed.data.length > 0
+        ) {
+          setRankDetails(parsed.data);
         }
-      } catch (error) {
-        console.error("Error checking registration status:", error);
-        navigate("/"); // Redirect if there's an error
-      }
-    };
-
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length > 0) {
-        console.log("MetaMask account changed to:", accounts[0]);
-        checkRegistrationStatus(accounts[0]); // Check if the new account is registered
-      } else {
-        console.log("No account connected, redirecting...");
-        navigate("/"); // Redirect if no account is connected
-      }
-    };
-
-    if (walletProvider) {
-      const provider = new BrowserProvider(walletProvider as any);
-      const externalProvider = provider.provider as any;
-
-      if (externalProvider?.on) {
-        externalProvider.on("accountsChanged", handleAccountsChanged);
       }
 
-      // Check registration on initial load
-      if (address) {
-        checkRegistrationStatus(address);
-      }
-
-      return () => {
-        if (externalProvider?.removeListener) {
-          externalProvider.removeListener(
-            "accountsChanged",
-            handleAccountsChanged
-          );
+      // Try to load cached user details
+      const cachedUserDetails = localStorage.getItem("userDetailsCache");
+      if (cachedUserDetails) {
+        const parsed = JSON.parse(cachedUserDetails);
+        if (parsed.data) {
+          setUserDetails(parsed.data);
         }
-      };
+      }
+
+      // Try to load cached totals
+      const cachedTotalPending = localStorage.getItem("totalPendingCache");
+      if (cachedTotalPending) {
+        const parsed = JSON.parse(cachedTotalPending);
+        if (parsed.data) {
+          setTotalPendingAmount(parsed.data);
+        }
+      }
+
+      const cachedTotalBonus = localStorage.getItem("totalBonusCache");
+      if (cachedTotalBonus) {
+        const parsed = JSON.parse(cachedTotalBonus);
+        if (parsed.data) {
+          setTotalBonus(parsed.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading cached data:", error);
     }
-  }, [walletProvider, address, isConnected, isProviderReady, navigate]);
+  }, []);
 
+  // Check connection and redirect if needed
   useEffect(() => {
-    const fetchAddress = async () => {
-      if (walletProvider) {
-        try {
-          const provider = new BrowserProvider(walletProvider);
-          const signer = await provider.getSigner();
-          const address = await signer.getAddress(); // Get connected wallet address
-          console.log("the add is", address);
-          setConnectedAddress(address);
-        } catch (error) {
-          console.error("Error fetching connected address:", error);
+    if (!isConnected) {
+      const timer = setTimeout(() => {
+        if (!isConnected) {
+          navigate("/");
         }
-      }
-    };
-    fetchAddress();
-  }, [walletProvider]);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isConnected, navigate]);
 
+  // Fetch data directly
   useEffect(() => {
-    setIsProviderReady(!!walletProvider);
-  }, [walletProvider]);
-
-  useEffect(() => {
-    const getRankName = (rankIndex: string) => {
-      const ranks = [
-        { name: "STAR", index: 0 },
-        { name: "BRONZE", index: 1 },
-        { name: "SILVER", index: 2 },
-        { name: "GOLD", index: 3 },
-        { name: "DIAMOND", index: 4 },
-        { name: "BLUE_DIAMOND", index: 5 },
-        { name: "BLACK_DIAMOND", index: 6 },
-        { name: "ROYAL_DIAMOND", index: 7 },
-        { name: "CROWN_DIAMOND", index: 8 },
-      ];
-
-      const _unused = { getRankName }; // This makes TypeScript think it's used
-      console.log(_unused);
-
-      const rank = ranks.find((r) => r.index === parseInt(rankIndex));
-      return rank ? rank.name : "Unknown Rank";
-    };
-
-    // ...
-
-    const fetchUserDetails = async () => {
-      if (!isConnected || !walletProvider || !isProviderReady || !address) {
-        console.warn("Prerequisites not met for fetching user details");
-        return;
-      }
+    const fetchData = async () => {
+      if (!isConnected || !walletProvider || !address) return;
 
       try {
-        const ethersProvider = new BrowserProvider(walletProvider);
-        const signer = await ethersProvider.getSigner();
+        // Initialize provider and contract
+        const provider = new BrowserProvider(walletProvider);
+        const signer = await provider.getSigner();
         const contract = new Contract(contractAddress, contractAbi, signer);
 
-        // Fetch user data
+        // Check if user is registered first
         const userData = await contract.users(address);
-        console.log("Raw user data:", userData); // Log the raw data to inspect its structure
-
-        const formatTimestamp = (timestamp: any): string => {
-          try {
-            const timestampNum = Number(timestamp);
-            if (isNaN(timestampNum) || timestampNum === 0) {
-              return "Not updated";
-            }
-            return new Date(timestampNum * 1000).toLocaleDateString();
-          } catch (error) {
-            console.error("Error formatting timestamp:", error);
-            return "Invalid timestamp";
-          }
-        };
-
-        // Safer way to handle rewards calculation
-        let rewardSumBN = BigInt(0);
-
-        // First check if userData[6] exists
-        if (userData && userData[6]) {
-          console.log("Rewards data structure:", userData[6]);
-
-          // Check if it's an array or array-like
-          if (Array.isArray(userData[6]) || typeof userData[6] === "object") {
-            try {
-              // Safely try to access and convert each index
-              // userData[6][1]
-              if (userData[6][1] !== undefined) {
-                const r1 = BigInt(userData[6][1].toString());
-                rewardSumBN += r1;
-              }
-
-              // userData[6][3]
-              if (userData[6][3] !== undefined) {
-                const r3 = BigInt(userData[6][3].toString());
-                rewardSumBN += r3;
-              }
-
-              // userData[6][5]
-              if (userData[6][5] !== undefined) {
-                const r5 = BigInt(userData[6][5].toString());
-                rewardSumBN += r5;
-              }
-            } catch (err) {
-              console.error("Error calculating rewards sum:", err);
-              // Continue with rewardSumBN as 0
-            }
-          } else {
-            console.warn(
-              "userData[6] is not an array or object:",
-              typeof userData[6]
-            );
-          }
+        if (!userData || !userData.isActive) {
+          navigate("/");
+          return;
         }
 
-        // Format other fields - safer accessing with fallbacks
-        const getRankName = (rankIndex: string) => {
-          const ranks = [
-            { name: "STAR", index: 0 },
-            { name: "BRONZE", index: 1 },
-            { name: "SILVER", index: 2 },
-            { name: "GOLD", index: 3 },
-            { name: "DIAMOND", index: 4 },
-            { name: "BLUE_DIAMOND", index: 5 },
-            { name: "BLACK_DIAMOND", index: 6 },
-            { name: "ROYAL_DIAMOND", index: 7 },
-            { name: "CROWN_DIAMOND", index: 8 },
-          ];
-
-          const rank = ranks.find((r) => r.index === parseInt(rankIndex));
-          return rank ? rank.name : "Unknown Rank";
-        };
-
-        const formattedData = {
+        // Process and store user data
+        const currentRank = userData[0]
+          ? ranks[Number(userData[0])].name
+          : "Unknown";
+        const userDetailsData = {
           referrer: userData[2] ? userData[2].toString() : "No referrer",
-          currentRank: getRankName(
-            userData[0] !== undefined ? userData[0].toString() : "0"
-          ),
-          lastRankUpdateTime: formatTimestamp(
-            userData.lastRankUpdateTime
-              ? Number(userData.lastRankUpdateTime)
-              : 0
-          ),
-          rankExpiryTime: formatTimestamp(
-            userData.rankExpiryTime ? Number(userData.rankExpiryTime) : 0
-          ),
-          totalInvestment: formatUnits(
-            userData[5] !== undefined ? userData[5].toString() : "0",
-            18
-          ),
+          currentRank,
+          totalInvestment: formatUnits(userData[5] || "0", 18),
           isActive: Boolean(userData[5]),
-          rewards: formatUnits(rewardSumBN.toString(), 18), // Convert BigInt to string for formatUnits
         };
+        setUserDetails(userDetailsData);
+        localStorage.setItem(
+          "userDetailsCache",
+          JSON.stringify({
+            data: userDetailsData,
+            timestamp: Date.now(),
+          })
+        );
 
-        console.log("Formatted user data:", formattedData);
-        setUserDetails(formattedData);
-        setError(null);
-      } catch (error) {
-        console.error("Error fetching user details:", error);
-        setUserDetails({
-          referrer: "Not Available",
-          currentRank: "Not Available",
-          lastRankUpdateTime: "Not Available",
-          rankExpiryTime: "Not Available",
-          totalInvestment: "0",
-          isActive: false,
-          rewards: "0",
+        // Fetch rank details in parallel
+        const details = [];
+        let pendingAmountTotal = BigInt("0");
+
+        const rankPromises = ranks.map(async (rank) => {
+          const response = await contract.getRankLTG(address, rank.id);
+          if (rank.id <= 7) {
+            pendingAmountTotal = pendingAmountTotal + response.pendingAmount;
+          }
+
+          return {
+            id: rank.id,
+            name: rank.name,
+            count: response.count.toString(),
+            pendingAmount: formatUnits(response.pendingAmount, 18),
+            totalDistributedAmount: formatUnits(response.ttlDstrbtdAmount, 18),
+          };
         });
-        setError("Failed to fetch user details. Please try again.");
-      }
-    };
 
-    fetchUserDetails();
-  }, [isConnected, walletProvider, isProviderReady, address]);
+        const rankResults = await Promise.all(rankPromises);
+        setRankDetails(rankResults);
 
-  useEffect(() => {
-    const fetchRankDetails = async () => {
-      if (walletProvider && connectedAddress) {
-        try {
-          const provider = new BrowserProvider(walletProvider);
-          const signer = await provider.getSigner();
-          const contract = new Contract(contractAddress, contractAbi, signer);
-
-          const details = [];
-          let pendingAmountTotal = BigInt("0"); // Initialize total as BigNumber
-
-          for (let i = 0; i <= 8; i++) {
-            const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
-            // console.log("the ltg is", response);
-
-            // console.log("the pencho is",Number(response.ttlDstrbtdAmount
-            // ));
-
-            // Add the pending amount to the total
-            if (i <= 7) {
-              pendingAmountTotal = pendingAmountTotal + response.pendingAmount;
-            }
-
-            details.push({
-              id: i,
-              name: ranks[i].name,
-              count: response.count.toString(),
-              pendingAmount: formatUnits(response.pendingAmount, 18),
-              totalDistributedAmount: formatUnits(
-                response.ttlDstrbtdAmount,
-                18
-              ),
-            });
-          }
-          setRankDetails(details);
-
-          // Set the rank details and the total pending amount with 2 decimal places
-          setRankDetails(details);
-          setTotalPendingAmount(
-            parseFloat(formatUnits(pendingAmountTotal, 18)).toFixed(2)
-          ); // Convert to string with 2 decimal places
-          setLoading(false);
-        } catch (error) {
-          console.error("Error fetching rank details:", error);
-          setLoading(false);
-        }
-      }
-    };
-    fetchRankDetails();
-  }, [walletProvider, connectedAddress]);
-
-  useEffect(() => {
-    const fetchBonusData = async () => {
-      if (!isConnected || !walletProvider || !address) {
-        console.error(
-          "Wallet not connected, provider not ready, or address missing"
+        // Store in cache
+        localStorage.setItem(
+          "rankDetailsCache",
+          JSON.stringify({
+            data: rankResults,
+            timestamp: Date.now(),
+          })
         );
-        return;
-      }
 
-      setIsLoading(true);
-      setError(null);
+        // Calculate and store totals
+        const formattedPending = parseFloat(
+          formatUnits(pendingAmountTotal, 18)
+        ).toFixed(2);
+        setTotalPendingAmount(formattedPending);
+        localStorage.setItem(
+          "totalPendingCache",
+          JSON.stringify({
+            data: formattedPending,
+            timestamp: Date.now(),
+          })
+        );
 
-      try {
-        const ethersProvider = new BrowserProvider(walletProvider);
-        const signer = await ethersProvider.getSigner();
-        const contract = new Contract(contractAddress, contractAbi, signer);
-
-        // Fetch withdrawal bonus
-        // const withdrawalBonusData = await contract.getWthltgbIncm(address);
-        // setWithdrawalBonus(
-        //   parseFloat(
-        //     ethers.utils.formatEther(withdrawalBonusData || "0")
-        //   ).toFixed(4)
-        // );
-
-        // Fetch total bonus
+        // Fetch and store total bonus
         const totalBonusData = await contract.getUsrTtlLtgrcvd(address);
-        setTotalBonus(
-          parseFloat(formatUnits(totalBonusData || "0", 18)).toFixed(4)
+        const formattedBonus = parseFloat(
+          formatUnits(totalBonusData || "0", 18)
+        ).toFixed(4);
+        setTotalBonus(formattedBonus);
+        localStorage.setItem(
+          "totalBonusCache",
+          JSON.stringify({
+            data: formattedBonus,
+            timestamp: Date.now(),
+          })
         );
       } catch (error) {
-        console.error("Error fetching bonus data:", error);
-        setError("Failed to fetch bonus data");
-        setWithdrawalBonus("0");
-        setTotalBonus("0");
-      } finally {
-        setIsLoading(false);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchBonusData();
-  }, [isConnected, walletProvider, address]);
+    fetchData();
+  }, [isConnected, walletProvider, address, navigate]);
 
-  // Fetch rank details
-  useEffect(() => {
-    const fetchRankDetails = async () => {
-      if (walletProvider && connectedAddress) {
-        try {
-          const provider = new BrowserProvider(walletProvider);
-          const signer = await provider.getSigner();
-          const contract = new Contract(contractAddress, contractAbi, signer);
+  // Get current rank image
+  const currentRankImage = useMemo(() => {
+    if (!userDetails?.currentRank) return ranks[0].image;
+    const rankItem = ranks.find((r) => r.name === userDetails.currentRank);
+    return rankItem?.image || ranks[0].image;
+  }, [userDetails]);
 
-          const details = [];
-          for (let i = 0; i <= 8; i++) {
-            const response = await contract.getRankLTG(connectedAddress, i); // Pass connected wallet address and rank ID
-            //console.log("the ltg is", response);
-            details.push({
-              id: i,
-              name: ranks[i].name,
-              count: response.count.toString(),
-              pendingAmount: formatUnits(response.pendingAmount, 18),
-              totalDistributedAmount: formatUnits(
-                response.ttlDstrbtdAmount,
-                18
-              ),
-
-              //console.log(count);
-            });
-          }
-          setRankDetails(details);
-          setLoading(false);
-        } catch (error) {
-          console.error("Error fetching rank details:", error);
-          setLoading(false);
-        }
-      }
-    };
-    fetchRankDetails();
-  }, [walletProvider, connectedAddress]);
-
+  // Always show the table if we have data, no loading states
   return (
     <>
-      <div className="fixed inset-0 -z-10">
-        {darkMode ? <FeaturesSection /> : <Light />}
-      </div>
-
-      {!isConnected ? (
-        navigate("/")
-      ) : (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen p-4 md:p-6 lg:p-8"
+      >
         <div className="min-h-screen p-5 relative">
           {/* Header Section */}
           <div className="max-w-7xl mx-auto mb-12">
@@ -478,9 +269,9 @@ const RankDetailsPage = () => {
 
           {/* Main Content */}
           <div className="max-w-7xl mx-auto">
-          
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-2xl dark:hover:shadow-[0_0_15px_rgba(0,255,255,0.3)]">
-                <div className="overflow-x-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div className="overflow-x-auto">
+                {rankDetails.length > 0 ? (
                   <table className="w-full">
                     <thead>
                       <tr className="bg-gradient-to-r from-blue-600 to-purple-600">
@@ -502,7 +293,7 @@ const RankDetailsPage = () => {
                       {rankDetails.map((rank, index) => (
                         <tr
                           key={rank.id}
-                          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center space-x-3">
@@ -542,7 +333,7 @@ const RankDetailsPage = () => {
                                 {parseFloat(rank.pendingAmount).toFixed(2)}
                               </span>
                               <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
-                                USDT
+                                ITC
                               </span>
                             </div>
                           </td>
@@ -554,7 +345,7 @@ const RankDetailsPage = () => {
                                 ).toFixed(2)}
                               </span>
                               <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
-                                USDT
+                                ITC
                               </span>
                             </div>
                           </td>
@@ -562,58 +353,58 @@ const RankDetailsPage = () => {
                       ))}
                     </tbody>
                   </table>
+                ) : (
+                  <div className="p-6 text-center text-gray-500">
+                    Loading your data...
+                  </div>
+                )}
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 bg-gray-50 dark:bg-gray-900">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Total Pending
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {totalPendingAmount} ITC
+                  </p>
                 </div>
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Total Bonus
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {totalBonus} ITC
+                  </p>
+                </div>
+                <div className="w-full max-w-sm bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Current Rank
+                  </p>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 bg-gray-50 dark:bg-gray-900">
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Pending
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {totalPendingAmount} USDT
-                    </p>
-                  </div>
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Bonus
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {totalBonus} USDT
-                    </p>
-                  </div>
-                  <div className="w-full max-w-sm bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Current Rank
-                    </p>
+                  <div className="flex flex-col items-start space-y-3 mt-2 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-center sm:text-sm sm:ml-2">
+                    <img
+                      src={currentRankImage}
+                      alt={userDetails?.currentRank || "STAR"}
+                      className="w-12 h-12 object-contain sm:w-10 sm:h-10"
+                    />
 
-                    <div className="flex flex-col items-start space-y-3 mt-2 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-center sm:text-sm sm:ml-2">
-                      <img
-                        src={
-                          ranks.find((r) => r.name === userDetails?.currentRank)
-                            ?.image || ranks[0].image
-                        }
-                        alt={userDetails?.currentRank || "STAR"}
-                        className="w-12 h-12 object-contain sm:w-10 sm:h-10"
-                      />
-
-                      <p
-                        className="lg:text-xl text-xl md:text-xl font-bold text-gray-900 dark:text-white truncate  mr-10 
-   xs:text-lg"
-                        style={{ marginLeft: "0rem" }}
-                      >
-                        {userDetails?.currentRank || "N/A"}
-                      </p>
-                    </div>
+                    <p
+                      className="lg:text-xl text-xl md:text-xl font-bold text-gray-900 dark:text-white truncate mr-10 xs:text-lg"
+                      style={{ marginLeft: "0rem" }}
+                    >
+                      {userDetails?.currentRank || "N/A"}
+                    </p>
                   </div>
                 </div>
               </div>
-          
+            </div>
           </div>
         </div>
-      )}
+      </motion.div>
     </>
   );
 };
 
-export default RankDetailsPage;
+export default React.memo(LifetimeGrowthBonusPage);
