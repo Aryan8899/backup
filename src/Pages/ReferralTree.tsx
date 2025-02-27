@@ -22,7 +22,6 @@ interface ReferralNode {
   address: string;
   rank: string;
   referrals: ReferralNode[];
-  
 }
 
 interface UserDetails {
@@ -438,19 +437,15 @@ const ReferralTree = () => {
   const calculateBranchWidth = useCallback((numChildren: number): number => {
     // Base width per child with spacing
     const baseNodeWidth = 274; // Width of node
-    const nodeSpacing = 25; // Space between nodes
+    const nodeSpacing = 150; // Space between nodes
 
     if (numChildren <= 1) {
       return baseNodeWidth;
     }
 
     // Calculate total width needed for all nodes with spacing
-    const totalWidth =
-      baseNodeWidth * numChildren + nodeSpacing * (numChildren - 1);
-
-    // Apply reasonable maximum width to prevent excessive horizontal scrolling
-    const maxWidth = 50000; // Reasonable maximum width
-    return Math.min(totalWidth, maxWidth);
+    // For multiple children, calculate total width with proper spacing
+  return (baseNodeWidth * numChildren) + (nodeSpacing * (numChildren - 1));
   }, []);
 
   const updateTreeWithReferrals = useCallback(
@@ -807,12 +802,30 @@ const ReferralTree = () => {
           ? details.avatar
           : svgToDataUrl(getMultiavatarSvg(node.address));
 
+           // Calculate total width needed based on the number of child nodes
+    const nodeBaseWidth = 280; // Single node width
+    const nodeSpacing = 200; // Very generous spacing between sibling nodes
+    
+
+    const nodeWidth = hasChildren && isExpanded && node.referrals.length > 0
+    ? nodeBaseWidth * node.referrals.length + nodeSpacing * (node.referrals.length - 1)
+    : nodeBaseWidth;
+
       return (
         <div
           key={node.address}
           className="referral-node-container flex flex-col items-center"
+
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            width: nodeWidth,
+            minWidth: nodeWidth,
+            position: "relative"
+          }}
         >
-          <div className="flex flex-col items-center">
+         
             {/* Node box */}
             <div
               onClick={() => toggleNodeExpansion(node.address)}
@@ -825,7 +838,7 @@ const ReferralTree = () => {
               }
               rounded-2xl p-4 shadow-lg hover:shadow-2xl
               flex flex-col items-center justify-center
-              w-64
+              w-64 mx-auto
             `}
             >
               {/* Glow effect */}
@@ -911,10 +924,10 @@ const ReferralTree = () => {
                   </svg>
                 </div>
               )}
-            </div>
+         
 
             {/* Connector */}
-            {hasChildren && isExpanded && (
+            {/* {hasChildren && isExpanded && (
               <svg
                 className={`w-4 h-6 ${
                   darkMode ? "text-gray-500" : "text-gray-400"
@@ -930,59 +943,71 @@ const ReferralTree = () => {
                   d="M19 14l-7 7m0 0l-7-7m7 7V3"
                 />
               </svg>
-            )}
+            )} */}
           </div>
 
           {/* Children */}
-          {hasChildren && isExpanded && (
-            <div className="relative flex flex-col items-center mt-2">
-              {/* Vertical connector from parent to horizontal bar */}
-              <div
-                className={`w-0.5 h-8 ${
-                  darkMode ? "bg-gray-600" : "bg-gray-400"
-                }`}
-              ></div>
+        
 
-              {/* Children container with horizontal connector */}
-              <div className="relative flex flex-col items-center">
-                {/* Horizontal connector line spanning all children */}
-                <div
-                  className={`h-0.5 ${
-                    darkMode ? "bg-gray-600" : "bg-gray-400"
-                  }`}
-                  style={{
-                    width: `${calculateBranchWidth(node.referrals.length)}px`,
-                  }}
-                ></div>
-
-                {/* Child nodes container */}
-                <div
-                  className="flex mt-2"
-                  style={{
-                    width: `${calculateBranchWidth(node.referrals.length)}px`,
-                    justifyContent:
-                      node.referrals.length > 1 ? "space-between" : "center",
-                  }}
-                >
-                  {node.referrals.map((child) => (
-                    <div
-                      key={child.address}
-                      className="flex flex-col items-center"
-                    >
-                      {/* Vertical connector line */}
-                      <div
-                        className={`w-0.5 h-6 ${
-                          darkMode ? "bg-gray-600" : "bg-gray-400"
-                        }`}
-                      ></div>
-                      {/* Child node */}
-                      {renderNode(child)}
-                    </div>
-                  ))}
-                </div>
+{/* Children */}
+{/* Children */}
+{/* Children */}
+{/* Children */}
+{/* Children */}
+{hasChildren && isExpanded && (
+  <div style={{ 
+    width: "100%",
+    minWidth: "100%"
+  }}>
+    {/* Center vertical connector from parent */}
+    <div style={{
+      display: "flex",
+      justifyContent: "center",
+      width: "100%"
+    }}>
+      <div style={{ 
+        width: "4px",
+        height: "20px",
+        backgroundColor: darkMode ? "#4B5563" : "#9CA3AF",
+      }}></div>
+    </div>
+    
+    {/* Table-based layout for horizontal connector and child nodes */}
+    <table style={{ 
+      width: "100%", 
+      borderCollapse: "collapse",
+      borderTop: `4px solid ${darkMode ? "#4B5563" : "#9CA3AF"}`
+    }}>
+      <tbody>
+        <tr>
+          {node.referrals.map((child, index) => (
+            <td key={`cell-${child.address}`} style={{ 
+              textAlign: "center", 
+              verticalAlign: "top",
+              position: "relative"
+            }}>
+              {/* Vertical connector to child */}
+              <div style={{
+                position: "absolute", 
+                left: "50%", 
+                transform: "translateX(-50%)", 
+                top: "0", 
+                width: "4px", 
+                height: "20px", 
+                backgroundColor: darkMode ? "#4B5563" : "#9CA3AF"
+              }}></div>
+              
+              {/* Child node with padding for connector */}
+              <div style={{ paddingTop: "20px" }}>
+                {renderNode(child)}
               </div>
-            </div>
-          )}
+            </td>
+          ))}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+)}
         </div>
       );
     },

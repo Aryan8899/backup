@@ -306,11 +306,19 @@ body {
   }
 }
 
+.referral-tree-container {
+  overflow-x: auto;
+  min-width: max-content;
+  max-width: 100vw;
+  white-space: nowrap;
+}
+
+
 
 .referral-tree-container {
-  min-width: 1500px;
-  /* Adjust this value as needed */
   overflow-x: auto;
+  min-width: max-content;
+  max-width: 100vw;
   white-space: nowrap;
 }
 
