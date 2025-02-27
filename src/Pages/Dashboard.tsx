@@ -6,6 +6,7 @@ import {
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
+import { RefreshCw } from 'lucide-react';
 import { BrowserProvider, Contract, formatUnits, ethers } from "ethers";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -389,6 +390,7 @@ const compressImage = async (file: File, maxSize = 500): Promise<File> => {
 // Main Dashboard Component
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [cacheVersion, setCacheVersion] = useState(1);
   const { darkMode } = useDarkMode();
   const { priceData } = usePriceData();
   const { address, isConnected } = useAppKitAccount();
@@ -421,6 +423,7 @@ const Dashboard = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedRank, setSelectedRank] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState("");
+  const [forceRefresh, setForceRefresh] = useState(0);
 
   // Financial data state
   const [financialData, setFinancialData] = useState<FinancialData>({
@@ -531,6 +534,28 @@ const Dashboard = () => {
       }
     }
   }, [isConnected, contract, address, navigate, walletProvider]);
+
+  const refreshGraphData = useCallback(() => {
+    setCacheVersion(prev => prev + 1);
+
+    setRankGraphDataCache({
+      data: null,
+      timestamp: 0
+    });
+    
+    // Clear any existing cache for this address
+    const baseKey = `rankGraphData_${address}`;
+    // Loop through potential cache versions to clean them all up
+    for (let i = 0; i < 100; i++) {
+      //const versionedKey = `${baseKey}_v${i}`;
+      localStorage.removeItem(`rtree_${baseKey}_v${i}`);
+      localStorage.removeItem(`$rtree_${baseKey}_v${i}`);
+    }
+    
+    // Force the useEffect to run again
+    setIsGraphLoading(true);
+    // toast.info("Refreshing team data...");
+  }, [address]);
 
   // Load all contract data in a consolidated effect
   useEffect(() => {
@@ -648,6 +673,8 @@ const Dashboard = () => {
 
         // Set rank expiry status
         setIsRankExpired(isExpired);
+
+        refreshGraphData();
 
         // Set financial data
         setFinancialData({
@@ -776,7 +803,7 @@ const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [isConnected, contract, address, userDetails?.currentRank]);
+  }, [isConnected, contract, address, userDetails?.currentRank, refreshGraphData]);
 
   const [rankGraphDataCache, setRankGraphDataCache] = useState<{
     data: GraphData | null;
@@ -785,6 +812,8 @@ const Dashboard = () => {
     data: null,
     timestamp: 0
   });
+
+  
 
 
   // Generate graph data with proper optimization
@@ -819,6 +848,10 @@ const Dashboard = () => {
     return cacheObj;
   }, []);
 
+ 
+
+  
+
   useEffect(() => {
     // Ultra-fast early exits
     if (!isConnected || !contract || !address) {
@@ -826,16 +859,37 @@ const Dashboard = () => {
       return;
     }
   
-    const CACHE_DURATION = 60 * 60 * 1000; // Reduced to 3 minutes
-    const cacheKey = `rankGraphData_${address}`;
-  const cachedData = cache.get(cacheKey);
+    const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes cache
+  const cacheKey = `rankGraphData_${address}_v${cacheVersion}`;
+  // const cachedData = cache.get(cacheKey);
 
+  if (rankGraphDataCache.data && rankGraphDataCache.timestamp > Date.now() - CACHE_DURATION) {
+    console.log("Using memory cached graph data");
+    setRankGraphData(rankGraphDataCache.data);
+    setIsGraphLoading(false);
+    return;
+  }
+
+  const cachedData = cache.get(cacheKey);
   if (cachedData) {
+    console.log("Using localStorage cached graph data");
+    
+    // Update memory cache too
+    setRankGraphDataCache({
+      data: cachedData,
+      timestamp: Date.now()
+    });
+    
     setRankGraphData(cachedData);
     setIsGraphLoading(false);
     return;
   }
 
+  // if (cachedData) {
+  //   setRankGraphData(cachedData);
+  //   setIsGraphLoading(false);
+  //   return;
+  // }
 
   
    
@@ -956,6 +1010,11 @@ const Dashboard = () => {
             },
           }],
         };
+
+        setRankGraphDataCache({
+          data: graphData,
+          timestamp: Date.now()
+        });
         cache.set(cacheKey, graphData, CACHE_DURATION);
   
         // Immediate state updates
@@ -979,18 +1038,20 @@ const Dashboard = () => {
         setIsGraphLoading(false);
       }
     };
+
+    
   
     // Minimized initialization delay
     const timer = setTimeout(generateRankGraphData, 2);
   
     return () => clearTimeout(timer);
   }, [
-    isConnected, 
-    contract, 
-    address, 
-    setRankGraphData, 
-    setRankGraphDataCache,
+    isConnected, contract, address, cacheVersion, rankGraphDataCache.timestamp
   ]);
+
+  const handleRefreshGraph = useCallback(() => {
+    refreshGraphData();
+  }, [refreshGraphData]);
   
   // Address change reset effect
   useEffect(() => {
@@ -1239,6 +1300,9 @@ const Dashboard = () => {
   
       toast.success("🎉 Level Distribution Pool withdrawn successfully!");
 
+
+      refreshGraphData();
+
       setTimeout(() => {
         setShowConfetti(false);
       }, 5000);
@@ -1288,6 +1352,8 @@ const Dashboard = () => {
       }));
 
       toast.success("🎉 RAB withdrawn successfully!");
+
+      refreshGraphData();
 
       setTimeout(() => {
         setShowConfetti(false);
@@ -1346,6 +1412,8 @@ const Dashboard = () => {
                     }
                   : null
               );
+
+              refreshGraphData();
                // Reset the dropdown selection
             setSelectedRank(null);
             
@@ -1996,6 +2064,15 @@ const Dashboard = () => {
                 >
                   Team Ranks Progression
                 </h2>
+
+                <button 
+    onClick={handleRefreshGraph}
+    className="p-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+    title="Refresh graph data"
+  >
+    <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
+  </button>
+
               </div>
 
               <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">

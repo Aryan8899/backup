@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback, useMemo,useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ethers, BrowserProvider } from "ethers";
 import {
   Provider,
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
-import {  useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { useDarkMode } from "../context/DarkModeContext.tsx";
@@ -67,27 +66,6 @@ const ReferralTree = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [initialTransitionLoading, setInitialTransitionLoading] = useState(true);
-
-// Reference to track if this is first mount
-const isFirstMount = useRef(true);
-
-
-// Show initial loader immediately on mount 
-useEffect(() => {
-  // Show the loader immediately on component mount
-  if (isFirstMount.current) {
-    setInitialTransitionLoading(true);
-    
-    // After a short delay, consider the transition phase complete
-    const timer = setTimeout(() => {
-      setInitialTransitionLoading(false);
-    }, 2000); // Adjust timing as needed
-    
-    isFirstMount.current = false;
-    return () => clearTimeout(timer);
-  }
-}, []);
 
   // Memoized contract with error handling
   const contract = useMemo(() => {
@@ -531,7 +509,6 @@ useEffect(() => {
           if (isMounted) {
             setTreeData(cachedTree);
             setIsLoading(false);
-            setInitialTransitionLoading(false); 
             setExpandedNodes(new Set([address]));
           }
 
@@ -1047,7 +1024,7 @@ useEffect(() => {
         <div className="min-h-screen p-6">
           <SimpleBar className="w-full overflow-x-auto">
             <div className="min-w-max">
-            {(isLoading || initialTransitionLoading || !treeData) ? (
+              {isLoading ? (
                 <div className="flex justify-center items-center h-96">
                   <div className="absolute inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30" />
                   <motion.div
@@ -1056,31 +1033,19 @@ useEffect(() => {
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     className="relative z-50 flex flex-col items-center justify-center space-y-6"
                   >
-                    {/* Logo */}
-                    {/* <div className="relative">
-                      <motion.div
-                        animate={{
-                          y: [0, -10, 0],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                        className="relative"
-                      >
-                        <img
-                          src="https://cticlub.org/assets/images/brand/itclogow.png"
-                          alt="ITC Club Logo"
-                          className="h-32 w-auto rounded-xl shadow-lg"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                          }}
-                        />
-                      </motion.div>
-                    </div> */}
-
+           <div className="flex justify-center items-center">
+  <div 
+    className={`
+      w-10 h-10 rounded-full 
+      animate-spin 
+      border-4 
+      ${darkMode 
+        ? 'border-blue-700 border-t-transparent' 
+        : 'border-gray-200 border-t-transparent'
+      }
+    `}
+  />
+</div>
                     {/* Loading indicator */}
 
                     {/* Progress bar */}
