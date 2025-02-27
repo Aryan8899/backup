@@ -6,7 +6,7 @@ import {
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw } from "lucide-react";
 import { BrowserProvider, Contract, formatUnits, ethers } from "ethers";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -535,27 +535,77 @@ const Dashboard = () => {
     }
   }, [isConnected, contract, address, navigate, walletProvider]);
 
-  const refreshGraphData = useCallback(() => {
-    setCacheVersion(prev => prev + 1);
+  const cache = useMemo(() => {
+    const CACHE_PREFIX = 'rtree_'; // Use a single consistent prefix
+    
+    const cacheObj = {
+      get: (key: string): any => {
+        try {
+          const item = localStorage.getItem(`${CACHE_PREFIX}${key}`);
+          if (!item) return null;
+          
+          const parsedItem = JSON.parse(item);
+          if (parsedItem.expiry && Date.now() > parsedItem.expiry) {
+            localStorage.removeItem(`${CACHE_PREFIX}${key}`);
+            return null;
+          }
+          return parsedItem.data;
+        } catch (e) {
+          console.error(`Cache read error for ${key}:`, e);
+          return null;
+        }
+      },
+      set: (key: string, data: any, ttl: number): void => {
+        try {
+          if (data === null || data === undefined) return;
+          const expiry = Date.now() + ttl;
+          localStorage.setItem(
+            `${CACHE_PREFIX}${key}`,
+            JSON.stringify({ data, expiry })
+          );
+        } catch (e) {
+          console.error(`Cache write error for ${key}:`, e);
+        }
+      },
+      remove: (key: string): void => {
+        try {
+          localStorage.removeItem(`${CACHE_PREFIX}${key}`);
+        } catch (e) {
+          console.error(`Cache delete error for ${key}:`, e);
+        }
+      }
+    };
+    return cacheObj;
+  }, []);
 
+  const refreshGraphData = useCallback(() => {
+    // Increment cache version to force a complete refresh
+    setCacheVersion(prev => prev + 1);
+    
+    // Clear the memory cache
     setRankGraphDataCache({
       data: null,
-      timestamp: 0
+      timestamp: 0,
     });
     
-    // Clear any existing cache for this address
+    // Remove ALL cache keys related to this address
     const baseKey = `rankGraphData_${address}`;
-    // Loop through potential cache versions to clean them all up
     for (let i = 0; i < 100; i++) {
-      //const versionedKey = `${baseKey}_v${i}`;
-      localStorage.removeItem(`rtree_${baseKey}_v${i}`);
-      localStorage.removeItem(`$rtree_${baseKey}_v${i}`);
+      cache.remove(`${baseKey}_v${i}`);
     }
     
-    // Force the useEffect to run again
+    // Set loading state to true to trigger a fresh data fetch
     setIsGraphLoading(true);
-    // toast.info("Refreshing team data...");
-  }, [address]);
+    
+    // Reset the graph data to force a complete redraw
+    setRankGraphData({
+      labels: [],
+      datasets: [],
+    });
+  }, [address, cache]);
+  
+  // Then update the upgradeRank function to properly refresh the graph
+
 
   // Load all contract data in a consolidated effect
   useEffect(() => {
@@ -803,54 +853,24 @@ const Dashboard = () => {
     return () => {
       isMounted = false;
     };
-  }, [isConnected, contract, address, userDetails?.currentRank, refreshGraphData]);
+  }, [
+    isConnected,
+    contract,
+    address,
+    userDetails?.currentRank,
+    refreshGraphData,
+  ]);
 
   const [rankGraphDataCache, setRankGraphDataCache] = useState<{
     data: GraphData | null;
     timestamp: number;
   }>({
     data: null,
-    timestamp: 0
+    timestamp: 0,
   });
 
-  
-
-
   // Generate graph data with proper optimization
-  const cache = useMemo(() => {
-    const cacheObj = {
-      get: (key: string): any => {
-        try {
-          let item = localStorage.getItem(`rtree_${key}`) || localStorage.getItem(`$rtree_${key}`);
-          if (!item) return null;
-          const parsedItem = JSON.parse(item);
-          if (parsedItem.expiry && Date.now() > parsedItem.expiry) {
-            localStorage.removeItem(`rtree_${key}`);
-            localStorage.removeItem(`$rtree_${key}`);
-            return null;
-          }
-          return parsedItem.data;
-        } catch (e) {
-          console.error(`Cache read error for ${key}:`, e);
-          return null;
-        }
-      },
-      set: (key: string, data: any, ttl: number): void => {
-        try {
-          if (data === null || data === undefined) return;
-          const expiry = Date.now() + ttl;
-          localStorage.setItem(`rtree_${key}`, JSON.stringify({ data, expiry }));
-        } catch (e) {
-          console.error(`Cache write error for ${key}:`, e);
-        }
-      },
-    };
-    return cacheObj;
-  }, []);
-
  
-
-  
 
   useEffect(() => {
     // Ultra-fast early exits
@@ -858,48 +878,52 @@ const Dashboard = () => {
       setIsGraphLoading(false);
       return;
     }
-  
+
     const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes cache
-  const cacheKey = `rankGraphData_${address}_v${cacheVersion}`;
-  // const cachedData = cache.get(cacheKey);
+    const cacheKey = `rankGraphData_${address}_v${cacheVersion}`;
+    // const cachedData = cache.get(cacheKey);
 
-  if (rankGraphDataCache.data && rankGraphDataCache.timestamp > Date.now() - CACHE_DURATION) {
-    console.log("Using memory cached graph data");
-    setRankGraphData(rankGraphDataCache.data);
-    setIsGraphLoading(false);
-    return;
-  }
+    if (cacheVersion > 1) {
+      setRankGraphDataCache({ data: null, timestamp: 0 });
+    }
 
-  const cachedData = cache.get(cacheKey);
-  if (cachedData) {
-    console.log("Using localStorage cached graph data");
-    
-    // Update memory cache too
-    setRankGraphDataCache({
-      data: cachedData,
-      timestamp: Date.now()
-    });
-    
-    setRankGraphData(cachedData);
-    setIsGraphLoading(false);
-    return;
-  }
+    if (
+      rankGraphDataCache.data &&
+      Date.now() - rankGraphDataCache.timestamp < CACHE_DURATION
+    ) {
+      setRankGraphData(rankGraphDataCache.data);
+      setIsGraphLoading(false);
+      return;
+    }
 
-  // if (cachedData) {
-  //   setRankGraphData(cachedData);
-  //   setIsGraphLoading(false);
-  //   return;
-  // }
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) {
+      console.log("Using localStorage cached graph data");
 
-  
-   
-  
+      // Update memory cache too
+      setRankGraphDataCache({
+        data: cachedData,
+        timestamp: Date.now(),
+      });
+
+      setRankGraphData(cachedData);
+      setIsGraphLoading(false);
+      return;
+    }
+
+    // if (cachedData) {
+    //   setRankGraphData(cachedData);
+    //   setIsGraphLoading(false);
+    //   return;
+    // }
+   // setIsGraphLoading(true);
+
     const generateRankGraphData = async () => {
       const startTime = performance.now();
-      
+
       try {
         setIsGraphLoading(true);
-  
+
         const RANK_INFO = [
           { name: "STAR", index: 0, color: "#B8B8B8" },
           { name: "BRONZE", index: 1, color: "#CD7F32" },
@@ -911,47 +935,44 @@ const Dashboard = () => {
           { name: "ROYAL DIAMOND", index: 7, color: "#F59E0B" },
           { name: "CROWN DIAMOND", index: 8, color: "#6366F1" },
         ];
-  
+
         // Use more memory-efficient data structure
         const rankCountMap = new Map<number, number>();
         const processedAddresses = new Set<string>();
-  
+
         // Hyper-optimized parallel processing
         const processReferralsParallel = async (
-          addresses: string[], 
+          addresses: string[],
           depth = 0,
           maxDepth = 8 // Reduced depth for faster processing
         ) => {
           if (depth >= maxDepth || addresses.length === 0) return;
-  
+
           // Aggressive batch processing with increased concurrency
           const BATCH_SIZE = 10; // Increased batch size
           for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
             const batch = addresses.slice(i, i + BATCH_SIZE);
-            
+
             await Promise.all(
               batch.map(async (address) => {
                 // Immediate skip for processed addresses
                 if (processedAddresses.has(address)) return [];
-  
+
                 processedAddresses.add(address);
-  
+
                 try {
                   // Concurrent data fetching
                   const [userData, referrals] = await Promise.all([
                     contract.users(address),
-                    contract.getUserReferrals(address)
+                    contract.getUserReferrals(address),
                   ]);
-  
+
                   // Rank counting
                   const rank = parseInt(userData[0]?.toString() || "0");
                   if (rank >= 0 && rank < 9) {
-                    rankCountMap.set(
-                      rank, 
-                      (rankCountMap.get(rank) || 0) + 1
-                    );
+                    rankCountMap.set(rank, (rankCountMap.get(rank) || 0) + 1);
                   }
-  
+
                   // Filter and return unprocessed referrals
                   return referrals.filter(
                     (ref: string) => !processedAddresses.has(ref)
@@ -965,69 +986,71 @@ const Dashboard = () => {
               // Flatten and filter results
               const nextLevelReferrals = results
                 .flat()
-                .filter((ref): ref is string => 
-                  typeof ref === 'string' && !processedAddresses.has(ref)
+                .filter(
+                  (ref): ref is string =>
+                    typeof ref === "string" && !processedAddresses.has(ref)
                 );
-  
+
               // Recursive processing with reduced overhead
               if (nextLevelReferrals.length > 0) {
                 await processReferralsParallel(
-                  nextLevelReferrals, 
-                  depth + 1, 
+                  nextLevelReferrals,
+                  depth + 1,
                   maxDepth
                 );
               }
             });
           }
         };
-  
+
         // Start processing with minimal initial delay
         await processReferralsParallel([address]);
-  
+
         // Efficient rank count conversion
-        const rankCounts = RANK_INFO.map((_, index) => 
-          rankCountMap.get(index) || 0
+        const rankCounts = RANK_INFO.map(
+          (_, index) => rankCountMap.get(index) || 0
         );
-  
+
         // Lightweight graph data construction
         const graphData = {
           labels: RANK_INFO.map((rank) => rank.name),
-          datasets: [{
-            label: "Number of Users",
-            data: rankCounts,
-            backgroundColor: RANK_INFO.map((rank) => `${rank.color}80`),
-            borderColor: RANK_INFO.map((rank) => 
-              rank.color === "#000000" 
-                ? "#111111" 
-                : darkenColor(rank.color, -30)
-            ),
-            borderWidth: 2,
-            borderRadius: {
-              topLeft: 8,
-              topRight: 8,
-              bottomLeft: 0,
-              bottomRight: 0,
+          datasets: [
+            {
+              label: "Number of Users",
+              data: rankCounts,
+              backgroundColor: RANK_INFO.map((rank) => `${rank.color}80`),
+              borderColor: RANK_INFO.map((rank) =>
+                rank.color === "#000000"
+                  ? "#111111"
+                  : darkenColor(rank.color, -30)
+              ),
+              borderWidth: 2,
+              borderRadius: {
+                topLeft: 8,
+                topRight: 8,
+                bottomLeft: 0,
+                bottomRight: 0,
+              },
             },
-          }],
+          ],
         };
 
         setRankGraphDataCache({
           data: graphData,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
         cache.set(cacheKey, graphData, CACHE_DURATION);
-  
+
         // Immediate state updates
         setRankGraphData(graphData);
         // setRankGraphDataCache({
         //   data: graphData,
         //   timestamp: currentTime,
         // });
-  
+
         // Optional performance logging
         const endTime = performance.now();
         console.log(`Rank graph generated in ${endTime - startTime}ms`);
-  
       } catch (error) {
         console.error("Rank graph generation failed:", error);
         setRankGraphData({
@@ -1039,20 +1062,22 @@ const Dashboard = () => {
       }
     };
 
-    
-  
     // Minimized initialization delay
     const timer = setTimeout(generateRankGraphData, 2);
-  
+
     return () => clearTimeout(timer);
   }, [
-    isConnected, contract, address, cacheVersion, rankGraphDataCache.timestamp
+    isConnected,
+    contract,
+    address,
+    cacheVersion,
+    rankGraphDataCache.timestamp,
   ]);
 
   const handleRefreshGraph = useCallback(() => {
     refreshGraphData();
   }, [refreshGraphData]);
-  
+
   // Address change reset effect
   useEffect(() => {
     // Immediate cache and graph reset
@@ -1287,7 +1312,7 @@ const Dashboard = () => {
         contract.getWthlvlIncm(address),
         contract.getUsrTtllvlrcvd(address),
       ]);
-  
+
       setFinancialData((prev) => ({
         ...prev,
         withdrawalLevel: parseFloat(
@@ -1297,11 +1322,8 @@ const Dashboard = () => {
           formatUnits(totalLevelReceived || "0", 18)
         ).toFixed(4),
       }));
-  
+
       toast.success("🎉 Level Distribution Pool withdrawn successfully!");
-
-
-      refreshGraphData();
 
       setTimeout(() => {
         setShowConfetti(false);
@@ -1340,20 +1362,18 @@ const Dashboard = () => {
         contract.getWthrabIncome(address),
         contract.getUsrTtlrabrcvd(address),
       ]);
-  
+
       setFinancialData((prev) => ({
         ...prev,
         withdrawalRAB: parseFloat(
           formatUnits(withdrawableRAB || "0", 18)
         ).toFixed(4),
-        totalRAB: parseFloat(
-          formatUnits(totalRABReceived || "0", 18)
-        ).toFixed(4),
+        totalRAB: parseFloat(formatUnits(totalRABReceived || "0", 18)).toFixed(
+          4
+        ),
       }));
 
       toast.success("🎉 RAB withdrawn successfully!");
-
-      refreshGraphData();
 
       setTimeout(() => {
         setShowConfetti(false);
@@ -1394,6 +1414,8 @@ const Dashboard = () => {
       setShowConfetti(true);
       toast.success(`🎉 Successfully upgraded to ${selectedRank}.`);
 
+     
+
       setTimeout(() => {
         setShowConfetti(false);
         // Instead of full page reload, refresh key data
@@ -1413,12 +1435,14 @@ const Dashboard = () => {
                   : null
               );
 
+
+
               refreshGraphData();
-               // Reset the dropdown selection
-            setSelectedRank(null);
-            
-            // Close the dropdown if it's open
-            setDropdownOpen(false);
+              // Reset the dropdown selection
+              setSelectedRank(null);
+
+              // Close the dropdown if it's open
+              setDropdownOpen(false);
             })
             .catch(console.error);
         }
@@ -2065,14 +2089,13 @@ const Dashboard = () => {
                   Team Ranks Progression
                 </h2>
 
-                <button 
-    onClick={handleRefreshGraph}
-    className="p-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
-    title="Refresh graph data"
-  >
-    <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
-  </button>
-
+                <button
+                  onClick={handleRefreshGraph}
+                  className="p-2 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+                  title="Refresh graph data"
+                >
+                  <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
               </div>
 
               <div className="w-full overflow-x-auto rounded-xl p-2 sm:p-4">
