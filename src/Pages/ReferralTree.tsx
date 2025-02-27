@@ -22,6 +22,7 @@ interface ReferralNode {
   address: string;
   rank: string;
   referrals: ReferralNode[];
+  
 }
 
 interface UserDetails {
