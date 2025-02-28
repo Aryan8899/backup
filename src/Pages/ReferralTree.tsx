@@ -1116,6 +1116,7 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
 {/* Children */}
 {/* Children */}
 {/* Children */}
+{/* Children */}
 {hasChildren && isExpanded && (
   <div style={{ 
     width: "100%",
@@ -1125,7 +1126,6 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
     <div style={{
       display: "flex",
       justifyContent: "center",
-      width: "100%"
     }}>
       <div style={{ 
         width: "4px",
@@ -1140,7 +1140,7 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
       borderCollapse: "collapse",
       borderTop: `4px solid ${darkMode ? "#4B5563" : "#9CA3AF"}`
     }}>
-      <tbody>
+  <tbody>
         <tr>
           {node.referrals.map((child, index) => (
             <td key={`cell-${child.address}`} style={{ 
@@ -1153,20 +1153,22 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
                 position: "absolute", 
                 left: "50%", 
                 transform: "translateX(-50%)", 
-                top: "0", 
+                top: "0", /* Ensures proper alignment with parent node */
                 width: "4px", 
-                height: "20px", 
+                height: "40px", /* Further increased for better connection */
                 backgroundColor: darkMode ? "#4B5563" : "#9CA3AF"
               }}></div>
               
               {/* Child node with padding for connector */}
-              <div style={{ paddingTop: "20px" }}>
+              <div style={{ paddingTop: "40px", display: "flex", justifyContent: "center" }}> {/* Center-aligned child node */}
                 {renderNode(child)}
               </div>
             </td>
           ))}
         </tr>
       </tbody>
+
+
     </table>
   </div>
 )}
