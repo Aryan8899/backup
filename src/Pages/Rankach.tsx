@@ -220,7 +220,7 @@ interface CustomTooltipProps extends TooltipProps<number, string> {
 // Constants
 const ADMIN_ADDRESSES: string[] = [
   "0x3E582a9FFD780A4DFC8AAb220A644596772B919E",
-  "0x3e582a9ffd780a4dfc8aab220a644596772b919e",
+  "0x185601d452718d92F66dB4A372bE1cf3Cb67C2f3",
 ];
 
 const RANKS: RankInfo[] = [

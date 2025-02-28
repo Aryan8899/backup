@@ -1609,8 +1609,8 @@ const Dashboard = () => {
   }, [isConnected, walletProvider, isProviderReady, address]);
 
   const ADMIN_ADDRESSES = [
-    "0x3E582a9FFD780A4DFC8AAb220A644596772B919E".toLowerCase(),
-    "0x0Ac0920459Ae9c1ABB3D866C1f772e7f0697B069".toLowerCase(),
+    "0x185601d452718d92F66dB4A372bE1cf3Cb67C2f3 ".toLowerCase(),
+
   ];
 
   useEffect(() => {

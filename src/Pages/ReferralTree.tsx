@@ -596,18 +596,19 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
   );
 
   // Calculate dynamic width for tree branches based on number of children
-  const calculateBranchWidth = useCallback((numChildren: number): number => {
+  const calculateBranchWidth = useCallback((numChildren: number, depth = 0, expanded = false): number => {
     // Base width per child with spacing
-    const baseNodeWidth = 274; // Width of node
-    const nodeSpacing = 150; // Space between nodes
-
+    const baseNodeWidth = 280; // Width of node
+    const minNodeSpacing = expanded ? 100 : 20; // More space between expanded nodes
+    
     if (numChildren <= 1) {
       return baseNodeWidth;
     }
-
+    
     // Calculate total width needed for all nodes with spacing
     // For multiple children, calculate total width with proper spacing
-  return (baseNodeWidth * numChildren) + (nodeSpacing * (numChildren - 1));
+    // The expanded parameter ensures expanded nodes get more space
+    return (baseNodeWidth * numChildren) + (minNodeSpacing * (numChildren - 1));
   }, []);
 
   const updateTreeWithReferrals = useCallback(
@@ -947,9 +948,8 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
     [loadingNodes, loadReferrals]
   );
 
-  // Render a single node
   const renderNode = useCallback(
-    (node: ReferralNode) => {
+    (node: ReferralNode, depth = 0) => {
       const hasChildren = node.referrals.length > 0;
       const isExpanded = expandedNodes.has(node.address);
       const isLoading = loadingNodes.has(node.address);
@@ -957,143 +957,92 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
         avatar: "",
         nickname: "Unknown",
       };
-
+    
       // Get avatar source with fallback to multiavatar
       const avatarSource =
         details.avatar && details.avatar.trim() !== ""
           ? details.avatar
           : svgToDataUrl(getMultiavatarSvg(node.address));
-
-           // Calculate total width needed based on the number of child nodes
-    const nodeBaseWidth = 280; // Single node width
-    const nodeSpacing = 200; // Very generous spacing between sibling nodes
     
-
-    const nodeWidth = hasChildren && isExpanded && node.referrals.length > 0
-    ? nodeBaseWidth * node.referrals.length + nodeSpacing * (node.referrals.length - 1)
-    : nodeBaseWidth;
-
-      return (
+      // Node card content - this remains unchanged
+      const nodeCard = (
         <div
-          key={node.address}
-          className="referral-node-container flex flex-col items-center"
-
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            width: nodeWidth,
-            minWidth: nodeWidth,
-            position: "relative"
-          }}
+          onClick={() => toggleNodeExpansion(node.address)}
+          className={`
+            relative group cursor-pointer transition-all duration-300
+            ${
+              darkMode
+                ? "bg-gray-800/60 backdrop-blur-xl border border-gray-700/50 hover:border-cyan-500/50"
+                : "bg-white/60 backdrop-blur-xl border border-gray-200/50 hover:border-blue-500/50"
+            }
+            rounded-2xl p-4 shadow-lg hover:shadow-2xl
+            flex flex-col items-center justify-center
+            w-64 mx-auto
+          `}
         >
-         
-            {/* Node box */}
-            <div
-              onClick={() => toggleNodeExpansion(node.address)}
-              className={`
-              relative group cursor-pointer transition-all duration-300
-              ${
-                darkMode
-                  ? "bg-gray-800/60 backdrop-blur-xl border border-gray-700/50 hover:border-cyan-500/50"
-                  : "bg-white/60 backdrop-blur-xl border border-gray-200/50 hover:border-blue-500/50"
-              }
-              rounded-2xl p-4 shadow-lg hover:shadow-2xl
-              flex flex-col items-center justify-center
-              w-64 mx-auto
-            `}
-            >
-              {/* Glow effect */}
+          {/* Glow effect */}
+          <div
+            className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300 
+            bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-cyan-500/10 rounded-2xl blur-lg"
+          />
+  
+          {/* Content */}
+          <div className="relative z-10">
+            <img
+              src={avatarSource}
+              alt="Avatar"
+              className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-white/20 group-hover:scale-105 transition-transform"
+              onError={(e) => {
+                // Fallback if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.src = svgToDataUrl(getMultiavatarSvg(node.address));
+              }}
+            />
+  
+            <div className="text-center space-y-1">
               <div
-                className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300 
-                bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-cyan-500/10 rounded-2xl blur-lg"
-              />
-
-              {/* Content */}
-              <div className="relative z-10">
-                <img
-                  src={avatarSource}
-                  alt="Avatar"
-                  className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-white/20 group-hover:scale-105 transition-transform"
-                  onError={(e) => {
-                    // Fallback if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.src = svgToDataUrl(getMultiavatarSvg(node.address));
-                  }}
-                />
-
-                <div className="text-center space-y-1">
-                  <div
-                    className={`text-sm ${
-                      darkMode ? "text-gray-300" : "text-gray-600"
-                    }`}
-                  >
-                    {details?.nickname || "Unknown"}
-                  </div>
-                  <div
-                    className={`font-bold ${
-                      darkMode ? "text-white" : "text-gray-800"
-                    }`}
-                  >
-                    {shortenAddress(node.address)}
-                  </div>
-                  <div
-                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium
-                  ${
-                    darkMode
-                      ? "bg-gray-700 text-cyan-400"
-                      : "bg-blue-50 text-blue-600"
-                  }`}
-                  >
-                    Rank: {node.rank}
-                  </div>
-                  <div
-                    className={`text-xs ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    {isLoading || !node.referrals?.length
-                      ? "-"
-                      : `${node.referrals.length} Referrals`}
-                  </div>
-                </div>
+                className={`text-sm ${
+                  darkMode ? "text-gray-300" : "text-gray-600"
+                }`}
+              >
+                {details?.nickname || "Unknown"}
               </div>
-
-              {/* Loading indicator */}
-              {/* {isLoading && (
-                <div className="absolute top-1 right-1">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )} */}
-
-              {/* Expand indicator */}
-              {node.referrals.length > 0 && (
-                <div className="absolute bottom-1 right-1">
-                  <svg
-                    className={`w-4 h-4 transform transition-transform ${
-                      isExpanded ? "rotate-180" : "rotate-0"
-                    } text-gray-400`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-              )}
-         
-
-            {/* Connector */}
-            {/* {hasChildren && isExpanded && (
+              <div
+                className={`font-bold ${
+                  darkMode ? "text-white" : "text-gray-800"
+                }`}
+              >
+                {shortenAddress(node.address)}
+              </div>
+              <div
+                className={`inline-block px-2 py-1 rounded-full text-xs font-medium
+                ${
+                  darkMode
+                    ? "bg-gray-700 text-cyan-400"
+                    : "bg-blue-50 text-blue-600"
+                }`}
+              >
+                Rank: {node.rank}
+              </div>
+              <div
+                className={`text-xs ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                {isLoading || !node.referrals?.length
+                  ? "-"
+                  : `${node.referrals.length} Referrals`}
+              </div>
+            </div>
+          </div>
+  
+          {/* Expand indicator */}
+          {node.referrals.length > 0 && (
+            <div className="absolute bottom-1 right-1">
               <svg
-                className={`w-4 h-6 ${
-                  darkMode ? "text-gray-500" : "text-gray-400"
-                } my-2`}
+                className={`w-4 h-4 transform transition-transform ${
+                  isExpanded ? "rotate-180" : "rotate-0"
+                } text-gray-400`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1101,77 +1050,87 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
                 />
               </svg>
-            )} */}
+            </div>
+          )}
+        </div>
+      );
+  
+      // If this node doesn't have children or isn't expanded, just return the card
+      if (!hasChildren || !isExpanded) {
+        return (
+          <div className="inline-block" style={{ margin: "0 20px" }}>
+            {nodeCard}
           </div>
-
-          {/* Children */}
-        
-
-{/* Children */}
-{/* Children */}
-{/* Children */}
-{/* Children */}
-{/* Children */}
-{/* Children */}
-{hasChildren && isExpanded && (
-  <div style={{ 
-    width: "100%",
-    minWidth: "100%"
-  }}>
-    {/* Center vertical connector from parent */}
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-    }}>
-      <div style={{ 
-        width: "4px",
-        height: "20px",
-        backgroundColor: darkMode ? "#4B5563" : "#9CA3AF",
-      }}></div>
-    </div>
-    
-    {/* Table-based layout for horizontal connector and child nodes */}
-    <table style={{ 
-      width: "100%", 
-      borderCollapse: "collapse",
-      borderTop: `4px solid ${darkMode ? "#4B5563" : "#9CA3AF"}`
-    }}>
-  <tbody>
-        <tr>
-          {node.referrals.map((child, index) => (
-            <td key={`cell-${child.address}`} style={{ 
-              textAlign: "center", 
-              verticalAlign: "top",
-              position: "relative"
-            }}>
-              {/* Vertical connector to child */}
-              <div style={{
-                position: "absolute", 
-                left: "50%", 
-                transform: "translateX(-50%)", 
-                top: "0", /* Ensures proper alignment with parent node */
-                width: "4px", 
-                height: "40px", /* Further increased for better connection */
-                backgroundColor: darkMode ? "#4B5563" : "#9CA3AF"
-              }}></div>
-              
-              {/* Child node with padding for connector */}
-              <div style={{ paddingTop: "40px", display: "flex", justifyContent: "center" }}> {/* Center-aligned child node */}
-                {renderNode(child)}
-              </div>
-            </td>
-          ))}
-        </tr>
-      </tbody>
-
-
-    </table>
-  </div>
-)}
+        );
+      }
+  
+      // If the node has children and is expanded, create a table-based layout
+      return (
+        <div className="flex flex-col items-center" style={{ margin: "0 20px" }}>
+          {/* Node card at top */}
+          {nodeCard}
+          
+          {/* Vertical connector from parent */}
+          <div 
+            style={{
+              width: "4px", 
+              height: "20px",
+              backgroundColor: darkMode ? "#4B5563" : "#9CA3AF",
+              margin: "8px auto"
+            }}
+          />
+          
+          {/* Table-based layout for horizontal connector and child nodes */}
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              borderTop: `4px solid ${darkMode ? "#4B5563" : "#9CA3AF"}`,
+            }}
+          >
+            <tbody>
+              <tr>
+                {node.referrals.map((child, index) => (
+                  <td
+                    key={child.address}
+                    style={{
+                      textAlign: "center",
+                      verticalAlign: "top",
+                      position: "relative",
+                    }}
+                  >
+                    {/* Vertical connector to child */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        top: "0",
+                        width: "4px",
+                        height: "40px",
+                        backgroundColor: darkMode ? "#4B5563" : "#9CA3AF",
+                      }}
+                    />
+  
+                    {/* Child node with padding for connector */}
+                    <div
+                      style={{
+                        paddingTop: "40px",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {renderNode(child, depth + 1)}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
       );
     },
@@ -1183,7 +1142,7 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
       toggleNodeExpansion,
       shortenAddress,
       svgToDataUrl,
-      getMultiavatarSvg,
+      getMultiavatarSvg
     ]
   );
 

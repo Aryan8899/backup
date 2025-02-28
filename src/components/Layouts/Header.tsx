@@ -127,7 +127,7 @@ const Header = () => {
 
   const ADMIN_ADDRESSES = [
     "0x978ef2f8e2BB491Adf7358be7fFB527E7bD47312".toLowerCase(),
-    "0x3E582a9FFD780A4DFC8AAb220A644596772B919E".toLowerCase(),
+    "0x185601d452718d92F66dB4A372bE1cf3Cb67C2f3".toLowerCase(),
   ];
 
   const isAdmin = (userAddress: string | undefined): boolean => {
