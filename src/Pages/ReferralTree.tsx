@@ -68,6 +68,12 @@ const ReferralTree = () => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoized contract with error handling
+
+
+  interface SkeletonProps {
+    darkMode: boolean;
+  }
+
   const contract = useMemo(() => {
     if (!walletProvider) {
       console.log("Wallet provider not available");
@@ -122,6 +128,162 @@ const ReferralTree = () => {
     // Emergency clear of cache if needed - uncomment to reset cache
     // rtreeKeys.forEach(key => localStorage.removeItem(key));
   }, []);
+
+
+  // Skeleton loader component for referral nodes
+const SkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
+  <div className="w-64 mx-auto">
+    <div
+      className={`
+        relative rounded-2xl p-4 shadow-lg
+        ${
+          darkMode
+            ? "bg-gray-800/60 backdrop-blur-xl border border-gray-700/50"
+            : "bg-white/60 backdrop-blur-xl border border-gray-200/50"
+        }
+      `}
+    >
+      {/* Avatar skeleton */}
+      <div 
+        className={`
+          w-20 h-20 rounded-full mx-auto mb-3 animate-pulse
+          ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+        `}
+      />
+      
+      {/* Text lines skeletons */}
+      <div className="space-y-3">
+        {/* Nickname */}
+        <div 
+          className={`
+            h-4 w-24 mx-auto rounded-full animate-pulse
+            ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+          `}
+        />
+        
+        {/* Address */}
+        <div 
+          className={`
+            h-5 w-32 mx-auto rounded-full animate-pulse
+            ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+          `}
+        />
+        
+        {/* Rank */}
+        <div 
+          className={`
+            h-5 w-20 mx-auto rounded-full animate-pulse
+            ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+          `}
+        />
+        
+        {/* Referral count */}
+        <div 
+          className={`
+            h-3 w-16 mx-auto rounded-full animate-pulse
+            ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+          `}
+        />
+      </div>
+    </div>
+  </div>
+);
+
+
+// Skeleton tree structure
+// Improved Skeleton tree structure with better spacing and width management
+// Completely redesigned SkeletonTree to ensure it stays within viewport
+// Compact SkeletonTree with reduced height and tighter spacing
+const SkeletonTree: React.FC<SkeletonProps> = ({ darkMode }) => (
+  <div className="w-full max-w-full overflow-visible py-2">
+    {/* Root node with reduced size */}
+    <div className="flex justify-center mb-4">
+      <CompactSkeletonNode darkMode={darkMode} />
+    </div>
+    
+    {/* Shorter vertical connector */}
+    <div className="flex justify-center mb-2">
+      <div 
+        className={`w-1 h-8 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}
+      />
+    </div>
+    
+    {/* Child nodes with more compact layout */}
+    <div className="w-full overflow-visible">
+      {/* Horizontal connector line */}
+      <div className="relative w-full flex justify-center mb-2">
+        <div 
+          className={`w-1/2 h-1 ${darkMode ? "bg-gray-700" : "bg-gray-300"}`}
+          style={{ maxWidth: "400px" }}
+        />
+      </div>
+      
+      {/* More compact child nodes layout with reduced spacing */}
+      <div className="flex justify-center flex-wrap gap-2">
+        <div className="mb-2 mx-1">
+          <CompactSkeletonNode darkMode={darkMode} />
+        </div>
+        <div className="mb-2 mx-1">
+          <CompactSkeletonNode darkMode={darkMode} />
+        </div>
+        <div className="mb-2 mx-1">
+          <CompactSkeletonNode darkMode={darkMode} />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Smaller and more compact skeleton node
+const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
+  <div className="w-48 mx-auto"> {/* Reduced width from 64 to 48 */}
+    <div
+      className={`
+        relative rounded-xl p-3 shadow-md
+        ${
+          darkMode
+            ? "bg-gray-800/60 backdrop-blur-xl border border-gray-700/50"
+            : "bg-white/60 backdrop-blur-xl border border-gray-200/50"
+        }
+      `}
+    >
+      {/* Smaller avatar skeleton */}
+      <div 
+        className={`
+          w-12 h-12 rounded-full mx-auto mb-2 animate-pulse
+          ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+        `}
+      />
+      
+      {/* Smaller and fewer text lines */}
+      <div className="space-y-2">
+        {/* Nickname */}
+        <div 
+          className={`
+            h-3 w-16 mx-auto rounded-full animate-pulse
+            ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+          `}
+        />
+        
+        {/* Address */}
+        <div 
+          className={`
+            h-3 w-24 mx-auto rounded-full animate-pulse
+            ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+          `}
+        />
+        
+        {/* Rank - single line instead of two */}
+        <div 
+          className={`
+            h-3 w-16 mx-auto rounded-full animate-pulse
+            ${darkMode ? "bg-gray-700" : "bg-gray-300"}
+          `}
+        />
+      </div>
+    </div>
+  </div>
+);
 
   // Cache utilities
   const cache = useMemo(() => {
@@ -1053,41 +1215,7 @@ const ReferralTree = () => {
               {isLoading ? (
                 <div className="flex justify-center items-center h-96">
                   <div className="absolute inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30" />
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="relative z-50 flex flex-col items-center justify-center space-y-6"
-                  >
-           <div className="flex justify-center items-center">
-  <div 
-    className={`
-      w-10 h-10 rounded-full 
-      animate-spin 
-      border-4 
-      ${darkMode 
-        ? 'border-blue-700 border-t-transparent' 
-        : 'border-gray-200 border-t-transparent'
-      }
-    `}
-  />
-</div>
-                    {/* Loading indicator */}
-
-                    {/* Progress bar */}
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: ["0%", "100%", "0%"],
-                        transition: {
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        },
-                      }}
-                      className="w-64 h-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-                    />
-                  </motion.div>
+                  <SkeletonTree darkMode={darkMode} />
                 </div>
               ) : error ? (
                 <div className="flex flex-col items-center justify-center h-96 space-y-4">

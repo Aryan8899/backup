@@ -113,6 +113,12 @@ const API_ENDPOINTS = {
   updateAvatar: `${API_BASE_URL}/users/update-avatar`,
 };
 
+const SPECIAL_ADDRESSES = [
+  "0x0Ac0920459Ae9c1ABB3D866C1f772e7f0697B069",
+  "0xe18dAc7e37eD0F27b1DeBB5b07D61211dEb90237",
+  "0x370f791Bd02d7672Aa9a4A72aa8Cd46f0604b285"
+];
+
 // Type definitions for better code organization and type safety
 interface UserData {
   nickname: string;
@@ -397,6 +403,17 @@ const Dashboard = () => {
   const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const { width, height } = useWindowSize();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+
+  const isSpecialAddress = useMemo(() => {
+    if (!address) return false;
+    
+    // Convert everything to lowercase for case-insensitive comparison
+    const lowerAddress = address.toLowerCase();
+    const lowerSpecialAddresses = SPECIAL_ADDRESSES.map(addr => addr.toLowerCase());
+    
+    return lowerSpecialAddresses.includes(lowerAddress);
+  }, [address]);
 
   // Use the custom hook for contract interactions
   const { contract, isReady: isContractReady } = useContract(
@@ -703,10 +720,20 @@ const Dashboard = () => {
         const currentTime = BigInt(Math.floor(Date.now() / 1000));
         const expectedTime = userData[0]?.toString();
         const expiryTime = userData.rankExpiryTime;
-        const isActive =
-          currentTime >= BigInt(expectedTime || "0") &&
-          currentTime < BigInt(expiryTime || "0");
-        const isExpired = currentTime > BigInt(expiryTime || "0");
+
+
+          let isActive = true;
+        let isExpired = false;
+        let rankExpiryTimeDisplay = "MAX";
+        
+        // For non-special addresses, use the normal logic
+        if (!isSpecialAddress) {
+          isActive = currentTime >= BigInt(expectedTime || "0") && 
+                     currentTime < BigInt(expiryTime || "0");
+          isExpired = currentTime > BigInt(expiryTime || "0");
+          rankExpiryTimeDisplay = formatTimestamp(Number(userData.rankExpiryTime || 0));
+        }
+
 
         setUserDetails({
           referrer: userData[2] || "No referrer",
@@ -714,15 +741,15 @@ const Dashboard = () => {
           lastRankUpdateTime: formatTimestamp(
             Number(userData.lastRankUpdateTime || 0)
           ),
-          rankExpiryTime: formatTimestamp(Number(userData.rankExpiryTime || 0)),
+          rankExpiryTime: isSpecialAddress ? "MAX" : rankExpiryTimeDisplay,
           totalInvestment: formatUnits(userData[5]?.toString() || "0", 18),
-          isActive: isActive && !isExpired,
-          isExpired,
+          isActive: isSpecialAddress ? true : (isActive && !isExpired),
+          isExpired: isSpecialAddress ? false : isExpired,
           rewards: totalRewards.toString(),
         });
 
         // Set rank expiry status
-        setIsRankExpired(isExpired);
+        setIsRankExpired(isSpecialAddress ? false : isExpired);
 
         refreshGraphData();
 
