@@ -100,7 +100,7 @@ interface RankDetail {
 }
 
 const ADMIN_ADDRESSES = [
-  "0x185601d452718d92F66dB4A372bE1cf3Cb67C2f3".toLowerCase(),
+  "0x3E582a9FFD780A4DFC8AAb220A644596772B919E".toLowerCase(),
   
 ];
 
