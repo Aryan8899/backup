@@ -1609,7 +1609,7 @@ const Dashboard = () => {
   }, [isConnected, walletProvider, isProviderReady, address]);
 
   const ADMIN_ADDRESSES = [
-    "0x3E582a9FFD780A4DFC8AAb220A644596772B919E   ".toLowerCase(),
+    "0x3E582a9FFD780A4DFC8AAb220A644596772B919E".toLowerCase(),
 
   ];
 
