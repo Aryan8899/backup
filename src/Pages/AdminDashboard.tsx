@@ -1619,6 +1619,8 @@ const Dashboard = () => {
       return;
     }
 
+    console.log("the add issss",ADMIN_ADDRESSES);
+
     if (!ADMIN_ADDRESSES.includes(address.toLowerCase())) {
       navigate("/");
     }
