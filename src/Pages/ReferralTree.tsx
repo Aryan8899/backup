@@ -5,6 +5,7 @@ import {
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
+import { userApi } from "../api/userApi";
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { useDarkMode } from "../context/DarkModeContext.tsx";
@@ -520,51 +521,77 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
     const checkRegistration = async () => {
       try {
         console.log("Checking registration for address:", address);
-
-        // IMPORTANT: Temporarily bypass cache check to rule out cache issues
-        // const cachedStatus = cache.get(`reg_${address}`);
-        // if (cachedStatus !== null) {
-        //   if (!cachedStatus) {
-        //     navigate("/");
-        //   } else if (isMounted) {
-        //     setIsInitialized(true);
-        //     setIsLoading(false);
-        //   }
-        //   return;
-        // }
-
-        // Directly check contract without cache dependency
+    
+        try {
+          const userCheckResponse = await userApi.getUserByAddress(address);
+          console.log("User API response:", userCheckResponse);
+          console.log("User Data:", userCheckResponse.data);
+    
+          // More detailed logging and checking
+          if (userCheckResponse.status === 'success') {
+            const userData = userCheckResponse.data?.user;
+            console.log("User Details:", userData);
+    
+            // Explicitly check isActive from user object
+            const isApiActive = userData?.isActive === true;
+            console.log("API Reported Active Status:", isApiActive);
+    
+            if (isApiActive) {
+              console.log("User is active according to API, continuing to dashboard");
+              if (isMounted) {
+                setIsInitialized(true);
+                setIsLoading(false);
+                return;
+              }
+            } else {
+              console.log("User is NOT active according to API, redirecting home");
+              if (isMounted) {
+                navigate("/");
+                return;
+              }
+            }
+          }
+        } catch (apiError) {
+          console.error("API registration check failed:", apiError);
+        }
+    
+        // Fallback to contract check if API check fails or returns unexpected result
         const userData = await contract.users(address);
         console.log("User data from contract:", userData);
-
+    
         // Handle different contract response formats
         let isActive = false;
-
+    
         if (userData && typeof userData.isActive === "boolean") {
           isActive = userData.isActive;
         } else if (userData && userData.length > 0) {
           // Try to extract isActive from array if it's returned that way
           isActive = Boolean(userData[1]);
         }
-
-        console.log("User active status:", isActive);
-
-        // Only store in cache if successful
-        cache.set(`reg_${address}`, isActive, CACHE_TTL.REGISTRATION);
-
+    
+        console.log("Contract Reported Active Status:", isActive);
+    
         if (!isActive) {
-          console.log("User not active, redirecting to home");
-          if (isMounted) navigate("/");
-        } else if (isMounted) {
-          console.log("User active, continuing to tree initialization");
+          console.log("User not active via contract, redirecting to home");
+          if (isMounted) {
+            navigate("/");
+            return;
+          }
+        }
+    
+        // If we reach here and nothing has triggered a navigation, 
+        // it means the user is active
+        if (isMounted) {
+          console.log("User is active, continuing to initialization");
           setIsInitialized(true);
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Registration check error:", error);
+        console.error("Comprehensive registration check error:", error);
         if (isMounted) {
-          setError("Failed to verify registration status. Please try again.");
+          setError("Failed to verify registration status.");
           setIsLoading(false);
+          
         }
       }
     };
@@ -653,27 +680,27 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
     const loadTreeData = async () => {
       try {
         setIsLoading(true);
-
+    
         // Add emergency clear of tree cache - uncomment if needed
         // cache.clear(`tree_${address}`);
-
+    
         // Check cache first
         const cacheKey = `tree_${address}`;
         console.log("Checking cache for tree data with key:", cacheKey);
         const cachedTree = cache.get(cacheKey);
-
+    
         if (cachedTree) {
           console.log("Found cached tree data:", cachedTree);
-
+    
           if (isMounted) {
             setTreeData(cachedTree);
             setIsLoading(false);
             setExpandedNodes(new Set([address]));
           }
-
+    
           // Pre-fetch user details for root
           fetchUserDetails(address);
-
+    
           // Pre-fetch first level referrals
           if (cachedTree?.referrals && isMounted) {
             console.log("Pre-fetching user details for referrals");
@@ -681,24 +708,31 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
               fetchUserDetails(ref.address);
             });
           }
-
+    
           return;
         }
-
-        console.log("No cached tree data, fetching from contract");
-
-        // Get user rank
-        const userData = await contract.users(address);
-        const rankIndex = Number(userData[0]?.toString() || "0");
-        const rank = getRankName(rankIndex);
-
-        // Get referrals for root
-        const firstLevelReferrals = await contract.getUserReferrals(address);
-
+    
+        console.log("No cached tree data, fetching from API");
+    
+        // Get user data
+        const userResponse = await userApi.getUserByAddress(address);
+        const userData = userResponse.data?.user;
+        
+        if (!userData || !userData.id) {
+          throw new Error("User data not found");
+        }
+    
+        // Get user's rank directly from the response
+        const rank = userData.currentRank || "Unknown";
+    
+        // Get referrals for root using the user's ID
+        const detailsResponse = await userApi.getUserDetails(userData.id);
+        const firstLevelReferrals = detailsResponse.data?.referrals || [];
+    
         // Build referral nodes for first level, with concurrency limit
         const CONCURRENCY_LIMIT = 3;
         const referrals: ReferralNode[] = [];
-
+    
         for (
           let i = 0;
           i < firstLevelReferrals.length;
@@ -706,45 +740,43 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
         ) {
           const batch = firstLevelReferrals.slice(i, i + CONCURRENCY_LIMIT);
           const batchResults = await Promise.all(
-            batch.map(async (refAddress: string) => {
+            batch.map(async (referral: any) => {
               try {
-                const refData = await contract.users(refAddress);
-                const refRankIndex = Number(refData[0]?.toString() || "0");
                 return {
-                  address: refAddress,
-                  rank: getRankName(refRankIndex),
+                  address: referral.address,
+                  rank: referral.currentRank || "Unknown",
                   referrals: [],
                 };
               } catch (e) {
                 return {
-                  address: refAddress,
+                  address: referral.address,
                   rank: "Unknown",
                   referrals: [],
                 };
               }
             })
           );
-
+    
           referrals.push(...batchResults);
         }
-
+    
         // Create root node
         const rootNode: ReferralNode = {
           address,
           rank,
           referrals,
         };
-
+    
         // Cache tree data
         cache.set(cacheKey, rootNode, CACHE_TTL.TREE);
-
+    
         // Update state if component still mounted
         if (isMounted) {
           setTreeData(rootNode);
           setIsLoading(false);
           setExpandedNodes(new Set([address]));
         }
-
+    
         // Fetch user details for first level
         fetchUserDetails(address);
         referrals.forEach((ref) => {
@@ -799,133 +831,131 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
   }, [cache]);
 
   // Load child referrals
-  const loadReferrals = useCallback(
-    async (nodeAddress: string) => {
-      if (!contract) {
-        console.error("Contract not available for loading referrals");
-        return;
-      }
+ // Load child referrals
+const loadReferrals = useCallback(
+  async (nodeAddress: string) => {
+    if (!nodeAddress) {
+      console.error("Invalid node address for loading referrals");
+      return;
+    }
 
-      if (!nodeAddress) {
-        console.error("Invalid node address for loading referrals");
-        return;
-      }
+    if (loadingNodes.has(nodeAddress)) {
+      console.log(`Already loading referrals for ${nodeAddress}`);
+      return;
+    }
 
-      if (loadingNodes.has(nodeAddress)) {
-        console.log(`Already loading referrals for ${nodeAddress}`);
-        return;
-      }
+    console.log(
+      `Checking if referrals for ${nodeAddress} are already loaded`
+    );
 
-      console.log(
-        `Checking if referrals for ${nodeAddress} are already loaded`
-      );
+    // Check if this node already has its referrals loaded
+    const hasReferrals = findNode(
+      treeData,
+      nodeAddress,
+      (node) => node.referrals.length > 0
+    );
 
-      // Check if this node already has its referrals loaded
-      const hasReferrals = findNode(
-        treeData,
-        nodeAddress,
-        (node) => node.referrals.length > 0
-      );
+    if (hasReferrals) {
+      console.log(`Referrals for ${nodeAddress} already loaded`);
+      return;
+    }
 
-      if (hasReferrals) {
-        console.log(`Referrals for ${nodeAddress} already loaded`);
-        return;
-      }
+    console.log(`Loading referrals for ${nodeAddress}`);
 
-      console.log(`Loading referrals for ${nodeAddress}`);
+    // Mark node as loading
+    setLoadingNodes((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(nodeAddress);
+      return newSet;
+    });
 
-      // Mark node as loading
-      setLoadingNodes((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(nodeAddress);
-        return newSet;
-      });
+    try {
+      // Check cache first
+      const cacheKey = `refs_${nodeAddress}`;
+      const cachedRefs = cache.get(cacheKey);
 
-      try {
-        // Check cache first
-        const cacheKey = `refs_${nodeAddress}`;
-        const cachedRefs = cache.get(cacheKey);
-
-        if (cachedRefs) {
-          updateTreeWithReferrals(nodeAddress, cachedRefs);
-
-          // Fetch user details for the referrals
-          cachedRefs.forEach((ref: ReferralNode) => {
-            fetchUserDetails(ref.address);
-          });
-
-          return;
-        }
-
-        // Get referrals from contract with timeout protection
-        const referralAddresses = (await Promise.race([
-          contract.getUserReferrals(nodeAddress),
-          new Promise<string[]>((_, reject) =>
-            setTimeout(() => reject(new Error("Referral fetch timeout")), 10000)
-          ),
-        ])) as string[];
-
-        // Build referral nodes with concurrency limit
-        const CONCURRENCY_LIMIT = 3;
-        const referrals: ReferralNode[] = [];
-
-        for (let i = 0; i < referralAddresses.length; i += CONCURRENCY_LIMIT) {
-          const batch = referralAddresses.slice(i, i + CONCURRENCY_LIMIT);
-          const batchResults = await Promise.all(
-            batch.map(async (refAddress: string) => {
-              try {
-                const refData = await contract.users(refAddress);
-                const refRankIndex = Number(refData[0]?.toString() || "0");
-                return {
-                  address: refAddress,
-                  rank: getRankName(refRankIndex),
-                  referrals: [],
-                };
-              } catch (e) {
-                return {
-                  address: refAddress,
-                  rank: "Unknown",
-                  referrals: [],
-                };
-              }
-            })
-          );
-
-          referrals.push(...batchResults);
-        }
-
-        // Update tree with new referrals
-        updateTreeWithReferrals(nodeAddress, referrals);
-
-        // Cache the results
-        cache.set(cacheKey, referrals, CACHE_TTL.REFERRALS);
+      if (cachedRefs) {
+        updateTreeWithReferrals(nodeAddress, cachedRefs);
 
         // Fetch user details for the referrals
-        referrals.forEach((ref) => {
+        cachedRefs.forEach((ref: ReferralNode) => {
           fetchUserDetails(ref.address);
         });
-      } catch (error) {
-        console.error(`Error loading referrals for ${nodeAddress}:`, error);
-      } finally {
-        // Mark node as done loading
-        setLoadingNodes((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(nodeAddress);
-          return newSet;
-        });
+
+        return;
       }
-    },
-    [
-      contract,
-      loadingNodes,
-      treeData,
-      getRankName,
-      fetchUserDetails,
-      cache,
-      findNode,
-      updateTreeWithReferrals,
-    ]
-  );
+
+      // Get user data by address first
+      const userResponse = await userApi.getUserByAddress(nodeAddress);
+      console.log("User data response for node:", userResponse);
+      const userData = userResponse.data?.user;
+
+      if (!userData || !userData.id) {
+        throw new Error(`User data not found for address: ${nodeAddress}`);
+      }
+
+      // Get user's details including referrals using the user's ID
+      const detailsResponse = await userApi.getUserDetails(userData.id);
+      console.log("User details response for node:", detailsResponse);
+      const referralsData = detailsResponse.data?.referrals || [];
+
+      // Build referral nodes with concurrency limit
+      const CONCURRENCY_LIMIT = 3;
+      const referrals: ReferralNode[] = [];
+
+      for (let i = 0; i < referralsData.length; i += CONCURRENCY_LIMIT) {
+        const batch = referralsData.slice(i, i + CONCURRENCY_LIMIT);
+        const batchResults = await Promise.all(
+          batch.map(async (referral: any) => {
+            try {
+              return {
+                address: referral.address,
+                rank: referral.currentRank || "Unknown",
+                referrals: [],
+              };
+            } catch (e) {
+              return {
+                address: referral.address,
+                rank: "Unknown",
+                referrals: [],
+              };
+            }
+          })
+        );
+
+        referrals.push(...batchResults);
+      }
+
+      // Update tree with new referrals
+      updateTreeWithReferrals(nodeAddress, referrals);
+
+      // Cache the results
+      cache.set(cacheKey, referrals, CACHE_TTL.REFERRALS);
+
+      // Fetch user details for the referrals
+      referrals.forEach((ref) => {
+        fetchUserDetails(ref.address);
+      });
+    } catch (error) {
+      console.error(`Error loading referrals for ${nodeAddress}:`, error);
+    } finally {
+      // Mark node as done loading
+      setLoadingNodes((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(nodeAddress);
+        return newSet;
+      });
+    }
+  },
+  [
+    loadingNodes,
+    treeData,
+    fetchUserDetails,
+    cache,
+    findNode,
+    updateTreeWithReferrals,
+  ]
+);
 
   // Toggle node expansion
   const toggleNodeExpansion = useCallback(

@@ -6,7 +6,10 @@ import {
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
+import { rankApi } from "../api/rankApi";
 import { RefreshCw } from "lucide-react";
+import { rewardApi } from "../api/rewardApi";
+import { useBlockchain } from "../blockchainusecon/BlockchainContext";
 import { BrowserProvider, Contract, formatUnits, ethers } from "ethers";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -16,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import contractAbi from "../contracts/Props/contractAbi.ts";
 import contractAddress from "../contracts/Props/contractAddress.ts";
 import { Bar } from "react-chartjs-2";
+import { userApi, RegistrationRequest } from "../api/userApi";
 import {
   CheckCheck,
   Copy,
@@ -63,6 +67,7 @@ import {
   Title,
   Legend,
 } from "chart.js";
+import { connected } from "process";
 
 // Register chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Legend);
@@ -116,7 +121,7 @@ const API_ENDPOINTS = {
 const SPECIAL_ADDRESSES = [
   "0x0Ac0920459Ae9c1ABB3D866C1f772e7f0697B069",
   "0xe18dAc7e37eD0F27b1DeBB5b07D61211dEb90237",
-  "0x370f791Bd02d7672Aa9a4A72aa8Cd46f0604b285"
+  "0x370f791Bd02d7672Aa9a4A72aa8Cd46f0604b285",
 ];
 
 // Type definitions for better code organization and type safety
@@ -189,6 +194,15 @@ interface GraphData {
   }>;
 }
 
+interface WithdrawalState {
+  isProcessing: boolean;
+  type: "LEVEL" | "LTG" | "RAB" | null;
+  sessionData: any | null;
+  step: "init" | "processing" | "success" | "error";
+  error: string;
+}
+
+
 // Custom hooks to organize related functionality
 const useContract = (provider: any, account: string | undefined) => {
   const [contract, setContract] = useState<IContract | null>(null);
@@ -224,6 +238,7 @@ const useContract = (provider: any, account: string | undefined) => {
 };
 
 // Hook for managing user profile data
+//const [userDatarank, setUserDatarank] = useState<any>(null);
 const useUserProfile = (address: string | undefined) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -395,7 +410,16 @@ const compressImage = async (file: File, maxSize = 500): Promise<File> => {
 
 // Main Dashboard Component
 const Dashboard = () => {
+  const { account, approveTokens, deposit, balance } = useBlockchain();
   const navigate = useNavigate();
+  const [withdrawal, setWithdrawal] = useState<WithdrawalState>({
+    isProcessing: false,
+    type: null,
+    sessionData: null,
+    step: "init",
+    error: "",
+  });
+  const [upgradeCost, setUpgradeCost] = useState<any>(null);
   const [cacheVersion, setCacheVersion] = useState(1);
   const { darkMode } = useDarkMode();
   const { priceData } = usePriceData();
@@ -403,15 +427,18 @@ const Dashboard = () => {
   const { walletProvider } = useAppKitProvider<Provider>("eip155");
   const { width, height } = useWindowSize();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [rankCosts, setRankCosts] = useState<{[key: string]: any}>({});
+  
 
   const isSpecialAddress = useMemo(() => {
     if (!address) return false;
-    
+
     // Convert everything to lowercase for case-insensitive comparison
     const lowerAddress = address.toLowerCase();
-    const lowerSpecialAddresses = SPECIAL_ADDRESSES.map(addr => addr.toLowerCase());
-    
+    const lowerSpecialAddresses = SPECIAL_ADDRESSES.map((addr) =>
+      addr.toLowerCase()
+    );
+
     return lowerSpecialAddresses.includes(lowerAddress);
   }, [address]);
 
@@ -452,8 +479,10 @@ const Dashboard = () => {
     totalPendingAmount: "0",
   });
 
+  const [rewards, setRewards] = useState<any>(null);
+
   // User details state
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [userDetails, setUserDetails] = useState<any>("");
   const [isRankExpired, setIsRankExpired] = useState<"loading" | boolean>(
     "loading"
   );
@@ -483,6 +512,8 @@ const Dashboard = () => {
     datasets: [],
   });
 
+
+
   // Set invite link when address is available
   useEffect(() => {
     if (address) {
@@ -509,11 +540,12 @@ const Dashboard = () => {
       }
 
       try {
-        const userData = await contract.users(address);
+        const userData = await userApi.getUserByAddress(address);
 
-        if (!userData || !userData.isActive) {
-          console.log("User is NOT active. Redirecting to home...");
-          navigate("/");
+        if (userData.data.isActive) {
+          toast.info("You are already registered"); // Changed to info toast
+          navigate("/dashboard");
+          return;
         }
       } catch (error) {
         console.error("Error checking registration status:", error);
@@ -553,14 +585,14 @@ const Dashboard = () => {
   }, [isConnected, contract, address, navigate, walletProvider]);
 
   const cache = useMemo(() => {
-    const CACHE_PREFIX = 'rtree_'; // Use a single consistent prefix
-    
+    const CACHE_PREFIX = "rtree_"; // Use a single consistent prefix
+
     const cacheObj = {
       get: (key: string): any => {
         try {
           const item = localStorage.getItem(`${CACHE_PREFIX}${key}`);
           if (!item) return null;
-          
+
           const parsedItem = JSON.parse(item);
           if (parsedItem.expiry && Date.now() > parsedItem.expiry) {
             localStorage.removeItem(`${CACHE_PREFIX}${key}`);
@@ -590,39 +622,38 @@ const Dashboard = () => {
         } catch (e) {
           console.error(`Cache delete error for ${key}:`, e);
         }
-      }
+      },
     };
     return cacheObj;
   }, []);
 
   const refreshGraphData = useCallback(() => {
     // Increment cache version to force a complete refresh
-    setCacheVersion(prev => prev + 1);
-    
+    setCacheVersion((prev) => prev + 1);
+
     // Clear the memory cache
     setRankGraphDataCache({
       data: null,
       timestamp: 0,
     });
-    
+
     // Remove ALL cache keys related to this address
     const baseKey = `rankGraphData_${address}`;
     for (let i = 0; i < 100; i++) {
       cache.remove(`${baseKey}_v${i}`);
     }
-    
+
     // Set loading state to true to trigger a fresh data fetch
     setIsGraphLoading(true);
-    
+
     // Reset the graph data to force a complete redraw
     setRankGraphData({
       labels: [],
       datasets: [],
     });
   }, [address, cache]);
-  
-  // Then update the upgradeRank function to properly refresh the graph
 
+  // Then update the upgradeRank function to properly refresh the graph
 
   // Load all contract data in a consolidated effect
   useEffect(() => {
@@ -721,39 +752,40 @@ const Dashboard = () => {
         const expectedTime = userData[0]?.toString();
         const expiryTime = userData.rankExpiryTime;
 
-
-          let isActive = true;
+        let isActive = true;
         let isExpired = false;
         let rankExpiryTimeDisplay = "MAX";
-        
+
         // For non-special addresses, use the normal logic
         if (!isSpecialAddress) {
-          isActive = currentTime >= BigInt(expectedTime || "0") && 
-                     currentTime < BigInt(expiryTime || "0");
+          isActive =
+            currentTime >= BigInt(expectedTime || "0") &&
+            currentTime < BigInt(expiryTime || "0");
           isExpired = currentTime > BigInt(expiryTime || "0");
-          rankExpiryTimeDisplay = formatTimestamp(Number(userData.rankExpiryTime || 0));
+          rankExpiryTimeDisplay = formatTimestamp(
+            Number(userData.rankExpiryTime || 0)
+          );
         }
 
+        const userResponse = await userApi.getUserByAddress(address);
+        console.log("User response:", userResponse);
+        const userData2 = userResponse.data?.user;
+        console.log("User response of user:", userData2);
 
-        setUserDetails({
-          referrer: userData[2] || "No referrer",
-          currentRank: getRankName(userData[0]?.toString() || "0"),
-          lastRankUpdateTime: formatTimestamp(
-            Number(userData.lastRankUpdateTime || 0)
-          ),
-          rankExpiryTime: isSpecialAddress ? "MAX" : rankExpiryTimeDisplay,
-          totalInvestment: formatUnits(userData[5]?.toString() || "0", 18),
-          isActive: isSpecialAddress ? true : (isActive && !isExpired),
-          isExpired: isSpecialAddress ? false : isExpired,
-          rewards: totalRewards.toString(),
-        });
+        setUserDetails(userData2);
 
         // Set rank expiry status
         setIsRankExpired(isSpecialAddress ? false : isExpired);
 
+        const detailsResponse = await userApi.getUserDetails(userData2.id);
+        console.log("User details response:", detailsResponse);
+
         refreshGraphData();
 
         // Set financial data
+
+        setRewards(detailsResponse.data?.user?.reward);
+
         setFinancialData({
           totalBonus: parseFloat(
             formatUnits(totalBonusData || "0", 18)
@@ -897,7 +929,6 @@ const Dashboard = () => {
   });
 
   // Generate graph data with proper optimization
- 
 
   useEffect(() => {
     // Ultra-fast early exits
@@ -943,7 +974,7 @@ const Dashboard = () => {
     //   setIsGraphLoading(false);
     //   return;
     // }
-   // setIsGraphLoading(true);
+    // setIsGraphLoading(true);
 
     const generateRankGraphData = async () => {
       const startTime = performance.now();
@@ -976,119 +1007,128 @@ const Dashboard = () => {
           if (depth >= maxDepth || addresses.length === 0) return;
 
           // Aggressive batch processing with increased concurrency
-          const BATCH_SIZE = 10; // Increased batch size
-          for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
-            const batch = addresses.slice(i, i + BATCH_SIZE);
+        // Aggressive batch processing with increased concurrency
+      const BATCH_SIZE = 10; // Increased batch size
+      for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
+        const batch = addresses.slice(i, i + BATCH_SIZE);
 
-            await Promise.all(
-              batch.map(async (address) => {
-                // Immediate skip for processed addresses
-                if (processedAddresses.has(address)) return [];
+        await Promise.all(
+          batch.map(async (address) => {
+            // Immediate skip for processed addresses
+            if (processedAddresses.has(address)) return [];
 
-                processedAddresses.add(address);
+            processedAddresses.add(address);
 
-                try {
-                  // Concurrent data fetching
-                  const [userData, referrals] = await Promise.all([
-                    contract.users(address),
-                    contract.getUserReferrals(address),
-                  ]);
-
-                  // Rank counting
-                  const rank = parseInt(userData[0]?.toString() || "0");
-                  if (rank >= 0 && rank < 9) {
-                    rankCountMap.set(rank, (rankCountMap.get(rank) || 0) + 1);
-                  }
-
-                  // Filter and return unprocessed referrals
-                  return referrals.filter(
-                    (ref: string) => !processedAddresses.has(ref)
-                  );
-                } catch (error) {
-                  console.warn(`Processing error for ${address}:`, error);
-                  return [];
-                }
-              })
-            ).then(async (results) => {
-              // Flatten and filter results
-              const nextLevelReferrals = results
-                .flat()
-                .filter(
-                  (ref): ref is string =>
-                    typeof ref === "string" && !processedAddresses.has(ref)
-                );
-
-              // Recursive processing with reduced overhead
-              if (nextLevelReferrals.length > 0) {
-                await processReferralsParallel(
-                  nextLevelReferrals,
-                  depth + 1,
-                  maxDepth
-                );
+            try {
+              // First get user data for this address
+              const userResponse = await userApi.getUserByAddress(address);
+              const userData = userResponse.data?.user;
+              
+              if (!userData || !userData.id) {
+                console.warn(`No user data found for address: ${address}`);
+                return [];
               }
-            });
+              
+              // Then get referrals for this user's ID
+              const detailsResponse = await userApi.getUserDetails(userData.id);
+              const referrals = detailsResponse.data?.referrals || [];
+
+              console.log("User data:", userData);
+              console.log("User referrals:", referrals);
+
+              // Rank counting - get the rank index from the rank name
+              const rankIndex = RANK_INFO.findIndex(
+                (rank) => rank.name === userData.currentRank
+              );
+              
+              if (rankIndex >= 0 && rankIndex < 9) {
+                rankCountMap.set(rankIndex, (rankCountMap.get(rankIndex) || 0) + 1);
+              }
+
+              // Return referral addresses for next level processing
+               // Return referral addresses for next level processing
+               return referrals.map((ref: any) => ref.address).filter(
+                (refAddress: string) => typeof refAddress === "string" && !processedAddresses.has(refAddress)
+              );
+            } catch (error) {
+              console.warn(`Processing error for ${address}:`, error);
+              return [];
+            }
+          })
+        ).then(async (results) => {
+          // Flatten and filter results
+          const nextLevelReferrals = results
+            .flat()
+            .filter(
+              (ref) => typeof ref === "string" && !processedAddresses.has(ref)
+            );
+
+          // Recursive processing with reduced overhead
+          if (nextLevelReferrals.length > 0) {
+            await processReferralsParallel(
+              nextLevelReferrals,
+              depth + 1,
+              maxDepth
+            );
           }
-        };
-
-        // Start processing with minimal initial delay
-        await processReferralsParallel([address]);
-
-        // Efficient rank count conversion
-        const rankCounts = RANK_INFO.map(
-          (_, index) => rankCountMap.get(index) || 0
-        );
-
-        // Lightweight graph data construction
-        const graphData = {
-          labels: RANK_INFO.map((rank) => rank.name),
-          datasets: [
-            {
-              label: "Number of Users",
-              data: rankCounts,
-              backgroundColor: RANK_INFO.map((rank) => `${rank.color}80`),
-              borderColor: RANK_INFO.map((rank) =>
-                rank.color === "#000000"
-                  ? "#111111"
-                  : darkenColor(rank.color, -30)
-              ),
-              borderWidth: 2,
-              borderRadius: {
-                topLeft: 8,
-                topRight: 8,
-                bottomLeft: 0,
-                bottomRight: 0,
-              },
-            },
-          ],
-        };
-
-        setRankGraphDataCache({
-          data: graphData,
-          timestamp: Date.now(),
         });
-        cache.set(cacheKey, graphData, CACHE_DURATION);
-
-        // Immediate state updates
-        setRankGraphData(graphData);
-        // setRankGraphDataCache({
-        //   data: graphData,
-        //   timestamp: currentTime,
-        // });
-
-        // Optional performance logging
-        const endTime = performance.now();
-        console.log(`Rank graph generated in ${endTime - startTime}ms`);
-      } catch (error) {
-        console.error("Rank graph generation failed:", error);
-        setRankGraphData({
-          labels: [],
-          datasets: [],
-        });
-      } finally {
-        setIsGraphLoading(false);
       }
     };
 
+    // Start processing with minimal initial delay
+    await processReferralsParallel([address]);
+
+    // Efficient rank count conversion
+    const rankCounts = RANK_INFO.map(
+      (_, index) => rankCountMap.get(index) || 0
+    );
+
+    // Lightweight graph data construction
+    const graphData = {
+      labels: RANK_INFO.map((rank) => rank.name),
+      datasets: [
+        {
+          label: "Number of Users",
+          data: rankCounts,
+          backgroundColor: RANK_INFO.map((rank) => `${rank.color}80`),
+          borderColor: RANK_INFO.map((rank) =>
+            rank.color === "#000000"
+              ? "#111111"
+              : darkenColor(rank.color, -30)
+          ),
+          borderWidth: 2,
+          borderRadius: {
+            topLeft: 8,
+            topRight: 8,
+            bottomLeft: 0,
+            bottomRight: 0,
+          },
+        },
+      ],
+    };
+
+    setRankGraphDataCache({
+      data: graphData,
+      timestamp: Date.now(),
+    });
+    cache.set(cacheKey, graphData, CACHE_DURATION);
+
+    // Immediate state updates
+    setRankGraphData(graphData);
+
+    // Optional performance logging
+    const endTime = performance.now();
+    console.log(`Rank graph generated in ${endTime - startTime}ms`);
+  } catch (error) {
+    console.error("Rank graph generation failed:", error);
+    setRankGraphData({
+      labels: [],
+      datasets: [],
+    });
+  } finally {
+    setIsGraphLoading(false);
+  }
+};
     // Minimized initialization delay
     const timer = setTimeout(generateRankGraphData, 2);
 
@@ -1313,105 +1353,256 @@ const Dashboard = () => {
       });
   }, [inviteLink]);
 
-  const handleWithdrawLevel = useCallback(async () => {
-    if (!isConnected || !contract || !address) {
-      toast.error("Wallet not connected");
+  // const handleWithdrawLevel = useCallback(async () => {
+  //   if (!isConnected || !contract || !address) {
+  //     toast.error("Wallet not connected");
+  //     return;
+  //   }
+
+  //   if (isRankExpired === true) {
+  //     toast.error(
+  //       "Cannot withdraw - your rank has expired. Please upgrade your rank first."
+  //     );
+  //     return;
+  //   }
+
+  //   try {
+  //     setIsLoadingLevel(true);
+  //     const tx = await contract.withdrawLevelIncome();
+  //     await tx.wait();
+
+  //     // Show success animation
+  //     setShowConfetti(true);
+
+  //     // Update data without full reload
+  //     const [withdrawableLevelIncome, totalLevelReceived] = await Promise.all([
+  //       contract.getWthlvlIncm(address),
+  //       contract.getUsrTtllvlrcvd(address),
+  //     ]);
+
+  //     setFinancialData((prev) => ({
+  //       ...prev,
+  //       withdrawalLevel: parseFloat(
+  //         formatUnits(withdrawableLevelIncome || "0", 18)
+  //       ).toFixed(4),
+  //       totalLevel: parseFloat(
+  //         formatUnits(totalLevelReceived || "0", 18)
+  //       ).toFixed(4),
+  //     }));
+
+  //     toast.success("🎉 Level Distribution Pool withdrawn successfully!");
+
+  //     setTimeout(() => {
+  //       setShowConfetti(false);
+  //     }, 5000);
+  //   } catch (error) {
+  //     console.error("Error during Level withdrawal:", error);
+  //     toast.error("Failed to withdraw Level Distribution Pool.");
+  //   } finally {
+  //     setIsLoadingLevel(false);
+  //   }
+  // }, [isConnected, contract, address, isRankExpired]);
+
+  // const handleWithdrawRab = useCallback(async () => {
+  //   if (!isConnected || !contract || !address) {
+  //     toast.error("Wallet not connected");
+  //     return;
+  //   }
+
+  //   if (isRankExpired === true) {
+  //     toast.error(
+  //       "Cannot withdraw - your rank has expired. Please upgrade your rank first."
+  //     );
+  //     return;
+  //   }
+
+  //   try {
+  //     setIsLoadingRab(true);
+  //     const tx = await contract.claimMonthlyRab();
+  //     await tx.wait();
+
+  //     // Show success animation
+  //     setShowConfetti(true);
+
+  //     // Update data without full reload
+  //     const [withdrawableRAB, totalRABReceived] = await Promise.all([
+  //       contract.getWthrabIncome(address),
+  //       contract.getUsrTtlrabrcvd(address),
+  //     ]);
+
+  //     setFinancialData((prev) => ({
+  //       ...prev,
+  //       withdrawalRAB: parseFloat(
+  //         formatUnits(withdrawableRAB || "0", 18)
+  //       ).toFixed(4),
+  //       totalRAB: parseFloat(formatUnits(totalRABReceived || "0", 18)).toFixed(
+  //         4
+  //       ),
+  //     }));
+
+  //     toast.success("🎉 RAB withdrawn successfully!");
+
+  //     setTimeout(() => {
+  //       setShowConfetti(false);
+  //     }, 5000);
+  //   } catch (error) {
+  //     console.error("Error during RAB withdrawal:", error);
+  //     toast.error("Failed to withdraw RAB.");
+  //   } finally {
+  //     setIsLoadingRab(false);
+  //   }
+  // }, [isConnected, contract, address, isRankExpired]);
+
+  const handleWithdrawal = async (type) => {
+    // Skip if no user data or contract
+    if (!userData || !userDetails || !contract || !address) {
+      toast.error("Please check your connection and try again");
       return;
     }
-
+  
+    // Check for rank expiration
     if (isRankExpired === true) {
-      toast.error(
-        "Cannot withdraw - your rank has expired. Please upgrade your rank first."
-      );
+      toast.error("Cannot withdraw - your rank has expired. Please upgrade your rank first.");
       return;
     }
-
+  
     try {
-      setIsLoadingLevel(true);
-      const tx = await contract.withdrawLevelIncome();
-      await tx.wait();
-
-      // Show success animation
+      // Step 1: Update UI state to show loading
+      setWithdrawal({
+        isProcessing: true,
+        type,
+        sessionData: null,
+        step: "init",
+        error: "",
+      });
+  
+      // Step 2: Create a withdrawal session
+      let response;
+      if (type === "LEVEL") {
+        response = await rewardApi.createLevelWithdrawal(userDetails.id);
+      } else if (type === "LTG") {
+        response = await rewardApi.createLTGWithdrawal(userDetails.id);
+      } else {
+        response = await rewardApi.createRABWithdrawal(userDetails.id);
+      }
+  
+      console.log(`${type} withdrawal session created:`, response);
+  
+      // Step 3: Validate response
+      if (!response.status === "success" || !response.data) {
+        throw new Error("Invalid response from server");
+      }
+  
+      // Step 4: Update state with session data
+      setWithdrawal({
+        isProcessing: true,
+        type,
+        sessionData: response.data,
+        step: "processing",
+        error: "",
+      });
+  
+      // Step 5: Execute blockchain transaction based on withdrawal type
+      let tx;
+      if (type === "LEVEL") {
+        tx = await contract.withdrawLevelIncome();
+      } else if (type === "LTG") {
+        // Check if your contract has a dedicated LTG withdrawal method
+        // If not, you might need to use a general withdrawal method or ask the contract developer
+        // For now, we'll assume it has withdrawLTGIncome or fallback to withdrawLevelIncome
+        tx = contract.withdrawLTGIncome 
+            ? await contract.withdrawLTGIncome()
+            : await contract.withdrawLevelIncome();
+      } else if (type === "RAB") {
+        tx = await contract.claimMonthlyRab();
+      } else {
+        throw new Error("Unknown withdrawal type");
+      }
+  
+      // Step 6: Wait for transaction confirmation
+      const receipt = await tx.wait();
+      console.log("Transaction receipt:", receipt);
+  
+      // Step 7: Process the withdrawal with backend API
+      let processResult;
+      if (type === "LEVEL") {
+        processResult = await rewardApi.processLevelWithdrawal({
+          sessionData: response.data,
+          transactionHash: receipt.hash || receipt.transactionHash,
+        });
+      } else if (type === "LTG") {
+        processResult = await rewardApi.processLTGWithdrawal({
+          sessionData: response.data,
+          transactionHash: receipt.hash || receipt.transactionHash,
+        });
+      } else if (type === "RAB") {
+        processResult = await rewardApi.processRABWithdrawal({
+          sessionData: response.data,
+          transactionHash: receipt.hash || receipt.transactionHash,
+        });
+      }
+  
+      console.log("Withdrawal process result:", processResult);
+  
+      // Step 8: Update UI to show success
+      setWithdrawal({
+        isProcessing: false,
+        type,
+        sessionData: response.data,
+        step: "success",
+        error: "",
+      });
+  
+      // Step 9: Show success animation and notification
       setShowConfetti(true);
-
-      // Update data without full reload
-      const [withdrawableLevelIncome, totalLevelReceived] = await Promise.all([
-        contract.getWthlvlIncm(address),
-        contract.getUsrTtllvlrcvd(address),
-      ]);
-
-      setFinancialData((prev) => ({
-        ...prev,
-        withdrawalLevel: parseFloat(
-          formatUnits(withdrawableLevelIncome || "0", 18)
-        ).toFixed(4),
-        totalLevel: parseFloat(
-          formatUnits(totalLevelReceived || "0", 18)
-        ).toFixed(4),
-      }));
-
-      toast.success("🎉 Level Distribution Pool withdrawn successfully!");
-
+      toast.success(`🎉 ${type} withdrawn successfully!`);
+  
+      // Step 10: Refresh user data to update balances
+      const userResponse = await userApi.getUserByAddress(address);
+      if (userResponse.data && userResponse.data.user) {
+        const userData = userResponse.data.user;
+        const detailsResponse = await userApi.getUserDetails(userData.id);
+        setRewards(detailsResponse.data?.user?.reward);
+      }
+  
+      // Step 11: Cleanup after a delay
       setTimeout(() => {
         setShowConfetti(false);
+        // Reset withdrawal state
+        setWithdrawal({
+          isProcessing: false,
+          type: null,
+          sessionData: null,
+          step: "init",
+          error: "",
+        });
       }, 5000);
     } catch (error) {
-      console.error("Error during Level withdrawal:", error);
-      toast.error("Failed to withdraw Level Distribution Pool.");
-    } finally {
-      setIsLoadingLevel(false);
-    }
-  }, [isConnected, contract, address, isRankExpired]);
-
-  const handleWithdrawRab = useCallback(async () => {
-    if (!isConnected || !contract || !address) {
-      toast.error("Wallet not connected");
-      return;
-    }
-
-    if (isRankExpired === true) {
-      toast.error(
-        "Cannot withdraw - your rank has expired. Please upgrade your rank first."
-      );
-      return;
-    }
-
-    try {
-      setIsLoadingRab(true);
-      const tx = await contract.claimMonthlyRab();
-      await tx.wait();
-
-      // Show success animation
-      setShowConfetti(true);
-
-      // Update data without full reload
-      const [withdrawableRAB, totalRABReceived] = await Promise.all([
-        contract.getWthrabIncome(address),
-        contract.getUsrTtlrabrcvd(address),
-      ]);
-
-      setFinancialData((prev) => ({
-        ...prev,
-        withdrawalRAB: parseFloat(
-          formatUnits(withdrawableRAB || "0", 18)
-        ).toFixed(4),
-        totalRAB: parseFloat(formatUnits(totalRABReceived || "0", 18)).toFixed(
-          4
-        ),
-      }));
-
-      toast.success("🎉 RAB withdrawn successfully!");
-
+      console.error(`Error during ${type} withdrawal:`, error);
+      
+      // Update state to show error
+      setWithdrawal({
+        isProcessing: false,
+        type,
+        sessionData: null,
+        step: "error",
+        error: error.message || `Failed to process ${type} withdrawal`,
+      });
+      
+      toast.error(`Withdrawal failed: ${error.message || "An error occurred"}`);
+      
+      // Reset state after a delay
       setTimeout(() => {
-        setShowConfetti(false);
+        setWithdrawal({
+          isProcessing: false,
+          type: null,
+          sessionData: null,
+          step: "init",
+          error: "",
+        });
       }, 5000);
-    } catch (error) {
-      console.error("Error during RAB withdrawal:", error);
-      toast.error("Failed to withdraw RAB.");
-    } finally {
-      setIsLoadingRab(false);
     }
-  }, [isConnected, contract, address, isRankExpired]);
+  };
 
   const upgradeRank = useCallback(async () => {
     if (!selectedRank) {
@@ -1419,7 +1610,7 @@ const Dashboard = () => {
       return;
     }
 
-    if (!isConnected || !contract || !address) {
+    if (!isConnected || !address) {
       toast.info("Wallet not connected.");
       return;
     }
@@ -1435,44 +1626,73 @@ const Dashboard = () => {
         return;
       }
 
-      const tx = await contract.upgradeRank(rankIndex);
-      await tx.wait();
+      // console.log("the user is12",userDatarank.id,selectedRank)
+      // Create upgrade session first
+      const sessionResponse = await userApi.createUpgradeSession(
+        userDetails.id,
+        selectedRank
+      );
+
+      console.log("Upgrade session created:", sessionResponse);
+
+      if (!sessionResponse.data || sessionResponse.status !== "success") {
+        throw new Error("Failed to create upgrade session");
+      }
+
+      const sessionData = sessionResponse.data;
+
+      await approveTokens(sessionData.totalCost.toString());
+
+      // Execute deposit to get transaction hash
+      const tx = await deposit(
+        sessionData.totalCost.toString(),
+        sessionData.sessionId
+      );
+
+      console.log("Deposit transaction:", tx);
+
+      // Process the upgrade with backend using userApi
+      const processResult = await userApi.processUpgrade({
+        sessionData: sessionData,
+        transactionHash: tx.hash || tx.transactionHash,
+      });
+
+      console.log("Upgrade process result:", processResult);
 
       setShowConfetti(true);
       toast.success(`🎉 Successfully upgraded to ${selectedRank}.`);
 
-     
-
       setTimeout(() => {
         setShowConfetti(false);
-        // Instead of full page reload, refresh key data
-        if (contract) {
-          // Refresh user details
-          contract
-            .users(address)
-            .then((userData: any) => {
-              // Update user details with new rank info
-              setUserDetails((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      currentRank: selectedRank,
-                      // Other fields would be updated here too
-                    }
-                  : null
-              );
+        // Update user details with new rank info
+        setUserDetails((prev) =>
+          prev
+            ? {
+                ...prev,
+                currentRank: selectedRank,
+                lastRankUpdateTime: new Date().toLocaleDateString(),
+                isExpired: false,
+                isActive: true,
+              }
+            : null
+        );
 
+        refreshGraphData();
+        setSelectedRank(null);
+        setDropdownOpen(false);
 
-
-              refreshGraphData();
-              // Reset the dropdown selection
-              setSelectedRank(null);
-
-              // Close the dropdown if it's open
-              setDropdownOpen(false);
-            })
-            .catch(console.error);
-        }
+        // Refresh data from API
+        userApi
+          .getUserByAddress(address)
+          .then((response) => {
+            if (response.data && response.data.user) {
+              const userData = response.data.user;
+              console.log("User data refreshed after upgrade:", userData);
+            }
+          })
+          .catch((error) => {
+            console.error("Error refreshing user data:", error);
+          });
       }, 5000);
     } catch (error) {
       console.error("Error upgrading rank:", error);
@@ -1480,8 +1700,63 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedRank, isConnected, contract, address]);
+  }, [selectedRank, isConnected, address, userData, deposit, refreshGraphData]);
 
+// Move loadSelectedRankCost outside the useEffect and create a separate effect that watches for selectedRank changes
+
+// Add this right after your other useEffects
+
+// Add this useEffect after your existing rank cost loading effect
+useEffect(() => {
+  // Function to preload costs for all available ranks at once
+  const preloadAllRankCosts = async () => {
+    if (!userDetails || !userDetails.currentRank) {
+      console.log("User details not loaded yet, can't preload rank costs");
+      return;
+    }
+    
+    console.log("Preloading costs for all available ranks...");
+    
+    // For each filtered rank (ranks higher than current), calculate the upgrade cost
+    const loadPromises = filteredRanks.map(async (rank) => {
+      try {
+        console.log(`Calculating cost from ${userDetails.currentRank} to ${rank.name}`);
+        const response = await rankApi.calculateUpgradeCost(
+          userDetails.currentRank,
+          rank.name
+        );
+        
+        if (response.data) {
+          console.log(`Got cost data for ${rank.name}:`, response.data);
+          return { rankName: rank.name, costData: response.data };
+        }
+      } catch (error) {
+        console.error(`Error calculating cost for ${rank.name}:`, error);
+      }
+      return null;
+    });
+    
+    // Wait for all costs to be calculated in parallel
+    const results = await Promise.all(loadPromises);
+    
+    // Update rankCosts state with all the results
+    const newRankCosts = { ...rankCosts };
+    results.forEach(result => {
+      if (result) {
+        newRankCosts[result.rankName] = result.costData;
+      }
+    });
+    
+    console.log("All rank costs loaded:", newRankCosts);
+    setRankCosts(newRankCosts);
+  };
+  
+  // Call the preload function when user details and filteredRanks are available
+  if (userDetails && userDetails.currentRank && filteredRanks.length > 0) {
+    preloadAllRankCosts();
+  }
+  
+}, [userDetails]); // Depend on userDetails and filteredRanks
   // Utility functions
   const darkenColor = (hex: string, amount: number): string => {
     let usePound = false;
@@ -1515,6 +1790,18 @@ const Dashboard = () => {
     } else {
       return num.toString();
     }
+  };
+
+  const calculateTotalRewards = (rewards: any) => {
+    if (!rewards) return 0;
+  
+    const { totalLevelIncomeReceived, totalRABIncomeReceived, totalLTGReceived } = rewards;
+  
+    return (
+      parseFloat(totalLevelIncomeReceived || 0) +
+      parseFloat(totalRABIncomeReceived || 0) +
+      parseFloat(totalLTGReceived || 0)
+    );
   };
 
   // Dropdown and click handling
@@ -1795,10 +2082,10 @@ const Dashboard = () => {
                           Withdrawal Level:
                         </span>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {financialData.withdrawalLevel}
+                         {parseFloat(rewards?.withdrawableLevelIncome).toFixed(4)} 
                         </div>
                         <button
-                          onClick={handleWithdrawLevel}
+                          onClick={() => handleWithdrawal("LTG")}
                           className="mt-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg
                         hover:from-emerald-600 hover:to-teal-600 transform transition-all duration-300 
                         hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
@@ -1811,7 +2098,7 @@ const Dashboard = () => {
                           Total Level:
                         </span>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {financialData.totalLevel}
+                        {parseFloat(rewards?.totalLevelIncomeReceived).toFixed(4)}
                         </div>
                       </div>
                     </div>
@@ -1846,10 +2133,10 @@ const Dashboard = () => {
                           Withdrawal RAB:
                         </span>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {financialData.withdrawalRAB}
+                        {parseFloat(rewards?.withdrawableRABIncome).toFixed(4)}
                         </div>
                         <button
-                          onClick={handleWithdrawRab}
+                         onClick={() => handleWithdrawal("RAB")}
                           className="mt-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg
                         hover:from-amber-600 hover:to-orange-600 transform transition-all duration-300 
                         hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
@@ -1862,7 +2149,7 @@ const Dashboard = () => {
                           Total RAB:
                         </span>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {financialData.totalRAB}
+                        {parseFloat(rewards?.totalRABIncomeReceived).toFixed(4)}
                         </div>
                       </div>
                     </div>
@@ -1895,7 +2182,7 @@ const Dashboard = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-600 dark:text-white/70">
-                            On Hold Bonus:
+                             Bonus:
                           </span>
                           <Tooltip.Provider>
                             <Tooltip.Root>
@@ -1912,15 +2199,25 @@ const Dashboard = () => {
                           </Tooltip.Provider>
                         </div>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {financialData.totalPendingAmount}
+                        {parseFloat(rewards?.withdrawableLTGIncome).toFixed(4)}
                         </div>
+
+                        <button
+                          onClick={() => handleWithdrawal("LTG")}
+                          className="mt-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg
+                        hover:from-amber-600 hover:to-orange-600 transform transition-all duration-300 
+                        hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                        >
+                          Withdraw
+                        </button>
                       </div>
+                      
                       <div>
                         <span className="text-sm text-gray-600 dark:text-white/70">
                           Total Bonus:
                         </span>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                          {financialData.totalBonus}
+                        {parseFloat(rewards?.totalLTGReceived).toFixed(4) }
                         </div>
                       </div>
                     </div>
@@ -1946,7 +2243,7 @@ const Dashboard = () => {
                   Total Rewards
                 </h3>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                  {Number(userDetails?.rewards).toFixed(2) || "0.00"}
+                {calculateTotalRewards(rewards).toFixed(2)}
                 </div>
                 <p className="text-sm text-gray-600 dark:text-white/70">
                   Total Earnings
@@ -2001,12 +2298,12 @@ const Dashboard = () => {
                   {[
                     {
                       icon: Link,
-                      label: "Referrer",
-                      value: userDetails?.referrer
-                        ? `${userDetails.referrer.slice(
+                      label: "Address",
+                      value: userDetails?.address
+                        ? `${userDetails.address.slice(
                             0,
                             6
-                          )}...${userDetails.referrer.slice(-4)}`
+                          )}...${userDetails.address.slice(-4)}`
                         : "Loading...",
                     },
                     {
@@ -2017,7 +2314,8 @@ const Dashboard = () => {
                     {
                       icon: Clock,
                       label: "Last Update",
-                      value: userDetails?.lastRankUpdateTime || "Loading...",
+                      value:  new Date(userDetails?.lastRankUpdateTime).toLocaleString() || "Loading...",
+                     
                     },
                     {
                       icon: Calendar,
@@ -2035,14 +2333,14 @@ const Dashboard = () => {
                             </span>
                           </span>
                         ) : (
-                          userDetails?.rankExpiryTime || "Loading..."
+                          new Date(userDetails?.rankExpiryTime).toLocaleString() || "Loading..."
                         ),
                     },
                     {
                       icon: DollarSign,
-                      label: "Total Purchase",
-                      value: userDetails?.totalInvestment
-                        ? Number(userDetails.totalInvestment).toFixed(2)
+                      label: "Total Investment",
+                      value: userDetails?.userTotalInvestment
+                        ? Number(userDetails.userTotalInvestment).toFixed(2)
                         : "Loading...",
                     },
                     {
@@ -2445,43 +2743,16 @@ const Dashboard = () => {
                   max-h-48 sm:max-h-64 overflow-y-auto"
                         >
                           {filteredRanks.map((rank, index) => {
-                            const currentRankDetail = rankDetails.find(
-                              (detail) =>
-                                detail.name === userDetails?.currentRank &&
-                                detail.rankUpgradePriceUSD !== undefined
-                            );
-
-                            const targetRankDetail = rankDetails.find(
-                              (detail) =>
-                                detail.name === rank.name &&
-                                detail.rankUpgradePriceUSD !== undefined
-                            );
-
-                            const priceDifferenceUSD =
-                              currentRankDetail && targetRankDetail
-                                ? parseFloat(
-                                    targetRankDetail.rankUpgradePriceUSD || "0"
-                                  ) -
-                                  // Continuing from where we left off...
-
-                                  parseFloat(
-                                    currentRankDetail.rankUpgradePriceUSD || "0"
-                                  )
-                                : 0;
-
-                            const priceDifferenceITC =
-                              priceDifferenceUSD && priceData?.TUSDTperTITC
-                                ? (
-                                    priceDifferenceUSD *
-                                    Number(priceData?.TUSDTperTITC)
-                                  ).toFixed(4)
-                                : "Loading...";
+                          
+                          const rankCost = rankCosts[rank.name];
+                          
 
                             return (
                               <div
                                 key={index}
                                 onClick={() => {
                                   setSelectedRank(rank.name);
+                                  
                                   setDropdownOpen(false);
                                 }}
                                 className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 
@@ -2493,17 +2764,30 @@ const Dashboard = () => {
                                   </span>
                                   <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
                                 </div>
+                                
                                 <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                   <div className="flex justify-between">
-                                    <span>Upgrade Cost:</span>
+                                    <span>Base Cost:</span>
                                     <span className="font-medium">
-                                      ${priceDifferenceUSD.toFixed(2)} USD
+                                    {rankCost && rankCost.baseCostITC !== undefined 
+              ? `${Number(rankCost.baseCostITC).toFixed(2)} ITC` 
+              : "Loading..."}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span>ITC Price:</span>
+                                    <span>Admin Fee:</span>
                                     <span className="font-medium">
-                                      {priceDifferenceITC} ITC
+                                    {rankCost && rankCost.adminFee !== undefined 
+              ? `${Number(rankCost.adminFee).toFixed(2)} ITC` 
+              : "Loading..."}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Total Cost:</span>
+                                    <span className="font-medium">
+                                    {rankCost && rankCost.totalITCCost !== undefined 
+              ? `${Number(rankCost.totalITCCost).toFixed(2)} ITC` 
+              : "Loading..."}
                                     </span>
                                   </div>
                                 </div>

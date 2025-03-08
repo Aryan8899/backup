@@ -26,6 +26,8 @@ import {
   TooltipProps,
 } from "recharts";
 
+//import { RANKS } from "../config/constants";
+
 import contractAbi from "../contracts/Props/contractAbi.ts";
 import contractAddress from "../contracts/Props/contractAddress.ts";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +49,8 @@ import {
   Award,
   LucideIcon,
 } from "lucide-react";
+
+import { rewardApi } from "../api/rewardApi";
 
 import { rank4, rank5, rank6, rank7, rank8 } from "../assets/index";
 
@@ -220,7 +224,6 @@ interface CustomTooltipProps extends TooltipProps<number, string> {
 // Constants
 const ADMIN_ADDRESSES: string[] = [
   "0x3E582a9FFD780A4DFC8AAb220A644596772B919E",
-  
 ];
 
 const RANKS: RankInfo[] = [
@@ -483,8 +486,14 @@ const useFinancialData = (
     if (!contract) return;
 
     try {
-      const currentMonth = await contract.currentMonthIndex();
-      setCurrentMonthIndex(Number(currentMonth) + 1);
+      //const currentMonth = await contract.currentMonthIndex();
+      const response = await rewardApi.getRABStatistics();
+      console.log("the response is", response.data.currentMonthIndex);
+      const monthindex = response.data.currentMonthIndex;
+
+      // const rewardinfo = await rewardApi.getRewardStats();
+      //  console.log("the reward info is",rewardinfo)
+      setCurrentMonthIndex(monthindex + 1);
     } catch (error) {
       console.error("Error fetching current month index:", error);
     }
@@ -498,6 +507,11 @@ const useFinancialData = (
       try {
         // Get total RAB distributed
         const ttlRab = await contract.getTtlRabDstrbtd();
+        const rewardinfo = await rewardApi.getRewardStats();
+
+        const ttrab = rewardinfo.data.totalRABDistributed;
+        console.log("the ttrabnew one is");
+
         setTotalRab(parseFloat(formatUnits(ttlRab, 18)).toFixed(2));
 
         // Get monthly RAB pool balance

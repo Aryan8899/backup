@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useEffect, useState, useMemo } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useDarkMode } from "./context/DarkModeContext";
 import "./index.css";
+import { BlockchainProvider } from "./blockchainusecon/BlockchainContext";
 
 // Fallback loading component (non-lazy)
 const LoadingFallback = () => (
@@ -96,6 +97,7 @@ const App: React.FC = () => {
   }, [darkMode]);
 
   return (
+    <BlockchainProvider>
     <div className="relative min-h-screen">
       {/* Background Component */}
       {Background}
@@ -136,6 +138,7 @@ const App: React.FC = () => {
         <Footer />
       </Suspense>
     </div>
+    </BlockchainProvider>
   );
 };
 

@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../context/DarkModeContext";
 import "../index.css";
 import { motion } from "framer-motion";
+import { userApi } from "../api/userApi";
 
 // Import rank images
 import {
@@ -59,7 +60,15 @@ const Transactions = () => {
   );
   const [isLoading, setIsLoading] = useState(true);
 
+  const [userData, setUserData] = useState<any>(null);
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(20);
+
   // Simple functions for UI
+
+
   const getRankName = (rankIndex: number): string => {
     return ranks[rankIndex]?.name || "Unknown Rank";
   };
@@ -98,6 +107,163 @@ const Transactions = () => {
     }
   };
 
+
+   // Fetch transactions based on type
+  // Fetch transactions based on type
+// Add debugging to check API responses
+
+
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return "N/A";
+  
+  try {
+    // Convert ISO string to Date object
+    const date = new Date(timestamp);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "N/A";
+    
+    // Format the date as desired
+    return date.toLocaleString();
+  } catch (error) {
+    console.error("Error formatting timestamp:", error);
+    return "N/A";
+  }
+};
+
+// Add a helper function to get rank index from name
+const getRankIndex = (rankName) => {
+  if (!rankName) return -1;
+  const index = ranks.findIndex(rank => rank.name === rankName);
+  return index >= 0 ? index : -1;
+};
+
+
+const fetchTransactions = async (userId: string) => {
+  try {
+    console.log("Fetching transactions from API for user ID:", userId);
+    
+    // Fetch purchase transactions
+    const purchaseResponse = await Promise.all([
+      userApi.getUserTransactions(userId, page, limit, "RANK_PURCHASE"),
+      userApi.getUserTransactions(userId, page, limit, "RANK_UPGRADE"),
+      userApi.getUserTransactions(userId, page, limit, "LEVEL_INCOME")
+    ]);
+
+    // Fetch withdrawal transactions
+    const withdrawalResponse = await Promise.all([
+      userApi.getUserTransactions(userId, page, limit, "LEVEL_WITHDRAWAL"),
+      userApi.getUserTransactions(userId, page, limit, "LTG_WITHDRAWAL"),
+      userApi.getUserTransactions(userId, page, limit, "RAB_WITHDRAWAL")
+    ]);
+
+    // Process purchase transactions with proper mapping based on the provided sample
+    const allPurchaseTransactions = purchaseResponse.flatMap(response => {
+      return (response.data?.transactions || []).map(tx => {
+        console.log("Processing transaction:", tx);
+        
+        // Map according to your sample data structure
+        const mappedTx = {
+          // Use fromAddress for the sponsor (from field)
+          from: tx.fromAddress || tx.sponsorAddress || "Unknown",
+          
+          // Convert rank name to index
+          rank: tx.rank ? getRankIndex(tx.rank) : -1,
+          
+          // Use amount directly
+          amt: parseFloat(tx.amount || 0),
+          
+          // Format timestamp using createdAt or timestamp
+          ts: formatTimestamp(tx.createdAt || tx.timestamp),
+          
+          // Use type as the transaction type
+          tp: tx.type || tx.transactionType || "Unknown"
+        };
+        
+        console.log("Mapped transaction:", mappedTx);
+        return mappedTx;
+      });
+    });
+
+    // Similar process for withdrawals
+    const allWithdrawalTransactions = withdrawalResponse.flatMap(response => {
+      return (response.data?.transactions || []).map(tx => ({
+        from: tx.fromAddress || tx.sourceAddress || "Unknown",
+        amt: parseFloat(tx.amount || 0),
+        ts: formatTimestamp(tx.createdAt || tx.timestamp),
+        tp: tx.type || tx.transactionType || "Unknown"
+      }));
+    });
+
+    console.log("Final processed purchase transactions:", allPurchaseTransactions);
+    console.log("Final processed withdrawal transactions:", allWithdrawalTransactions);
+
+    // Set transactions and withdrawals
+    setTransactions(allPurchaseTransactions);
+    setWithdrawals(allWithdrawalTransactions);
+
+    // Calculate total pages
+    const purchasePages = purchaseResponse
+      .map(response => response.data?.pagination?.pages || 1)
+      .reduce((max, current) => Math.max(max, current), 1);
+
+    const withdrawalPages = withdrawalResponse
+      .map(response => response.data?.pagination?.pages || 1)
+      .reduce((max, current) => Math.max(max, current), 1);
+
+    setTotalPages(Math.max(purchasePages, withdrawalPages));
+
+  } catch (error) {
+    console.error("Failed to fetch transactions:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+  // Pagination handler
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+  };
+
+  // Determine which transactions to display
+ 
+
+
+
+
+  useEffect(() => {
+    const fetchUserDataAndTransactions = async () => {
+      if (!isConnected || !address) return;
+
+      setIsLoading(true);
+
+      try {
+        // Fetch user data
+        const userResponse = await userApi.getUserByAddress(address);
+        const userData = userResponse.data?.user;
+
+        if (!userData) {
+          setIsLoading(false);
+          return;
+        }
+
+        setUserData(userData);
+
+        // Fetch purchase transactions
+        await fetchTransactions(userData.id);
+      } catch (error) {
+        console.error("Failed to fetch user data or transactions:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserDataAndTransactions();
+  }, [isConnected, address, page]);
+
+  
+
   const shortenAddress = (address: string) => {
     if (!address) return "N/A";
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -117,14 +283,15 @@ const Transactions = () => {
       if (!walletProvider || !address) return;
 
       try {
-        const provider = new BrowserProvider(walletProvider);
-        const signer = await provider.getSigner();
-        const contract = new Contract(contractAddress, contractAbi, signer);
+        const userResponse = await userApi.getUserByAddress(address);
+      const userData1 = userResponse.data?.user;
 
-        const userData = await contract.users(address);
-        if (!userData || !userData.isActive) {
-          navigate("/");
-        }
+      console.log("the userdata is",userData1)
+
+      setUserData(userData1);
+        // if (!userData || !userData.isActive) {
+        //   navigate("/");
+        // }
       } catch (error) {
         console.error("Error checking registration:", error);
       }
@@ -132,6 +299,10 @@ const Transactions = () => {
 
     checkRegistration();
   }, [walletProvider, address, isConnected, navigate]);
+
+
+  // Add this to a useEffect that runs once on component mount
+
 
   // Direct data fetching - simpler approach to ensure data is fetched
   useEffect(() => {
@@ -155,13 +326,13 @@ const Transactions = () => {
 
           if (cachedPurchases) {
             const parsedData = JSON.parse(cachedPurchases);
-            setTransactions(parsedData);
+            //setTransactions(parsedData);
             console.log("Loaded cached purchases:", parsedData.length);
           }
 
           if (cachedWithdrawals) {
             const parsedData = JSON.parse(cachedWithdrawals);
-            setWithdrawals(parsedData);
+           // setWithdrawals(parsedData);
             console.log("Loaded cached withdrawals:", parsedData.length);
           }
         } catch (e) {
@@ -169,55 +340,55 @@ const Transactions = () => {
         }
 
         // Fetch purchases
-        if (contract.getUserInptTxn) {
-          console.log("Fetching purchase transactions...");
-          const rawTxns = await contract.getUserInptTxn(address);
-          console.log("Raw purchase data:", rawTxns);
+        // if (contract.getUserInptTxn) {
+        //   console.log("Fetching purchase transactions...");
+        //   const rawTxns = await contract.getUserInptTxn(address);
+        //   console.log("Raw purchase data:", rawTxns);
 
-          const formattedTxns = rawTxns.map((txn: any) => ({
-            from: txn[1] || "Unknown",
-            rank: Number(txn[2] ?? -1),
-            amt: Number(txn[3] || 0),
-            ts: txn[4]
-              ? new Date(Number(txn[4]) * 1000).toLocaleString()
-              : "N/A",
-            tp: txn.tp || txn[5] ? txn[5].toString() : "Unknown",
-          }));
+        //   const formattedTxns = rawTxns.map((txn: any) => ({
+        //     from: txn[1] || "Unknown",
+        //     rank: Number(txn[2] ?? -1),
+        //     amt: Number(txn[3] || 0),
+        //     ts: txn[4]
+        //       ? new Date(Number(txn[4]) * 1000).toLocaleString()
+        //       : "N/A",
+        //     tp: txn.tp || txn[5] ? txn[5].toString() : "Unknown",
+        //   }));
 
-          console.log("Formatted purchases:", formattedTxns);
-          setTransactions(formattedTxns);
-          localStorage.setItem(
-            "transaction_purchases",
-            JSON.stringify(formattedTxns)
-          );
-        } else {
-          console.warn("getUserInptTxn function does not exist in contract");
-        }
+        //   console.log("Formatted purchases:", formattedTxns);
+        //   setTransactions(formattedTxns);
+        //   localStorage.setItem(
+        //     "transaction_purchases",
+        //     JSON.stringify(formattedTxns)
+        //   );
+        // } else {
+        //   console.warn("getUserInptTxn function does not exist in contract");
+        // }
 
-        // Fetch withdrawals
-        if (contract.getUserWthdrlTxn) {
-          console.log("Fetching withdrawal transactions...");
-          const withdrawalsData = await contract.getUserWthdrlTxn(address);
-          console.log("Raw withdrawal data:", withdrawalsData);
+        // // Fetch withdrawals
+        // if (contract.getUserWthdrlTxn) {
+        //   console.log("Fetching withdrawal transactions...");
+        //   const withdrawalsData = await contract.getUserWthdrlTxn(address);
+        //   console.log("Raw withdrawal data:", withdrawalsData);
 
-          const formattedWithdrawals = withdrawalsData.map((txn: any) => ({
-            from: txn.from || "Unknown",
-            amt: parseFloat(formatUnits(txn.ttlamt || "0", 18)),
-            ts: txn.ts
-              ? new Date(Number(txn.ts) * 1000).toLocaleString()
-              : "N/A",
-            tp: txn.tp || "Unknown",
-          }));
+        //   const formattedWithdrawals = withdrawalsData.map((txn: any) => ({
+        //     from: txn.from || "Unknown",
+        //     amt: parseFloat(formatUnits(txn.ttlamt || "0", 18)),
+        //     ts: txn.ts
+        //       ? new Date(Number(txn.ts) * 1000).toLocaleString()
+        //       : "N/A",
+        //     tp: txn.tp || "Unknown",
+        //   }));
 
-          console.log("Formatted withdrawals:", formattedWithdrawals);
-          setWithdrawals(formattedWithdrawals);
-          localStorage.setItem(
-            "transaction_withdrawals",
-            JSON.stringify(formattedWithdrawals)
-          );
-        } else {
-          console.warn("getUserWthdrlTxn function does not exist in contract");
-        }
+        //   console.log("Formatted withdrawals:", formattedWithdrawals);
+        //   setWithdrawals(formattedWithdrawals);
+        //   localStorage.setItem(
+        //     "transaction_withdrawals",
+        //     JSON.stringify(formattedWithdrawals)
+        //   );
+        // } else {
+        //   console.warn("getUserWthdrlTxn function does not exist in contract");
+        // }
       } catch (error) {
         console.error("Error fetching transaction data:", error);
       } finally {
@@ -407,8 +578,9 @@ const Transactions = () => {
                             }`}
                           >
                             {selectedTab === "Purchase Transactions"
-                              ? `$${(txn.amt + (txn.amt * 3) / 100).toFixed(2)}`
+                              ? `$${parseFloat(String(txn.amt)).toFixed(2)}`
                               : `${txn.amt ? txn.amt.toFixed(4) : "0.0000"}`}
+                              
                           </span>
                         </td>
                         <td

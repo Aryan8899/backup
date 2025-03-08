@@ -6,6 +6,9 @@ import {
   useAppKitProvider,
   useAppKitAccount,
 } from "@reown/appkit/react";
+import { userApi, RegistrationRequest } from "../api/userApi";
+import { rankApi } from "../api/rankApi";
+import { useBlockchain } from  "../blockchainusecon/BlockchainContext";
 import axios from "axios";
 import { usePriceData } from "../context/PriceContext";
 import { useDarkMode } from "../context/DarkModeContext";
@@ -97,6 +100,10 @@ interface RankDetail {
   cumulativePrice: string;
   addedFeePrice: string;
   rankPriceInITC: string;
+   // Adding new properties from rankApi
+   baseCostITC: string;
+   adminFee: string;
+   totalITCCost: string;
 }
 
 const ADMIN_ADDRESSES = [
@@ -117,6 +124,13 @@ const RegisterRank = () => {
   const [selectedRank, setSelectedRank] = useState<number>(0);
   const [referralAddress, setReferralAddress] = useState<string>("");
   const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [referrerAddress, setReferrerAddress] = useState("");
+  const [sessionData, setSessionData] = useState<any>(null);
+  const { account, isConnected, connect, approveTokens, deposit, balance } =
+  useBlockchain();
+  const [success, setSuccess] = useState("");
+  const [step, setStep] = useState(1); 
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -134,15 +148,48 @@ const RegisterRank = () => {
     }
 
     const checkIfUserIsRegistered = async () => {
-      if (contract && address) {
+      if (address) {
         try {
-          const isRegistered = await contract.users(address);
-          if (isRegistered.isActive) {
+          // First check via API
+          const userCheckResponse = await userApi.getUserByAddress(address);
+          console.log("Full User Check Response:", userCheckResponse);
+          
+          // Enhanced logging for status and data
+          console.log("Response Status:", userCheckResponse.status);
+          console.log("Response User Data:", userCheckResponse.data?.user);
+          
+          // More robust checking - access isActive from nested user object
+          if (
+            userCheckResponse.status === 'success' && 
+            userCheckResponse.data?.user && 
+            userCheckResponse.data.user.isActive === true
+          ) {
+            console.log("User is active - navigating to dashboard");
+            toast.info("You are already registered");
             navigate("/dashboard");
+            return;
+          } else {
+            console.log("User not active or incomplete registration", {
+              status: userCheckResponse.status,
+              isActive: userCheckResponse.data?.user?.isActive,
+              userData: userCheckResponse.data?.user
+            });
           }
+          
         } catch (error) {
-          console.error("Error checking registration:", error);
+          console.error("Detailed Error checking registration:", error);
+          
+          // If it's an axios error, log more details
+          if (axios.isAxiosError(error)) {
+            console.error("Axios Error Details:", {
+              response: error.response?.data,
+              status: error.response?.status,
+              message: error.message
+            });
+          }
         }
+      } else {
+        console.warn("No address provided for registration check");
       }
     };
 
@@ -151,37 +198,56 @@ const RegisterRank = () => {
 
   useEffect(() => {
     const fetchRankDetails = async () => {
-      if (contract) {
+      setIsLoading(true);
+      
+      try {
         const details: RankDetail[] = [];
+        
         for (let i = 0; i < ranks.length; i++) {
           try {
-            const rankDetail = await contract.rankDetails(i);
-            const cumulativePriceUSD = parseFloat(
-              rankDetail.cumulativePrice.toString()
-            );
-
-            const addedFeePrice =
-              cumulativePriceUSD + cumulativePriceUSD * 0.03;
-            const rankPriceInITC =
-              addedFeePrice * parseFloat(priceData?.TUSDTperTITC || "0.0");
-
+            // Use rankApi to fetch price details for each rank
+            const response = await rankApi.getRankPrice(ranks[i].name);
+            const priceDetails = response.data;
+            
             details.push({
               id: i,
               name: ranks[i].name,
-              cumulativePrice: cumulativePriceUSD.toFixed(2),
-              addedFeePrice: addedFeePrice.toFixed(2),
-              rankPriceInITC: rankPriceInITC.toFixed(2),
+              // Maintain old properties for backward compatibility
+              cumulativePrice: "0.00",
+              addedFeePrice: "0.00",
+              rankPriceInITC: priceDetails.totalITCCost?.toFixed(2) || "0.00",
+              // Add new properties from rankApi
+              baseCostITC: priceDetails.baseCostITC?.toFixed(2) || "0.00",
+              adminFee: priceDetails.adminFee?.toFixed(2) || "0.00",
+              totalITCCost: priceDetails.totalITCCost?.toFixed(2) || "0.00",
             });
           } catch (error) {
-            console.error(`Error fetching rank ${i} details:`, error);
+            console.error(`Error fetching price for rank ${ranks[i].name}:`, error);
+            // Add with placeholder values in case of error
+            details.push({
+              id: i,
+              name: ranks[i].name,
+              cumulativePrice: "0.00",
+              addedFeePrice: "0.00",
+              rankPriceInITC: "0.00",
+              baseCostITC: "0.00",
+              adminFee: "0.00",
+              totalITCCost: "0.00",
+            });
           }
         }
+        
         setRankDetails(details);
+      } catch (error) {
+        console.error("Error fetching rank details:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
+  
 
     fetchRankDetails();
-  }, [contract, priceData]);
+  }, []);
 
   useEffect(() => {
     if (walletProvider) {
@@ -200,97 +266,170 @@ const RegisterRank = () => {
   }, [walletProvider]);
 
   const handleRegistration = async () => {
-    if (!contract || !referralAddress || !walletProvider) {
-      toast.error(
-        "Please connect wallet, select a rank, and enter referral address."
-      );
+    // Reset processing state and clear previous errors
+    setIsProcessing(true);
+    setSuccess("");
+  
+    // Validate inputs
+    if (!address) {
+      toast.error("Please connect your wallet");
+      setIsProcessing(false);
       return;
     }
-
-    if (address && ADMIN_ADDRESSES.includes(address.toLowerCase())) {
-      navigate("/admin/dashboard");
+  
+    if (!referralAddress) {
+      toast.error("Please enter a referral address");
+      setIsProcessing(false);
       return;
     }
-
+  
+    if (selectedRank === null) {
+      toast.error("Please select a rank");
+      setIsProcessing(false);
+      return;
+    }
+  
+    // Validate referral address format
+    if (!ethers.isAddress(referralAddress)) {
+      toast.error("Invalid referral address format");
+      setIsProcessing(false);
+      return;
+    }
+  
+    // Prevent self-referral
+    if (referralAddress.toLowerCase() === address.toLowerCase()) {
+      toast.error("You cannot use your own address as referral");
+      setIsProcessing(false);
+      return;
+    }
+  
     try {
-      setIsProcessing(true);
-
-      // First check if user exists in database
-      try {
-        const checkUserResponse = await axios.get(
-          `https://server.cryptomx.site/api/users/check/${address}`
-        );
-
-        // If user exists in database but not in contract, delete from database
-        if (checkUserResponse.data.exists) {
-          const isRegisteredOnChain = await contract.users(address);
-          if (!isRegisteredOnChain.isActive) {
-            await axios.delete(
-              `https://server.cryptomx.site/api/users/${address}`
-            );
-          } else {
-            // User exists both in database and contract
-            toast.error("User already registered");
-            navigate("/dashboard");
-            return;
-          }
-        }
-      } catch (error) {
-        console.error("Error checking user status:", error);
-        // Continue with registration if check fails
+      // 1. Check if user is already registered
+      const userCheckResponse = await userApi.getUserByAddress(address);
+      
+      // If user exists and is active, redirect to dashboard
+      if (userCheckResponse.data && userCheckResponse.data.isActive) {
+        toast.error("Use is already registered");
+        console.log("tere ma ki");
+       // navigate("/dashboard");
+        setIsProcessing(false);
+        return;
       }
+  
+      // 2. Check contract registration status
+      // if (contract) {
+      //   try {
+      //     const isRegisteredOnChain = await contract.users(address);
+      //     if (isRegisteredOnChain.isActive) {
+      //       toast.error("User is already registered on blockchain");
+      //       navigate("/dashboard");
+      //       setIsProcessing(false);
+      //       return;
+      //     }
+      //   } catch (contractError) {
+      //     console.error("Contract registration check failed:", contractError);
+      //     toast.warning("Unable to verify blockchain registration");
+      //   }
+      // }
+  
+      // 3. Create Registration Session
+      const registrationRequest = {
+        address: address,
+        referrerAddress: referralAddress,
+        rank: ranks[selectedRank].name,
+      };
+  
+      const sessionResponse = await userApi.createRegistrationSession(registrationRequest);
+      const sessionData = sessionResponse.data;
 
-      const provider = new BrowserProvider(walletProvider);
-      const signer = await provider.getSigner();
-      const tokenContract = new Contract(tokenAdd, tokenAbi, signer);
-
-      const currentAllowance = await tokenContract.allowance(
-        address,
-        contractAddress
-      );
-
-      if (BigInt(currentAllowance) === BigInt(0)) {
-        const maxUint256 = ethers.MaxUint256;
-        const approveTx = await tokenContract.approve(
-          contractAddress,
-          maxUint256
-        );
-        await approveTx.wait();
-      }
-
-      // Process contract registration
-      const tx = await contract.registerAndPurchaseRank(
-        referralAddress,
-        selectedRank
-      );
-      await tx.wait();
-
-      // Only after successful contract registration, register in database
+      console.log("the sss is",sessionData);
+  
+      // 4. Token Approval
       try {
-        const response = await axios.post(
+        await approveTokens(sessionData.totalCost.toString());
+      } catch (approvalError) {
+        console.error("Token approval failed:", approvalError);
+        toast.error("Token approval failed. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+  
+      // 5. Deposit Tokens
+      let depositTransaction;
+      try {
+        depositTransaction = await deposit(
+          sessionData.totalCost.toString(), 
+          sessionData.sessionId
+        );
+      } catch (depositError) {
+        console.error("Token deposit failed:", depositError);
+        toast.error("Token deposit failed. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
+  
+      // 6. Process Registration on Backend
+
+      console.log("process is",sessionData);
+      console.log("the new",depositTransaction);
+
+      let processRegistrationResponse;
+      try {
+        processRegistrationResponse = await userApi.processRegistration({
+          sessionData: sessionData,
+          transactionHash: depositTransaction.hash
+        });
+      } catch (processError) {
+        console.error("Registration processing failed:", processError);
+        toast.error("Registration processing failed. Please contact support.");
+        setIsProcessing(false);
+        return;
+      }
+  
+      // 7. Final Database Registration
+      try {
+        const databaseRegistrationResponse = await axios.post(
           `https://server.cryptomx.site/api/users/register`,
-          {
+          { 
             address: address,
+            
           }
         );
-
-        console.log("User registered:", response.data);
+  
+        // Success scenarios
+        setSuccess("Registration completed successfully!");
         toast.success("Registration completed successfully!");
         navigate("/dashboard");
-      } catch (error) {
-        console.error("Error during database registration:", error);
-        // Even if database registration fails, contract registration succeeded
+        return;
+      } catch (databaseError) {
+        console.error("Database registration failed:", databaseError);
         toast.warning(
-          "Contract registration successful but database update failed. Please contact support."
+          "Blockchain registration successful, but database update failed. Contact support."
         );
         navigate("/dashboard");
       }
-    } catch (error) {
-      console.error("Registration failed:", error);
-      toast.error(
-        "Registration failed. Please check your inputs and try again."
-      );
+  
+    } catch (error: unknown) {
+      // Catch-all error handling with type checking
+      console.error("Comprehensive registration error:", error);
+      
+      // Type guard for Axios error
+      if (axios.isAxiosError(error)) {
+        // Server responded with an error
+        const errorMessage = 
+          error.response?.data?.message || 
+          error.response?.data?.error || 
+          "Registration failed";
+        toast.error(errorMessage);
+      } else if (error instanceof Error) {
+        // Standard Error object
+        toast.error(error.message || "An unexpected error occurred");
+      } else {
+        // Unknown error type
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
+      // Always reset processing state
       setIsProcessing(false);
     }
   };
@@ -482,7 +621,7 @@ const RegisterRank = () => {
                           ${darkMode ? "text-gray-300" : "text-gray-600"}
                         `}
                         >
-                          <span className="text-sm">Price:</span>
+                          <span className="text-sm">Base Cost:</span>
                           <p
                             className={`text-lg font-semibold ${
                               darkMode
@@ -490,7 +629,7 @@ const RegisterRank = () => {
                                 : "text-gray-800 text-opacity-90"
                             }`}
                           >
-                            ${rank.addedFeePrice}
+ {rank.baseCostITC} ITC
                           </p>
                         </div>
                         <div
@@ -498,15 +637,30 @@ const RegisterRank = () => {
                           ${darkMode ? "text-gray-300" : "text-gray-600"}
                         `}
                         >
-                          <span className="text-sm">ITC Required:</span>
+                          <span className="text-sm">Admin Fee:</span>
                           <p
                             className={`text-lg font-semibold ${
                               darkMode ? "text-cyan-400" : "text-cyan-600"
                             }`}
                           >
-                            {rank.rankPriceInITC} ITC
+                            {rank.adminFee} ITC
                           </p>
                         </div>
+
+                        <div
+                            className={`
+                            ${darkMode ? "text-gray-300" : "text-gray-600"}
+                          `}
+                          >
+                            <span className="text-sm">Total Cost:</span>
+                            <p
+                              className={`text-lg font-semibold ${
+                                darkMode ? "text-cyan-400" : "text-cyan-600"
+                              }`}
+                            >
+                              {rank.totalITCCost} ITC
+                            </p>
+                          </div>
                       </div>
 
                       {selectedRank === rank.id && (

@@ -13,6 +13,7 @@ import { useAppKitProvider, useAppKitAccount } from "@reown/appkit/react";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../context/DarkModeContext";
 import { motion } from "framer-motion";
+import { userApi } from "../api/userApi";
 
 // Import rank images
 import {
@@ -96,10 +97,12 @@ const RankRow = React.memo(
     rank,
     index,
     userRank,
+    currentRank,
   }: {
     rank: RankDetail;
     index: number;
     userRank: number | null;
+    currentRank: string;
   }) => (
     <tr
       key={rank.id}
@@ -107,14 +110,15 @@ const RankRow = React.memo(
                             border-b border-gray-200 dark:border-gray-700
                             transition-colors duration-200
                             ${
-                              userRank === rank.id
+                              rank.name === currentRank
                                 ? "bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/70"
                                 : ""
                             }
                             ${
-                              userRank !== null && rank.id < userRank
-                                ? "bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/70"
-                                : ""
+                             // Highlight ranks below current rank
+          index < ranks.findIndex(r => r.name === currentRank)
+          ? "bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/70"
+          : ""
                             }
                           `}
     >
@@ -130,7 +134,7 @@ const RankRow = React.memo(
           <div className="min-w-0">
             <p
               className={`font-semibold truncate ${
-                userRank === rank.id
+                rank.name === currentRank
                   ? "text-emerald-600 dark:text-emerald-400"
                   : "text-gray-900 dark:text-white"
               }`}
@@ -195,6 +199,7 @@ const RankDetailsPage = () => {
   const { darkMode } = useDarkMode();
   const navigate = useNavigate();
   const { address, isConnected } = useAppKitAccount();
+  const [userData, setUserData] = useState<any | null>(null);
 
   // Create a ref for data already loaded flag to avoid re-renders
   const dataLoadedRef = useRef(false);
@@ -341,14 +346,29 @@ const RankDetailsPage = () => {
 
       try {
         // Check if user is registered
-        const userData = await contractRef.current.users(address);
-        if (!userData || !userData.isActive) {
-          navigate("/");
-          return;
-        }
+        const userData = await userApi.getUserByAddress(address);
+        // if (!userData || !userData.isActive) {
+        //   navigate("/");
+        //   return;
+        // }
+
+        setUserData(userData);
+
+         const currentRank = userData.data.user.currentRank;
+    
+    console.log("Current Rank:", currentRank);
+
+    const rankIndex = ranks.findIndex(rank => rank.name === currentRank);
+    
+    console.log("Rank Index:", rankIndex);
+
+    // Set the user rank
+    setUserRank(rankIndex !== -1 ? rankIndex : null);
+
+        console.log("the data is ",userData)
 
         // Fetch user rank and set it immediately
-        const userRankValue = parseInt(userData[0].toString(), 10);
+        const userRankValue =  userData.currentRank;
         setUserRank(userRankValue);
 
         // Fetch all rank details in parallel
@@ -445,6 +465,11 @@ const RankDetailsPage = () => {
                         rank={rank}
                         index={index}
                         userRank={userRank}
+                        currentRank={
+                          userData?.data?.user?.currentRank || 
+                          ranks[userRank || 0]?.name || 
+                          ""
+                        }
                       />
                     ))
                   ) : (
