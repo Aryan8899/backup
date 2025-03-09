@@ -26,6 +26,7 @@ const Loader = lazy(() => import("./Pages/Loader"));
 const Transactions = lazy(() => import("./Pages/Transactions"));
 const FeaturesSection = lazy(() => import("./Pages/FeaturesSection"));
 const Light = lazy(() => import("./Pages/Light"));
+const LTGB_new = lazy(() => import("./Pages/LTGB_new"));
 
 // Define route configuration
 interface RouteConfig {
@@ -52,6 +53,8 @@ const App: React.FC = () => {
       { path: "/LtgBon", component: LtgBon, skipLoading: true },
       { path: "/admin/dashboard", component: AdminDashboard },
       { path: "/Tansactions", component: Transactions },
+      { path: "/LTGB", component: Transactions },
+      { path: "/LTGB_new",component: LTGB_new }
     ],
     []
   );

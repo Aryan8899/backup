@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDarkMode } from "../context/DarkModeContext.tsx";
 import { usePriceData } from "../context/PriceContext.tsx";
@@ -111,11 +113,11 @@ const RANK_DEFINITIONS = [
 ];
 
 // API endpoints
-const API_BASE_URL = "https://server.cryptomx.site/api";
+const API_BASE_URL = "http://localhost:3000/api";
 const API_ENDPOINTS = {
   getUserData: (address: string) => `${API_BASE_URL}/users/${address}`,
-  updateNickname: `${API_BASE_URL}/users/update-nickname`,
-  updateAvatar: `${API_BASE_URL}/users/update-avatar`,
+  updateNickname: `${API_BASE_URL}/users/nickname`,
+  updateAvatar: `${API_BASE_URL}/users/profile-picture`,
 };
 
 const SPECIAL_ADDRESSES = [

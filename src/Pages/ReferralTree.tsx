@@ -440,7 +440,7 @@ const CompactSkeletonNode: React.FC<SkeletonProps> = ({ darkMode }) => (
       while (retries <= MAX_RETRIES) {
         try {
           const response = await axios.get(
-            `https://server.cryptomx.site/api/users/${userAddress}`,
+            `http://localhost:3000/api/users/${userAddress}`,
             { timeout: 3000 + retries * 1000 } // Increase timeout with each retry
           );
 
